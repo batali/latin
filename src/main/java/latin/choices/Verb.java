@@ -252,10 +252,8 @@ public class Verb {
 
     public static abstract class PersonNumberForms extends FormSystem implements PersonNumberSystem {
         public final Voice voice;
-        public final Completeness completeness;
-        public PersonNumberForms(String name, Completeness completeness, Voice voice) {
+        public PersonNumberForms(String name, Voice voice) {
             super(name);
-            this.completeness = completeness;
             this.voice = voice;
         }
     }
@@ -285,7 +283,7 @@ public class Verb {
         return false;
     }
 
-    public static PersonNumberForms IndPreAct = new PersonNumberForms("IndPreAct", Completeness.In, Voice.Act) {
+    public static PersonNumberForms IndPreAct = new PersonNumberForms("IndPreAct", Voice.Act) {
         @Override
         public boolean test(IEntry entry) {
             return haveAstemAndConj(entry);

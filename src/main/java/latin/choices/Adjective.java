@@ -1,5 +1,5 @@
 
-package latin.choices;
+package  latin.choices;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -19,29 +19,29 @@ import java.util.Map;
 
 public class Adjective {
 
-    public interface Key extends CaseNumber.Key, Gender.Key {
+    public interface Key extends latin.choices.CaseNumber.Key, latin.choices.Gender.Key {
     }
 
     public interface Stored extends Form.Stored<Key> {
-        public Formf getStored(CaseNumber caseNumber, Gender gender);
-        public Form.Stored<CaseNumber> toCaseNumber(Gender gender);
+        public Formf getStored(latin.choices.CaseNumber caseNumber, latin.choices.Gender gender);
+        public Form.Stored<latin.choices.CaseNumber> toCaseNumber(latin.choices.Gender gender);
     }
 
     public interface Rules extends Form.Rules<Key> {
-        public Rulef getRule(CaseNumber caseNumber, Gender gender);
-        public Form.Rules<CaseNumber> toCaseNumber(Gender gender);
+        public Rulef getRule(latin.choices.CaseNumber caseNumber, latin.choices.Gender gender);
+        public Form.Rules<latin.choices.CaseNumber> toCaseNumber(latin.choices.Gender gender);
     }
 
     public static Stored emptyForms = new Stored () {
 
         @Override
-        public Formf getStored(CaseNumber caseNumber, Gender gender) {
+        public Formf getStored(latin.choices.CaseNumber caseNumber, latin.choices.Gender gender) {
             return null;
         }
 
         @Override
-        public Form.Stored<CaseNumber> toCaseNumber(Gender gender) {
-            return Noun.emptyForms;
+        public Form.Stored<latin.choices.CaseNumber> toCaseNumber(latin.choices.Gender gender) {
+            return latin.choices.Noun.emptyForms;
         }
 
         @Override
