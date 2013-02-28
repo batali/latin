@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Fourth.us">
+  <forms>
+    <gstem>port</gstem>
+    <NomSi>portus</NomSi>
+    <GenSi>portūs</GenSi>
+    <DatSi>portuī</DatSi>
+    <AccSi>portum</AccSi>
+    <AblSi>portū</AblSi>
+    <NomPl>portūs</NomPl>
+    <GenPl>portuum</GenPl>
+    <DatPl>portibus</DatPl>
+    <AccPl>portūs</AccPl>
+    <AblPl>portibus</AblPl>
+  </forms>
+</noun>

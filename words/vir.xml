@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Second.r">
+<forms>
+  <EngSi>man</EngSi>
+  <EngPl>men</EngPl>
+  <NomSi>vir</NomSi>
+  <GenSi>virī</GenSi>
+  <DatSi>virō</DatSi>
+  <AccSi>virum</AccSi>
+  <AblSi>virō</AblSi>
+  <VocSi>vir</VocSi>
+  <NomPl>virī</NomPl>
+  <GenPl>virōrum</GenPl>
+  <DatPl>virīs</DatPl>
+  <AccPl>virōs</AccPl>
+  <AblPl>virīs</AblPl>
+  <VocPl>virī</VocPl>
+</forms>
+</noun>

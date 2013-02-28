@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="First.a">
+<forms>
+  <gstem>agricol</gstem>
+  <NomSi>agricola</NomSi>
+  <GenSi>agricolae</GenSi>
+  <DatSi>agricolae</DatSi>
+  <AccSi>agricolam</AccSi>
+  <AblSi>agricolā</AblSi>
+  <LocSi>agricolae</LocSi>
+  <NomPl>agricolae</NomPl>
+  <GenPl>agricolārum</GenPl>
+  <DatPl>agricolīs</DatPl>
+  <AccPl>agricolās</AccPl>
+  <AblPl>agricolīs</AblPl>
+  <LocPl>agricolīs</LocPl>
+</forms>
+</noun>

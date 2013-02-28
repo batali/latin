@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Third.c.mf">
+<forms>
+  <gstem>rēg</gstem>
+  <NomSi>rēx</NomSi>
+  <GenSi>rēgis</GenSi>
+  <DatSi>rēgī</DatSi>
+  <AccSi>rēgem</AccSi>
+  <AblSi>rēge</AblSi>
+  <NomPl>rēgēs</NomPl>
+  <GenPl>rēgum</GenPl>
+  <DatPl>rēgibus</DatPl>
+  <AccPl>rēgēs</AccPl>
+  <AblPl>rēgibus</AblPl>
+</forms>
+</noun>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Third.c.mf">
+<forms>
+  <gstem>prīncip</gstem>
+  <NomSi>prīnceps</NomSi>
+  <GenSi>prīncipis</GenSi>
+  <DatSi>prīncipī</DatSi>
+  <AccSi>prīncipem</AccSi>
+  <AblSi>prīncipe</AblSi>
+  <NomPl>prīncipēs</NomPl>
+  <GenPl>prīncipum</GenPl>
+  <DatPl>prīncipibus</DatPl>
+  <AccPl>prīncipēs</AccPl>
+  <AblPl>prīncipibus</AblPl>
+</forms>
+</noun>
+

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="n" rules="Third.pi.n">
+<forms>
+  <gstem>mar</gstem>
+  <NomSi>mare</NomSi>
+  <GenSi>maris</GenSi>
+  <DatSi>marī</DatSi>
+  <AccSi>mare</AccSi>
+  <AblSi>marī</AblSi>
+  <NomPl>maria</NomPl>
+  <GenPl>marium</GenPl>
+  <DatPl>maribus</DatPl>
+  <AccPl>maria</AccPl>
+  <AblPl>maribus</AblPl>
+</forms>
+</noun>

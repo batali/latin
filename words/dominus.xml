@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Second.us">
+    <forms>
+        <gstem>domin</gstem>
+        <NomSi>dominus</NomSi>
+        <GenSi>dominī</GenSi>
+        <DatSi>dominō</DatSi>
+        <AccSi>dominum</AccSi>
+        <AblSi>dominō</AblSi>
+        <VocSi>domine</VocSi>
+        <NomPl>dominī</NomPl>
+        <GenPl>dominōrum</GenPl>
+        <DatPl>dominīs</DatPl>
+        <AccPl>dominōs</AccPl>
+        <AblPl>dominīs</AblPl>
+        <VocPl>dominī</VocPl>
+    </forms>
+</noun>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<NounForms declension="third">
+  <forms>
+	<GenSi>is</GenSi>
+	<DatSi>ī</DatSi>
+	<AccSi gender="mf" stem="c">em</AccSi>
+	<AccSi gender="mf" stem="i">im</AccSi>
+	<AblSi stem="c">e</AblSi>
+	<AblSi stem="i">ī</AblSi>
+	<NomPl gender="mf">ēs</NomPl>
+	<NomPl gender="n" stem="c">a</NomPl>
+	<NomPl gender="n" stem="i">ia</NomPl>
+	<GenPl stem="c">um</GenPl>
+	<GenPl stem="i">ium</GenPl>
+	<DatPl>ibus</DatPl>
+	<AccPl gender="mf" stem="c">ēs</AccPl>
+	<AccPl gender="mf" stem="i">ēs,īs</AccPl>
+	<AccPl gender="mf" stem="i">īs</AccPl>
+	<AccPl gender="n" stem="c">a</AccPl>
+	<AccPl gender="n" stem="i">ia</AccPl>
+	<AblPl>ibus</AblPl>
+  </forms>
+</NounForms>

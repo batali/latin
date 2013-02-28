@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Second.ius">
+  <forms>
+    <gstem>fīli</gstem>
+    <EngSi>son</EngSi>
+    <NomSi>fīlius</NomSi>
+    <GenSi>fīliī,fīlī</GenSi>
+    <DatSi>fīliō</DatSi>
+    <AccSi>fīlium</AccSi>
+    <AblSi>fīliō</AblSi>
+    <VocSi>fīlī</VocSi>
+    <NomPl>fīliī</NomPl>
+    <GenPl>fīliōrum</GenPl>
+    <DatPl>fīliīs</DatPl>
+    <AccPl>fīliōs</AccPl>
+    <AblPl>fīliīs</AblPl>
+    <VocPl>fīliī</VocPl>
+  </forms>
+</noun>

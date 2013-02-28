@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Second.us">
+<forms>
+  <gstem>hort</gstem>
+  <NomSi>hortus</NomSi>
+  <GenSi>hortī</GenSi>
+  <DatSi>hortō</DatSi>
+  <AccSi>hortum</AccSi>
+  <AblSi>hortō</AblSi>
+  <VocSi>horte</VocSi>
+  <NomPl>hortī</NomPl>
+  <GenPl>hortōrum</GenPl>
+  <DatPl>hortīs</DatPl>
+  <AccPl>hortōs</AccPl>
+  <AblPl>hortīs</AblPl>
+  <VocPl>hortī</VocPl>
+</forms>
+</noun>

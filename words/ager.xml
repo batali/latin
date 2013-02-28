@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Second.er">
+<forms>
+  <gstem>agr</gstem>
+  <NomSi>ager</NomSi>
+  <GenSi>agrī</GenSi>
+  <DatSi>agrō</DatSi>
+  <AccSi>agrum</AccSi>
+  <AblSi>agrō</AblSi>
+  <VocSi>ager</VocSi>
+  <NomPl>agrī</NomPl>
+  <GenPl>agrōrum</GenPl>
+  <DatPl>agrīs</DatPl>
+  <AccPl>agrōs</AccPl>
+  <AblPl>agrīs</AblPl>
+  <VocPl>agrī</VocPl>
+</forms>
+</noun>

@@ -1,0 +1,16 @@
+# -*- encoding: utf-8 -*-
+
+noun via way f first
+
+NomSi via
+GenSi viae
+DatSi viae
+AccSi viam
+AblSi viā
+LocSi viae
+NomPl viae
+GenPl viārum
+DatPl viīs
+AccPl viās
+AblPl viīs
+LocPl viīs

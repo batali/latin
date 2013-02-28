@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="n" rules="Third.pi.n">
+<forms>
+  <gstem>animāl</gstem>
+  <NomSi>animal</NomSi>
+  <GenSi>animālis</GenSi>
+  <DatSi>animālī</DatSi>
+  <AccSi>animal</AccSi>
+  <AblSi>animālī</AblSi>
+  <NomPl>animālia</NomPl>
+  <GenPl>animālium</GenPl>
+  <DatPl>animālibus</DatPl>
+  <AccPl>animālia</AccPl>
+  <AblPl>animālibus</AblPl>
+</forms>
+</noun>

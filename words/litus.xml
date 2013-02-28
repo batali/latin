@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="n" rules="Third.c.n">
+<forms>
+  <EngSi>shore</EngSi>
+  <NomSi>lītus</NomSi>
+  <GenSi>lītoris</GenSi>
+  <DatSi>lītorī</DatSi>
+  <AccSi>lītus</AccSi>
+  <AblSi>lītore</AblSi>
+  <NomPl>lītora</NomPl>
+  <GenPl>lītorum</GenPl>
+  <DatPl>lītoribus</DatPl>
+  <AccPl>lītora</AccPl>
+  <AblPl>lītoribus</AblPl>
+</forms>
+</noun>
+

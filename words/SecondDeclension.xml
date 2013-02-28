@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<NounForms declension="second">
+  <forms>
+	<NomSi gender="mf">us</NomSi>
+	<NomSi gender="n">um</NomSi>
+	<GenSi>ī</GenSi>
+	<DatSi>ō</DatSi>
+	<AccSi>um</AccSi>
+	<AblSi>ō</AblSi>
+	<VocSi gender="mf">e</VocSi>
+	<VocSi gender="n">um</VocSi>
+	<NomPl gender="mf">ī</NomPl>
+	<NomPl gender="n">a</NomPl>
+	<GenPl>ōrum</GenPl>
+	<DatPl>īs</DatPl>
+	<AccPl gender="mf">ōs</AccPl>
+	<AccPl gender="n">a</AccPl>
+	<AblPl>īs</AblPl>
+  </forms>
+</NounForms>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Third.c.mf">
+<forms>
+  <EngSi>stone</EngSi>
+  <gstem>lapid</gstem>
+  <NomSi>lapis</NomSi>
+  <GenSi>lapidis</GenSi>
+  <DatSi>lapidī</DatSi>
+  <AccSi>lapidem</AccSi>
+  <AblSi>lapide</AblSi>
+  <NomPl>lapidēs</NomPl>
+  <GenPl>lapidum</GenPl>
+  <DatPl>lapidibus</DatPl>
+  <AccPl>lapidēs </AccPl>
+  <AblPl>lapidibus</AblPl>
+</forms>
+</noun>
+

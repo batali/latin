@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="n" rules="Second.um">
+  <forms>
+    <gstem>bell</gstem>
+    <EngSi>war</EngSi>
+	<NomSi>bellum</NomSi>
+	<GenSi>bellī</GenSi>
+	<DatSi>bellō</DatSi>
+	<AccSi>bellum</AccSi>
+	<AblSi>bellō</AblSi>
+	<VocSi>bellum</VocSi>
+	<NomPl>bella</NomPl>
+	<GenPl>bellōrum</GenPl>
+	<DatPl>bellīs</DatPl>
+	<AccPl>bella</AccPl>
+	<AblPl>bellīs</AblPl>
+	<VocPl>bella</VocPl>
+  </forms>
+</noun>

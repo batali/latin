@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<noun gender="m" rules="Third.c.mf">
+<forms>
+  <EngSi>lion</EngSi>
+  <NomSi>leō</NomSi>
+  <GenSi>leōnis</GenSi>
+  <DatSi>leōnī</DatSi>
+  <AccSi>leōnem</AccSi>
+  <AblSi>leōne</AblSi>
+  <NomPl>leōnēs</NomPl>
+  <GenPl>leōnum</GenPl>
+  <DatPl>leōnibus</DatPl>
+  <AccPl>leōnēs </AccPl>
+  <AblPl>leōnibus</AblPl>
+</forms>
+</noun>
+

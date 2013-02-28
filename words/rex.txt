@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+
+noun rex king m third
+
+NomSi rēx
+GenSi rēgis
+DatSi rēgī
+AccSi rēgem
+AblSi rēge
+NomPl rēgēs
+GenPl rēgum
+DatPl rēgibus
+AccPl rēgēs
+AblPl rēgibus

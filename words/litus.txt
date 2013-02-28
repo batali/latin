@@ -1,0 +1,15 @@
+# -*- encoding: utf-8 -*-
+
+noun litus shore n third
+
+NomSi lītus
+GenSi lītoris
+DatSi lītorī
+AccSi lītus
+AblSi lītore
+NomPl lītora
+GenPl lītorum
+DatPl līoribus
+AccPl lītora
+AblPl lītoribus
+

@@ -1,0 +1,16 @@
+# -*- encoding: utf-8 -*-
+
+porta gate f
+
+NomSi porta
+GenSi portae
+DatSi portae
+AccSi portam
+AblSi portā
+LocSi portae
+NomPl portae
+GenPl portārum
+DatPl portīs
+AccPl portās
+AblPl portīs
+LocPl portīs

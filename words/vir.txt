@@ -1,0 +1,16 @@
+# -*- encoding: utf-8 -*-
+
+noun vir man,men m third
+
+NomSi vir
+GenSi virī
+DatSi virō
+AccSi virum
+AblSi virō
+VocSi vir
+NomPl virī
+GenPl virōrum
+DatPl virīs
+AccPl virōs
+AblPl virīs
+VocPl virī
