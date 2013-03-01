@@ -15,7 +15,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -117,19 +119,37 @@ public class DocElement {
         return getStrings(docElement, tags);
     }
 
-    public static DocElement open(File xmlFile)
+    public static DocElement fromInputSource(InputSource sc)
             throws SAXException, ParserConfigurationException, IOException {
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        return new DocElement(dBuilder.parse(xmlFile));
+        return new DocElement(dBuilder.parse(sc));
+    }
+
+    public static DocElement fromInputStream(InputStream st)
+            throws SAXException, ParserConfigurationException, IOException {
+        return fromInputSource(new InputSource(st));
     }
 
     public static DocElement fromString(String s)
             throws SAXException, ParserConfigurationException, IOException {
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         StringReader sr = new StringReader(s);
-        InputSource sc = new InputSource(sr);
-        return new DocElement(dBuilder.parse(sc));
+        return fromInputSource(new InputSource(sr));
     }
+
+    public static DocElement fromFile(File xmlFile)
+            throws SAXException, ParserConfigurationException, IOException {
+        FileInputStream fis = new FileInputStream(xmlFile);
+//        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+//        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+//        return new DocElement(dBuilder.parse(xmlFile));
+        try {
+            return fromInputStream(fis);
+        }
+        finally {
+            fis.close();
+        }
+    }
+
 }
+

@@ -1,6 +1,7 @@
 
 package latin.forms;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import latin.choices.Alts;
@@ -14,24 +15,14 @@ import java.util.List;
 
 public class EnglishTest {
 
-    public static <K extends Enum<K>> List<String> getKeyForms(Form.Forms<K> forms, Class<K> kclass) throws Exception {
-        List<String> fstrings = Lists.newArrayList();
-        for (K k : kclass.getEnumConstants()) {
-            FormBuilder fb = new FormBuilder();
-            if (forms.getForm(k, fb, Alts.firstAlt)) {
-                fstrings.add(fb.getForm());
-            }
-        }
-        return fstrings;
-    }
-
-    public static <K extends Enum<K>> void testKeyForms(Form.Forms<K> forms, Class<K> kclass, List<String> tstrings) throws Exception {
-        List<String> fstrings = getKeyForms(forms, kclass);
-        Assert.assertEquals(tstrings, fstrings);
-    }
-
     public void testNounForms(String bs, String ts) throws Exception {
-        testKeyForms(English.nounForms(bs), English.NounKey.class, Suffix.ssplit(ts));
+        English.NounForms nf = English.nounForms(bs);
+        List<String> cforms = Lists.newArrayList();
+        for (English.NounKey key : English.NounKey.values()) {
+            cforms.add(Strings.nullToEmpty(Forms.formString(nf.getForm(key, Alts.firstAlt))));
+        }
+        List<String> tforms = Suffix.ssplit(ts);
+        Assert.assertEquals(tforms, cforms);
     }
 
     @Test
@@ -43,7 +34,13 @@ public class EnglishTest {
     }
 
     public void testVerbForms(String bs, String ts) throws Exception {
-        testKeyForms(English.verbForms(bs), English.VerbKey.class, Suffix.ssplit(ts));
+        English.VerbForms vf = English.verbForms(bs);
+        List<String> cforms = Lists.newArrayList();
+        for (English.VerbKey key : English.VerbKey.values()) {
+            cforms.add(Strings.nullToEmpty(Forms.formString(vf.getKeyForm(key, Alts.firstAlt))));
+        }
+        List<String> tforms = Suffix.ssplit(ts);
+        Assert.assertEquals(tforms, cforms);
     }
 
     @Test
@@ -60,14 +57,13 @@ public class EnglishTest {
     }
 
     public void showVerbGroups(English.VerbForms fv, PersonNumber pn, Time tm, Completeness cm, Voice v) {
-        FormBuilder fb = new FormBuilder();
-        English.getVerbGroup(fv, pn, tm, cm, v, fb, Alts.firstAlt);
+        List<String> strings = English.getVerbGroup(fv, pn, tm, cm, v, Alts.firstAlt);
         System.out.println(String.format("%s %s %s %s : %s",
                 tm.toString(),
                 cm.toString(),
                 pn.toString(),
                 v.toString(),
-                fb.getForm()));
+                strings.toString()));
     }
 
     public void showVerbGroups(English.VerbForms fv) {

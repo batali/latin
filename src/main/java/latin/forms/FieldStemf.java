@@ -33,9 +33,9 @@ public class FieldStemf<ET> implements Stemf<ET> {
         return getStemForm(e) != null;
     }
 
-    public boolean apply(ET e, IFormBuilder formBuilder, Alts.Chooser chooser) {
+    public IFormBuilder apply(ET e, Alts.Chooser chooser) {
         Formf formf = getStemForm(e);
-        return formf != null && formf.apply(formBuilder, chooser);
+        return Forms.applyFormf(formf, chooser);
     }
 
     public static <T> Field getField(Class<T> tclass, String fieldName) {

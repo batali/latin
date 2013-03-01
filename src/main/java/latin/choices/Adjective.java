@@ -5,12 +5,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import latin.forms.FieldStemf;
-import latin.forms.Form;
 import latin.forms.FormMap;
 import latin.forms.Formf;
-import latin.forms.IFormBuilder;
+import latin.forms.IForm;
 import latin.forms.Rulef;
 import latin.forms.Stemf;
+import latin.forms.StoredForms;
 import latin.forms.Suffix;
 
 import java.util.ArrayList;
@@ -19,46 +19,39 @@ import java.util.Map;
 
 public class Adjective {
 
-    public interface Key extends latin.choices.CaseNumber.Key, latin.choices.Gender.Key {
+    public interface Stored {
+        public Formf getStored(CaseNumber caseNumber, Gender gender);
+        public StoredForms<CaseNumber> toNounForms(Gender gender);
     }
 
-    public interface Stored extends Form.Stored<Key> {
-        public Formf getStored(latin.choices.CaseNumber caseNumber, latin.choices.Gender gender);
-        public Form.Stored<latin.choices.CaseNumber> toCaseNumber(latin.choices.Gender gender);
-    }
-
-    public interface Rules extends Form.Rules<Key> {
-        public Rulef getRule(latin.choices.CaseNumber caseNumber, latin.choices.Gender gender);
-        public Form.Rules<latin.choices.CaseNumber> toCaseNumber(latin.choices.Gender gender);
+    public interface Rules {
+        public Rulef getRule(CaseNumber caseNumber, Gender gender);
+        public Noun.Rules toNounRules (Gender gender);
     }
 
     public static Stored emptyForms = new Stored () {
 
         @Override
-        public Formf getStored(latin.choices.CaseNumber caseNumber, latin.choices.Gender gender) {
+        public Formf getStored(CaseNumber caseNumber, Gender gender) {
             return null;
         }
 
         @Override
-        public Form.Stored<latin.choices.CaseNumber> toCaseNumber(latin.choices.Gender gender) {
+        public StoredForms<CaseNumber> toNounForms(Gender gender) {
             return latin.choices.Noun.emptyForms;
         }
 
-        @Override
-        public Formf getStored(Key key) {
-            return null;
-        }
     };
 
-    public static Form.Stored<CaseNumber> makeNounForms(final Stored forms, final Gender gender) {
+    public static StoredForms<CaseNumber> makeNounForms(final Stored forms, final Gender gender) {
         if (forms == null) {
             return null;
         }
-        Form.Stored<CaseNumber> nounForms = forms.toCaseNumber(gender);
+        StoredForms<CaseNumber> nounForms = forms.toNounForms(gender);
         if (nounForms != null) {
             return nounForms;
         }
-        return new Form.Stored<CaseNumber> () {
+        return new StoredForms<CaseNumber>() {
             @Override
             public Formf getStored(CaseNumber caseNumber) {
                 return forms.getStored(caseNumber, gender);
@@ -66,12 +59,12 @@ public class Adjective {
         };
     }
 
-    public static Form.Rules<CaseNumber> makeNounRules(final Rules rules, final Gender gender) {
-        Form.Rules<CaseNumber> nounRules = rules.toCaseNumber(gender);
+    public static Noun.Rules makeNounRules(final Rules rules, final Gender gender) {
+        Noun.Rules nounRules = rules.toNounRules(gender);
         if (nounRules != null) {
             return nounRules;
         }
-        return new Form.Rules<CaseNumber> () {
+        return new Noun.Rules () {
             @Override
             public Rulef getRule(CaseNumber caseNumber) {
                 return rules.getRule(caseNumber, gender);
@@ -79,35 +72,24 @@ public class Adjective {
         };
     }
 
-    public static <ET> boolean getAdjForm(CaseNumber caseNumber,
-                                          Gender gender,
-                                          Stored forms,
-                                          Stemf<ET> stemf,
-                                          ET stemEntry,
-                                          Rules rules,
-                                          IFormBuilder fb,
-                                          Alts.Chooser chooser) {
-        return NounForms.getForm(
+    public static <ET> IForm getAdjForm(CaseNumber caseNumber,
+                                               Gender gender,
+                                               Stored forms,
+                                               Stemf<ET> stemf,
+                                               ET stemEntry,
+                                               Rules rules,
+                                               Alts.Chooser chooser) {
+        return Noun.getForm(
                 caseNumber,
                 makeNounForms(forms, gender),
                 stemf,
                 stemEntry,
                 makeNounRules(rules, gender),
-                fb,
                 chooser);
     }
 
-    public static <ET> boolean getAdjForm(Key key,
-                                          Stored forms,
-                                          Stemf<ET> stemf,
-                                          ET stemEntry,
-                                          Rules rules,
-                                          IFormBuilder fb,
-                                          Alts.Chooser chooser) {
-        return getAdjForm(key.getCaseNumber(), key.getGender(), forms, stemf, stemEntry, rules, fb, chooser);
-    }
 
-    public static class ListStoredForms implements Stored, Form.Stored<Key> {
+    public static class ListStoredForms implements Stored {
         public final String id;
         private List<FormMap<CaseNumber>> storedFormsList;
         public ListStoredForms(String id, int n) {
@@ -119,19 +101,23 @@ public class Adjective {
             }
         }
 
-        @Override
-        public Formf getStored(CaseNumber caseNumber, Gender gender) {
-            return toCaseNumber(gender).getStored(caseNumber);
+        public FormMap<CaseNumber> selectFormMap(Gender gender) {
+            return gender.select(storedFormsList);
         }
 
         @Override
-        public FormMap<CaseNumber> toCaseNumber(Gender gender) {
+        public Formf getStored(CaseNumber caseNumber, Gender gender) {
+            return toNounForms(gender).getStored(caseNumber);
+        }
+
+        @Override
+        public FormMap<CaseNumber> toNounForms(Gender gender) {
             return gender.select(storedFormsList);
         }
 
         public void putForm(Gender g, CaseNumber key, List<String> strings) {
             Preconditions.checkState(!storedFormsList.isEmpty());
-            toCaseNumber(g).putForm(id + "." + g.toString(), key, strings);
+            toNounForms(g).putForm(id + "." + g.toString(), key, strings);
         }
 
         public void putForm(Gender g, CaseNumber key, String afs) {
@@ -141,27 +127,20 @@ public class Adjective {
         public FormMap<CaseNumber> getStoredForms(int p) {
             return storedFormsList.get(p);
         }
-
-        public Formf getStored(Key key) {
-            return getStored(key.getCaseNumber(), key.getGender());
-        }
     }
 
-    public static class ListRules implements Rules, Form.Rules<Key> {
+    public static class ListRules implements Rules {
         public final String name;
         private List<NounForms.Erules> rulesList;
         public ListRules(String name, List<NounForms.Erules> rulesList) {
             this.name = name;
             this.rulesList = rulesList;
         }
-        public NounForms.Erules toCaseNumber(Gender gender) {
+        public Noun.Rules toNounRules(Gender gender) {
             return gender.select(rulesList);
         }
         public Rulef getRule(CaseNumber caseNumber, Gender gender) {
-            return toCaseNumber(gender).getRule(caseNumber);
-        }
-        public Rulef getRule(Key key) {
-            return getRule(key.getCaseNumber(), key.getGender());
+            return toNounRules(gender).getRule(caseNumber);
         }
         public boolean allComplete() {
             for (NounForms.Erules erules : rulesList) {
@@ -226,10 +205,8 @@ public class Adjective {
         public FormEntry(String id, String gst, String rn) {
             this(id, gst, rn, new ArrayList<String>());
         }
-        public boolean getForm(CaseNumber caseNumber, Gender gender,
-                               IFormBuilder formBuilder,
-                               Alts.Chooser chooser) {
-            return getAdjForm(caseNumber, gender, storedForms, adjStemf, this, rules, formBuilder, chooser);
+        public IForm getForm(CaseNumber caseNumber, Gender gender, Alts.Chooser chooser) {
+            return getAdjForm(caseNumber, gender, storedForms, adjStemf, this, rules, chooser);
         }
     }
 

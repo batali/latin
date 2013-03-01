@@ -1,6 +1,6 @@
 package latin.forms;
 
-public interface IFormBuilder extends CharSequence {
+public interface IFormBuilder extends IForm {
     public boolean isEmpty();
     public IFormBuilder removeLast(int n);
     public IFormBuilder add(char c);

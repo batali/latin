@@ -292,32 +292,25 @@ public abstract class FormRule implements Rulef {
         }
 
         public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return Alts.chooseElement(this, chooser).apply(formBuilder, chooser);
+            return Alts.chooseElement(this, id, chooser).apply(formBuilder, chooser);
         }
 
         public String toString() {
             return alts.toString();
         }
+    }
 
-        @Override
-        public FormRule firstRule() {
-            return alts.get(0).firstRule();
-        }
-
-        @Override
-        public String endingString() {
-            return alts.get(0).endingString();
-        }
+    public static Rulef makeRule(String id, List<?> objects) {
+        return new AltsRule(id, objects);
     }
 
     public static Rulef makeRule(String prefix, Object key, List<?> objects) {
-        return new AltsRule(prefix + "." + key.toString(), objects);
+        return makeRule (prefix + "." + key.toString(), objects);
     }
 
     public static Rulef parseRule(String prefix, Object key, String afs) {
         return makeRule(prefix, key, Suffix.csplit(afs));
     }
-
 }
 
 

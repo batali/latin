@@ -51,9 +51,9 @@ public class ConjugationTest {
         List<String> formList = Lists.newArrayList();
         CollectAlts collectAlts = new CollectAlts();
         do {
-            FormBuilder formBuilder = new FormBuilder();
-            if (personNumberForms.apply(entry, personNumber, formBuilder, collectAlts)) {
-                formList.add(formBuilder.getForm());
+            Object f = personNumberForms.getForm(entry, personNumber, collectAlts);
+            if (f != null) {
+                formList.add(f.toString());
             }
         }
         while(collectAlts.incrementPositions());

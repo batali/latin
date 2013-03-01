@@ -14,7 +14,6 @@ import latin.choices.CollectAlts;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
-import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
@@ -115,6 +114,21 @@ public class Suffix {
         }
     };
 
+    public static String unaccentString(CharSequence charSequence) {
+        StringBuilder sb = new StringBuilder(charSequence);
+        int s = sb.length();
+        for (int i = 0; i < s; i++) {
+            char c = sb.charAt(i);
+            if (c == ' ') {
+                sb.setCharAt(i, '_');
+            }
+            else if (isAccented(c)) {
+                sb.setCharAt(i, unaccented(c));
+            }
+        }
+        return sb.toString();
+    }
+
     public static Iterable<String> ssplitter(String str) {
         return Splitter.on(CharMatcher.BREAKING_WHITESPACE)
                 .omitEmptyStrings()
@@ -126,7 +140,8 @@ public class Suffix {
     }
 
     public static String makeFormString(String fstr) {
-        return fstr.trim().replace('_', ' ');
+        return CharMatcher.is('_').collapseFrom(fstr.trim(), ' ');
+        //return fstr.trim().replace('_', ' ');
     }
 
     public static final Function<String,String> toSameString = Functions.identity();
@@ -263,7 +278,7 @@ public class Suffix {
         return strings;
     }
 
-    static class AltsForm extends AbstractList<String> implements Formf {
+    static class AltsForm implements Formf {
 
         public final Object spec;
         public final ImmutableList<String> alts;
@@ -273,22 +288,8 @@ public class Suffix {
             this.alts = ImmutableList.copyOf(checkFormStrings(strings));
         }
 
-        public String getSpec() {
-            return spec.toString();
-        }
-
-        @Override
-        public String get(int i) {
-            return alts.get(i);
-        }
-
-        @Override
-        public int size() {
-            return alts.size();
-        }
-
         public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
-            String s = Alts.chooseElement(this, chooser);
+            String s = Alts.chooseElement(alts, this, chooser);
             if (s != null) {
                 formBuilder.add(s);
                 return true;
@@ -298,8 +299,20 @@ public class Suffix {
             }
         }
 
+        public IFormBuilder apply(Alts.Chooser chooser) {
+            String s = Alts.chooseElement(alts, this, chooser);
+            if (s != null) {
+                FormBuilder formBuilder = new FormBuilder();
+                formBuilder.add(s);
+                return formBuilder;
+            }
+            else {
+                return null;
+            }
+        }
+
         public String toString() {
-            return alts.toString();
+            return spec.toString() + ":" + alts.toString();
         }
 
     }
@@ -324,10 +337,7 @@ public class Suffix {
         List<String> strings = Lists.newArrayList();
         CollectAlts collector = new CollectAlts();
         do {
-            FormBuilder fb = new FormBuilder();
-            if (formf.apply(fb, collector)) {
-                strings.add(fb.toString());
-            }
+            Forms.addForm(formf.apply(collector), strings);
         }
         while (collector.incrementPositions());
         return strings;

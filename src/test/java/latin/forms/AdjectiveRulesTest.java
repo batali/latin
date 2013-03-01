@@ -18,9 +18,9 @@ public class AdjectiveRulesTest {
         List<String> formList = Lists.newArrayList();
         CollectAlts collectAlts = new CollectAlts();
         do {
-            FormBuilder formBuilder = new FormBuilder();
-            if (entry.getForm(key, gender, formBuilder, collectAlts)) {
-                formList.add(formBuilder.toString());
+            Object f = entry.getForm(key, gender, collectAlts);
+            if (f != null) {
+                formList.add(f.toString());
             }
         }
         while(collectAlts.incrementPositions());

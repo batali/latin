@@ -58,7 +58,7 @@ public class ParseFileTest {
     }
 
     public void parseEntry(String id) throws Exception {
-        DocElement docElement = DocElement.open(new File(wordsDir, id + ".xml"));
+        DocElement docElement = DocElement.fromFile(new File(wordsDir, id + ".xml"));
         parseEntry(id, docElement);
     }
 

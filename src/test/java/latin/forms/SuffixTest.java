@@ -132,6 +132,8 @@ public class SuffixTest {
     public void testMakeFormf() {
         Formf formf = Suffix.makeFormf("", "", " ab_c");
         Assert.assertEquals("[ab c]", Suffix.getStrings(formf).toString());
+        Formf formg = Suffix.makeFormf("", "", " ab_____c");
+        Assert.assertEquals("[ab c]", Suffix.getStrings(formg).toString());
     }
 
     @Test
@@ -148,6 +150,12 @@ public class SuffixTest {
     public void testEsplit() {
         List<Pair<String,String>> pairList = Lists.newArrayList(Suffix.esplitter("foo=3 bar=4,34 noog"));
         Assert.assertEquals("[(foo,3), (bar,4,34), (noog,)]", pairList.toString());
+    }
+
+    @Test
+    public void testUnaccentString() {
+        Assert.assertEquals("aba", Suffix.unaccentString("abā"));
+        Assert.assertEquals("a_ba", Suffix.unaccentString("a bā"));
     }
 
 }

@@ -2,6 +2,7 @@
 package latin.forms;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import latin.choices.Alts;
 import latin.choices.Completeness;
 import latin.choices.PersonNumber;
@@ -91,6 +92,12 @@ public class English {
         Poss;
     }
 
+    public static enum TenseKey {
+        Base,
+        TpSi,
+        Past;
+    }
+
     public static enum VerbKey {
         Base,
         TpSi,
@@ -106,7 +113,7 @@ public class English {
             .enumMap;
 
 
-    public static class NounForms implements Form.Forms<NounKey> {
+    public static class NounForms {
 
         public final EnumMap<NounKey, Formf> stored;
         public final EnumMap<NounKey, Rulef> rules;
@@ -117,10 +124,11 @@ public class English {
             this.rules = rules;
         }
 
-        public boolean applyRule(NounKey key, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IFormBuilder applyRule(NounKey key, Alts.Chooser chooser) {
             Formf si = stored.get(NounKey.Sing);
-            if (si == null || !si.apply(formBuilder, chooser)) {
-                return false;
+            IFormBuilder formBuilder = Forms.applyFormf(si, chooser);
+            if (formBuilder == null){
+                return null;
             }
             Rulef rule = rules.get(key);
             if (rule == null) {
@@ -133,19 +141,19 @@ public class English {
                         break;
                 }
             }
-            return rule.apply(formBuilder, chooser);
+            return Forms.applyRule(rule, formBuilder, chooser);
         }
 
-        public boolean getForm(NounKey key, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IFormBuilder getForm(NounKey key, Alts.Chooser chooser) {
             Formf sf = stored.get(key);
             if (sf != null) {
-                return sf.apply(formBuilder, chooser);
+                return sf.apply(chooser);
             }
             else if (key.equals(NounKey.Sing)) {
-                return false;
+                return null;
             }
             else {
-                return applyRule(key, formBuilder, chooser);
+                return applyRule(key, chooser);
             }
         }
 
@@ -191,10 +199,11 @@ public class English {
     }
 
     public interface TensedForms {
-        public boolean getTensedForm(PersonNumber personNumber, Time time, IFormBuilder formBuilder, Alts.Chooser chooser);
+        public IForm getTensedForm(PersonNumber personNumber, Time time, Alts.Chooser chooser);
     }
 
-    public static interface TensedEntry extends TensedForms, Form.Forms<VerbKey> {
+    public static interface TensedEntry extends TensedForms {
+        public IForm getKeyForm(VerbKey verbKey, Alts.Chooser chooser);
     }
 
     public static class VerbForms implements TensedEntry {
@@ -204,10 +213,11 @@ public class English {
             this.stored = stored;
         }
 
-        public boolean applyRule(VerbKey key, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IFormBuilder applyRule(VerbKey key, Alts.Chooser chooser) {
             Formf base = stored.get(VerbKey.Base);
-            if (base == null || !base.apply(formBuilder, chooser)) {
-                return false;
+            IFormBuilder formBuilder = Forms.applyFormf(base, chooser);
+            if (formBuilder == null) {
+                return null;
             }
             Rulef rule = FormRule.noopRule;
             switch(key) {
@@ -223,20 +233,20 @@ public class English {
                 default:
                     break;
             }
-            return rule.apply(formBuilder, chooser);
+            return Forms.applyRule(rule, formBuilder, chooser);
         }
 
         @Override
-        public boolean getForm(VerbKey key, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IFormBuilder getKeyForm(VerbKey key, Alts.Chooser chooser) {
             Formf formf = stored.get(key);
             if (formf != null) {
-                return formf.apply(formBuilder, chooser);
+                return formf.apply(chooser);
             }
             else if (key.equals(VerbKey.Part)) {
-                return getForm(VerbKey.Past, formBuilder, chooser);
+                return getKeyForm(VerbKey.Past, chooser);
             }
             else {
-                return applyRule(key, formBuilder, chooser);
+                return applyRule(key, chooser);
             }
         }
 
@@ -261,20 +271,20 @@ public class English {
         }
 
         @Override
-        public boolean getTensedForm(PersonNumber personNumber, Time time, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IForm getTensedForm(PersonNumber personNumber, Time time, Alts.Chooser chooser) {
             if (time.isPast()) {
-                return getForm(VerbKey.Past, formBuilder, chooser);
+                return getKeyForm(VerbKey.Past, chooser);
             }
             else if (time.isPresent()) {
                 if (personNumber.equals(PersonNumber.TpSi)) {
-                    return getForm(VerbKey.TpSi, formBuilder, chooser);
+                    return getKeyForm(VerbKey.TpSi, chooser);
                 }
                 else {
-                    return getForm(VerbKey.Base, formBuilder, chooser);
+                    return getKeyForm(VerbKey.Base, chooser);
                 }
             }
             else {
-                return false;
+                return null;
             }
         }
 
@@ -348,12 +358,12 @@ public class English {
         }
 
         @Override
-        public boolean getTensedForm(PersonNumber personNumber, Time time, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IFormBuilder getTensedForm(PersonNumber personNumber, Time time, Alts.Chooser chooser) {
             Formf formf = getTensedFormf(personNumber, time);
-            return formf != null && formf.apply(formBuilder, chooser);
+            return Forms.applyFormf(formf, chooser);
         }
 
-        public Formf getFormf(VerbKey key) {
+        public Formf getKeyFormf(VerbKey key) {
             switch (key) {
                 case Base:
                     return Be;
@@ -369,8 +379,8 @@ public class English {
         }
 
         @Override
-        public boolean getForm(VerbKey key, IFormBuilder builder, Alts.Chooser chooser) {
-            return getFormf(key).apply(builder, chooser);
+        public IFormBuilder getKeyForm(VerbKey key, Alts.Chooser chooser) {
+            return getKeyFormf(key).apply(chooser);
         }
     };
 
@@ -378,42 +388,40 @@ public class English {
 
     public static final Formf Will = Suffix.makeFormf("will", "will");
 
-    public static boolean getVerbGroup(TensedEntry baseVerb,
-                                PersonNumber personNumber, Time time, Completeness completeness, Voice voice,
-                                IFormBuilder formBuilder, Alts.Chooser chooser) {
+    public static List<String> getVerbGroup(TensedEntry baseVerb,
+                                           PersonNumber personNumber, Time time, Completeness completeness, Voice voice,
+                                           Alts.Chooser chooser) {
         VerbKey nextKey = null;
+        List<String> formList = Lists.newArrayList();
         if (time.isFuture()) {
-            Will.apply(formBuilder, chooser);
-            formBuilder.add(' ');
+            Forms.addForm(Will.apply(chooser), formList);
             nextKey = VerbKey.Base;
         }
         if (completeness.isComplete()) {
             if (nextKey == null) {
-                haveForms.getTensedForm(personNumber, time, formBuilder, chooser);
+                Forms.addForm(haveForms.getTensedForm(personNumber, time, chooser), formList);
             }
             else {
-                haveForms.getForm(nextKey, formBuilder, chooser);
+                Forms.addForm(haveForms.getKeyForm(nextKey, chooser), formList);
             }
-            formBuilder.add(' ');
             nextKey = VerbKey.Part;
         }
         if (voice.isPassive()) {
             if (nextKey == null) {
-                beForms.getTensedForm(personNumber, time, formBuilder, chooser);
+                Forms.addForm(beForms.getTensedForm(personNumber, time, chooser), formList);
             }
             else {
-                beForms.getForm(nextKey, formBuilder, chooser);
+                Forms.addForm(beForms.getKeyForm(nextKey, chooser), formList);
             }
-            formBuilder.add(' ');
             nextKey = VerbKey.Part;
         }
-        if (nextKey == null){
-            baseVerb.getTensedForm(personNumber, time, formBuilder, chooser);
+        if (nextKey == null) {
+            Forms.addForm(baseVerb.getTensedForm(personNumber, time, chooser), formList);
         }
         else {
-            baseVerb.getForm(nextKey, formBuilder, chooser);
+            Forms.addForm(baseVerb.getKeyForm(nextKey, chooser), formList);
         }
-        return true;
+        return formList;
     }
 }
 

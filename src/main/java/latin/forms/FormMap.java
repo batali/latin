@@ -6,7 +6,7 @@ import com.google.common.base.Preconditions;
 import java.util.EnumMap;
 import java.util.List;
 
-public class FormMap<KT extends Enum<KT>> extends EnumMap<KT, Formf> implements Form.Stored<KT> {
+public class FormMap<KT extends Enum<KT>> extends EnumMap<KT, Formf> implements StoredForms<KT> {
 
     public FormMap (Class<KT> ktClass) {
         super(ktClass);

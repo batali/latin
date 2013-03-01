@@ -6,9 +6,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import latin.forms.Form;
-import latin.forms.FormMap;
 import latin.forms.FormRule;
 import latin.forms.Formf;
+import latin.forms.Forms;
+import latin.forms.IForm;
 import latin.forms.IFormBuilder;
 import latin.forms.Rulef;
 import latin.forms.Stemf;
@@ -46,9 +47,8 @@ public class Verb {
         public boolean test(IEntry t) {
             return t.getStem(stemName) != null;
         }
-        public boolean apply(IEntry entry, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            Formf formf = entry.getStem(stemName);
-            return formf != null && formf.apply(formBuilder, chooser);
+        public IFormBuilder apply(IEntry entry, Alts.Chooser chooser) {
+            return Forms.applyFormf(entry.getStem(stemName), chooser);
         }
     }
 
@@ -63,11 +63,13 @@ public class Verb {
             return haveAstemAndConj(t);
         }
         public abstract Rulef getMod(Conjugation conjugation);
-        public boolean apply(IEntry entry, IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public IFormBuilder apply(IEntry entry, Alts.Chooser chooser) {
             Formf astemf = entry.getAstem();
-            Conjugation conjugation = (astemf != null) ? entry.getConjugation() : null;
-            Rulef rule = (conjugation != null) ? getMod(conjugation) : null;
-            return (rule != null) && astemf.apply(formBuilder, chooser) && rule.apply(formBuilder, chooser);
+            Conjugation conjugation = entry.getConjugation();
+            if (astemf != null && conjugation != null) {
+                return Forms.applyRule(getMod(conjugation), Forms.applyFormf(astemf, chooser), chooser);
+            }
+            else return null;
         }
     }
 
@@ -80,10 +82,10 @@ public class Verb {
 
     public static class ModStemf implements Stemf<IEntry> {
         public final Stemf<IEntry> prev;
-        public final Rulef mod;
-        public ModStemf(Stemf<IEntry> prev, Rulef mod) {
+        public final Rulef modRule;
+        public ModStemf(Stemf<IEntry> prev, Rulef modRule) {
             this.prev = prev;
-            this.mod = mod;
+            this.modRule = modRule;
         }
         public ModStemf(Stemf<IEntry> prev, String name, String mst) {
             this(prev, FormRule.parseRule(name, "mod", mst));
@@ -92,9 +94,8 @@ public class Verb {
         public boolean test(IEntry e) {
             return prev.test(e);
         }
-        @Override
-        public boolean apply(IEntry e, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return prev.apply(e, formBuilder, chooser) && mod.apply(formBuilder, chooser);
+        public IFormBuilder apply(IEntry e, Alts.Chooser chooser) {
+            return Forms.applyRule(modRule, prev.apply(e, chooser), chooser);
         }
     }
 
@@ -137,7 +138,7 @@ public class Verb {
     }
 
     public static interface InfinitiveSystem extends System {
-        public boolean getForm(IEntry entry, IFormBuilder formBuilder, Alts.Chooser chooser);
+        public IForm getForm(IEntry entry, Alts.Chooser chooser);
     }
 
     public static class InfinitiveFormSystem extends FormSystem implements InfinitiveSystem {
@@ -149,8 +150,8 @@ public class Verb {
         public boolean test(IEntry entry) {
             return stemf.test(entry);
         }
-        public boolean getForm(IEntry entry, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return stemf.apply(entry, formBuilder, chooser);
+        public IForm getForm(IEntry entry, Alts.Chooser chooser) {
+            return stemf.apply(entry, chooser);
         }
     }
 
@@ -184,18 +185,17 @@ public class Verb {
             this.name = name;
         }
         @Override
-        public boolean getForm(IEntry entry, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return formf.apply(formBuilder, chooser);
+        public IFormBuilder apply(IEntry e, Alts.Chooser chooser) {
+            return Forms.applyFormf(formf, chooser);
+        }
+        @Override
+        public IForm getForm(IEntry entry, Alts.Chooser chooser) {
+            return apply(entry, chooser);
         }
 
         @Override
         public boolean test(IEntry e) {
             return true;
-        }
-
-        @Override
-        public boolean apply(IEntry e, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return formf.apply(formBuilder, chooser);
         }
 
         @Override
@@ -243,11 +243,11 @@ public class Verb {
     }
 
     public interface PersonNumberSystem extends System {
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser);
     }
 
     public interface ImperfectEndings {
-        public boolean applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser);
     }
 
     public static abstract class PersonNumberForms extends FormSystem implements PersonNumberSystem {
@@ -258,29 +258,38 @@ public class Verb {
         }
     }
 
-    public static boolean conjugationEndings(Conjugation conjugation,
-                                             PersonNumber personNumber,
-                                             Voice voice,
-                                             Pair<Rulef,Rulef> fpSiPair,
-                                             IFormBuilder formBuilder,
-                                             Alts.Chooser chooser) {
+    public static IFormBuilder conjugationEnding(Conjugation conjugation,
+                                                 PersonNumber personNumber,
+                                                 Voice voice,
+                                                 Pair<Rulef,Rulef> fpSiPair,
+                                                 IFormBuilder formBuilder,
+                                                 Alts.Chooser chooser) {
+        if (formBuilder == null || conjugation == null) {
+            return null;
+        }
         Rulef erule = Conjugation.endingRule(personNumber, voice, fpSiPair);
         Preconditions.checkNotNull(erule);
         if (erule == null) {
-            return false;
+            return null;
         }
         Rulef ipmod = conjugation.ipmod(personNumber, voice);
-        return ((ipmod == null) || ipmod.apply(formBuilder, chooser)) && erule.apply(formBuilder, chooser);
+        if (ipmod != null) {
+            formBuilder = Forms.applyRule(ipmod, formBuilder, chooser);
+        }
+        return Forms.applyRule(erule, formBuilder, chooser);
     }
 
-    public static boolean indPresentForm(IEntry entry, PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-        Formf astemf = entry.getStem("astem");
+    public static IFormBuilder indPresentForm(IEntry entry, PersonNumber personNumber, Voice voice, Alts.Chooser chooser) {
+        Formf astemf = entry.getAstem();
         if (astemf != null) {
             Conjugation conjugation = entry.getConjugation();
-            return (conjugation != null && astemf.apply(formBuilder, chooser) &&
-                    conjugationEndings(conjugation, personNumber, voice, Conjugation.piFpSiPair, formBuilder, chooser));
+            if (conjugation != null) {
+                IFormBuilder formBuilder = Forms.applyFormf(astemf, chooser);
+                return conjugationEnding(conjugation, personNumber, voice, Conjugation.piFpSiPair, formBuilder, chooser);
+            }
         }
-        return false;
+        return null;
+
     }
 
     public static PersonNumberForms IndPreAct = new PersonNumberForms("IndPreAct", Voice.Act) {
@@ -289,8 +298,8 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return indPresentForm(entry, personNumber, voice, formBuilder, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return indPresentForm(entry, personNumber, voice, chooser);
         }
     };
 
@@ -300,8 +309,8 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return indPresentForm(entry, personNumber, voice, formBuilder, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return indPresentForm(entry, personNumber, voice, chooser);
         }
     };
 
@@ -309,8 +318,8 @@ public class Verb {
 
     public static ImperfectEndings indFutEndings1 = new ImperfectEndings() {
         @Override
-        public boolean applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return conjugationEndings(Conjugation.thirdc, personNumber, voice, Conjugation.piFpSiPair, formBuilder, chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
+            return conjugationEnding(Conjugation.thirdc, personNumber, voice, Conjugation.piFpSiPair, formBuilder, chooser);
         }
     };
 
@@ -320,24 +329,26 @@ public class Verb {
 
     public static ImperfectEndings indFutEndings2 = new ImperfectEndings() {
         @Override
-        public boolean applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return conjugationEndings(Conjugation.first, personNumber, voice, IndFut2FpSiPair, formBuilder, chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
+            return conjugationEnding(Conjugation.first, personNumber, voice, IndFut2FpSiPair, formBuilder, chooser);
         }
     };
 
-    public static boolean indFutureForm(IEntry entry, PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
+    public static IFormBuilder indFutureForm(IEntry entry, PersonNumber personNumber, Voice voice, Alts.Chooser chooser) {
         if (entry.getAstem() == null) {
-            return false;
+            return null;
         }
         Conjugation conjugation = entry.getConjugation();
         if (conjugation == null) {
-            return false;
+            return null;
         }
         if (conjugation.hasi()) {
-           return StrongStem.apply(entry, formBuilder, chooser) && indFutEndings2.applyEnding(personNumber, voice, formBuilder, chooser);
+            IFormBuilder formBuilder = Forms.applyStemf(StrongStem, entry, chooser);
+            return indFutEndings2.applyEnding(personNumber, voice, formBuilder, chooser);
         }
         else {
-            return indFutStemf1.apply(entry, formBuilder, chooser) && indFutEndings1.applyEnding(personNumber, voice, formBuilder, chooser);
+            IFormBuilder formBuilder = Forms.applyStemf(indFutStemf1, entry, chooser);
+            return indFutEndings1.applyEnding(personNumber, voice, formBuilder, chooser);
         }
     }
 
@@ -347,8 +358,8 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return indFutureForm(entry, personNumber, voice, formBuilder, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return indFutureForm(entry, personNumber, voice, chooser);
         }
     };
 
@@ -358,15 +369,15 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return indFutureForm(entry, personNumber, voice, formBuilder, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return indFutureForm(entry, personNumber, voice, chooser);
         }
     };
 
     public static ImperfectEndings regEndings = new ImperfectEndings() {
         @Override
-        public boolean applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return conjugationEndings(Conjugation.second, personNumber, voice, Conjugation.regFpSiPair, formBuilder, chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
+            return conjugationEnding(Conjugation.second, personNumber, voice, Conjugation.regFpSiPair, formBuilder, chooser);
         }
     };
 
@@ -379,8 +390,12 @@ public class Verb {
         public boolean test (IEntry t) {
             return stemf.test(t);
         }
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return stemf.apply(entry, formBuilder, chooser) && regEndings.applyEnding(personNumber, voice, formBuilder, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return regEndings.applyEnding(
+                    personNumber,
+                    voice,
+                    Forms.applyStemf(stemf, entry, chooser),
+                    chooser);
         }
     }
 
@@ -540,11 +555,13 @@ public class Verb {
             return setIrregular(new StoredPersonNumberSystem(fs, stored));
         }
 
+        /*
         public EntryBuilder makeStoredForms(PersonNumberForms fs, List<String> sll) {
             FormMap<PersonNumber> formMap = new FormMap<PersonNumber>(PersonNumber.class);
             formMap.putForms(id + "." + fs.getName(), PersonNumber.values(), sll);
             return makeStoredForms(fs, formMap);
         }
+        */
 
     }
 
@@ -556,9 +573,8 @@ public class Verb {
             this.formSystem = personNumberForms;
             this.stored = stored;
         }
-        public boolean apply(IEntry entry, PersonNumber personNumber, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            Formf formf = stored.getStored(personNumber);
-            return formf != null && formf.apply(formBuilder, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return Forms.applyFormf(stored.getStored(personNumber), chooser);
         }
         public boolean test(IEntry entry) {
             return true;

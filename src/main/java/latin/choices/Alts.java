@@ -11,12 +11,16 @@ public abstract class Alts {
     }
 
     public static <T> T chooseElement(List<T> tlist, Chooser chooser) {
+        return chooseElement(tlist, tlist, chooser);
+    }
+
+    public static <T> T chooseElement(List<T> tlist, Object id, Chooser chooser) {
         int s = (tlist == null) ? 0 : tlist.size();
         if (s == 0) {
             return null;
         }
         else {
-            return tlist.get((s == 1) ? 0 : chooser.getAltsIndex(tlist, s));
+            return tlist.get((s == 1) ? 0 : chooser.getAltsIndex(id, s));
         }
     }
 

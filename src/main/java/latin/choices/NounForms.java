@@ -2,16 +2,19 @@
 package latin.choices;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import latin.forms.DocElement;
-import latin.forms.Form;
-import latin.forms.FormBuilder;
 import latin.forms.FormMap;
+import latin.forms.FormRule;
 import latin.forms.Formf;
+import latin.forms.Forms;
+import latin.forms.IForm;
 import latin.forms.IFormBuilder;
-import latin.forms.RuleMapBuilder;
 import latin.forms.Rulef;
 import latin.forms.Stemf;
 import latin.forms.Suffix;
@@ -24,19 +27,42 @@ import java.util.Set;
 
 public class NounForms {
 
-    public static class Erules implements Form.Rules<CaseNumber> {
+    public static class Erule implements Rulef {
+        public final String name;
+        public final ImmutableSet<String> features;
+        public final ImmutableList<FormRule> rules;
+
+        public Erule (String name,
+                      ImmutableSet<String> features,
+                      ImmutableList<FormRule> rules) {
+            this.name = name;
+            this.features = features;
+            this.rules = rules;
+        }
+
+        @Override
+        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+            return Alts.chooseElement(rules, this, chooser).apply(formBuilder, chooser);
+        }
+
+        public String toString() {
+            return name + ":" + rules.toString();
+        }
+    }
+
+    public static class Erules implements Noun.Rules {
 
         public final String name;
-        private final EnumMap<CaseNumber,Rulef> enumMap;
+        private final EnumMap<CaseNumber,Erule> enumMap;
 
         public Erules(String name,
-                      EnumMap<CaseNumber,Rulef> enumMap) {
+                      EnumMap<CaseNumber,Erule> enumMap) {
             this.name = name;
             this.enumMap = enumMap;
         }
 
         @Override
-        public Rulef getRule(CaseNumber key) {
+        public Erule getRule(CaseNumber key) {
             return enumMap.get(key);
         }
 
@@ -45,11 +71,14 @@ public class NounForms {
         }
 
         public String gsiEnding() {
-           Rulef gsiRule = enumMap.get(CaseNumber.GenSi);
+            Erule gsiRule = enumMap.get(CaseNumber.GenSi);
             if (gsiRule != null) {
-                gsiRule = gsiRule.firstRule();
+                FormRule fr = gsiRule.rules.get(0);
+                return fr.endingString();
             }
-            return gsiRule != null ? gsiRule.endingString() : null;
+            else {
+                return null;
+            }
         }
 
         public List<String> makeGstems(List<String> gsistrings) {
@@ -68,33 +97,6 @@ public class NounForms {
 
     private static Map<String, Erules> erulesMap = Maps.newHashMap();
 
-    public static RuleMapBuilder<CaseNumber> makeMapBuilder(String name) {
-        return new RuleMapBuilder<CaseNumber>(CaseNumber.class, name);
-    }
-
-    static class ErulesBuilder {
-        public RuleMapBuilder<CaseNumber> mapBuilder;
-        public ErulesBuilder(String name) {
-            this.mapBuilder = makeMapBuilder(name);
-        }
-        public ErulesBuilder add(String ks, String afs) {
-            mapBuilder.add(ks,afs);
-            return this;
-        }
-        public ErulesBuilder add(Map<CaseNumber,Rulef> rmap) {
-            mapBuilder.add(rmap);
-            return this;
-        }
-        public ErulesBuilder add(String erulesName) {
-            return add(erulesMap.get(erulesName).enumMap);
-        }
-        public Erules makeRules() {
-            Erules erules = new Erules(mapBuilder.name, mapBuilder.enumMap);
-            erulesMap.put(erules.name, erules);
-            return erules;
-        }
-    }
-
     public static Erules getErules(String name, boolean errorp) {
         Erules erules = erulesMap.get(name);
         if (erules == null) {
@@ -109,47 +111,106 @@ public class NounForms {
         return getErules(name, true);
     }
 
-    public static EnumMap<CaseNumber, CaseNumber> renamed =
-            new EnumMap<CaseNumber, CaseNumber>(CaseNumber.class);
-
-    static {
-        renamed.put(CaseNumber.AccSi, CaseNumber.NomSi);
-        renamed.put(CaseNumber.VocSi, CaseNumber.NomSi);
-        renamed.put(CaseNumber.VocPl, CaseNumber.NomPl);
-        renamed.put(CaseNumber.LocSi, CaseNumber.AblSi);
-        renamed.put(CaseNumber.LocPl, CaseNumber.AblPl);
-        renamed.put(CaseNumber.AblPl, CaseNumber.DatPl);
-        renamed.put(CaseNumber.AccPl, CaseNumber.NomPl);
+    public static ImmutableSet<String> splitFeatures(String fs) {
+        return ImmutableSet.copyOf(Splitter.on('.').omitEmptyStrings().split(fs));
     }
 
-    public static <ET> boolean getForm(CaseNumber key,
-                                       Form.Stored<CaseNumber> storedForms,
-                                       Stemf<ET> stemf,
-                                       ET stemEntry,
-                                       Form.Rules<CaseNumber> rules,
-                                       IFormBuilder formBuilder,
-                                       Alts.Chooser chooser) {
-        if (storedForms != null) {
-            Formf storedFormf = storedForms.getStored(key);
-            if (storedFormf != null) {
-                return storedFormf.apply(formBuilder, chooser);
+    public static class ErulesEntriesMap extends EnumMap<CaseNumber, List<Erule>> {
+
+        private String id;
+        public ErulesEntriesMap(String id) {
+            super(CaseNumber.class);
+            this.id = id;
+        }
+
+        public ErulesEntriesMap add(String ks, String es) {
+            CaseNumber key = null;
+            ImmutableSet<String> features = null;
+            int p = ks.indexOf('.');
+            if (p > 0) {
+                key = CaseNumber.valueOf(ks.substring(0,p));
+                features = splitFeatures(ks.substring(p+1,ks.length()));
+            }
+            else {
+                key = CaseNumber.valueOf(ks);
+                features = ImmutableSet.of();
+            }
+            ImmutableList<FormRule> rules =
+                    ImmutableList.copyOf(Suffix.csplitter(es, FormRule.toFormRule));
+            putEntry(key, new Erule(ks, features, rules));
+            return this;
+        }
+
+        public ErulesEntriesMap putEntry(CaseNumber key, Erule erule) {
+            List<Erule> erules = get(key);
+            if (erules == null) {
+                erules = Lists.newArrayList();
+                put(key, erules);
+            }
+            erules.add(erule);
+            return this;
+        }
+
+        public Erule selectRule(CaseNumber key, Set<String> targetSet) {
+            List<Erule> matchers = Lists.newArrayList();
+            for (Erule nrule : get(key)) {
+                Set<String> nset = nrule.features;
+                if (targetSet.containsAll(nset)) {
+                    boolean addp = true;
+                    List<Erule> removed = Lists.newArrayList();
+                    for (Erule mrule : matchers) {
+                        Set<String> mset = mrule.features;
+                        if (mset.containsAll(nset)) {
+                            addp = false;
+                            break;
+                        }
+                        if (nset.containsAll(mset)) {
+                            removed.add(mrule);
+                        }
+                    }
+                    if (addp) {
+                        matchers.removeAll(removed);
+                        matchers.add(nrule);
+                    }
+                }
+            }
+            if (matchers.isEmpty()) {
+                return null;
+            }
+            else {
+                Preconditions.checkState(matchers.size()==1);
+                return matchers.get(0);
             }
         }
-        Rulef ruleFormf = rules.getRule(key);
-        if (ruleFormf != null) {
-            return stemf.apply(stemEntry, formBuilder, chooser) && ruleFormf.apply(formBuilder, chooser);
-        }
-        CaseNumber rkey = renamed.get(key);
-        return rkey != null && getForm(rkey, storedForms, stemf, stemEntry, rules, formBuilder, chooser);
-    }
 
-    public static ErulesBuilder rulesBuilder(String name) {
-        return new ErulesBuilder(name);
+        public EnumMap<CaseNumber,Erule> selectRules(Set<String> tfeatures) {
+            EnumMap<CaseNumber,Erule> rmap = new EnumMap<CaseNumber,Erule>(CaseNumber.class);
+            for (Map.Entry<CaseNumber,List<Erule>> e : entrySet()) {
+                CaseNumber key = e.getKey();
+                Erule rule = selectRule(key, tfeatures);
+                if (rule != null) {
+                    rmap.put(key, rule);
+                }
+            }
+            return rmap;
+        }
+
+        public EnumMap<CaseNumber,Erule> selectRules(String tfs) {
+            return selectRules(splitFeatures(tfs));
+        }
+
+        public ErulesEntriesMap makeRules(String name, String tfs) {
+            Erules erules = new Erules(name, selectRules(tfs));
+            erulesMap.put(erules.name, erules);
+            return this;
+        }
+
     }
 
     static {
 
-        rulesBuilder("First.mf")
+        new ErulesEntriesMap("First")
+                .add("NomSi.a", "a")
                 .add("AccSi", "am")
                 .add("GenSi", "ae")
                 .add("DatSi", "ae")
@@ -158,166 +219,93 @@ public class NounForms {
                 .add("NomPl", "ae")
                 .add("AccPl", "ās")
                 .add("GenPl", "ārum")
-                .add("DatPl", "īs").makeRules();
+                .add("DatPl", "īs")
+                .makeRules("First.mf", "")
+                .makeRules("First.a", "a");
 
-        rulesBuilder("First.a")
-                .add("First.mf")
-                .add("NomSi", "a").makeRules();
-
-        EnumMap<CaseNumber,Rulef> secondShared = makeMapBuilder("Second.shared")
+        new ErulesEntriesMap("Second")
+                .add("NomSi.us", "us")
+                .add("NomSi.um", "um")
+                .add("NomSi.er", "-er")
+                .add("NomSi.r", ":")
+                .add("VocSi.us", "e")
+                .add("VocSi.iu.us", "-ī")
                 .add("GenSi", "ī")
+                .add("GenSi.iu", "ī,-ī")
                 .add("DatSi", "ō")
                 .add("AblSi", "ō")
                 .add("LocSi", "ī")
                 .add("GenPl", "ōrum")
-                .add("DatPl", "īs").enumMap;
+                .add("DatPl", "īs")
+                .add("AccSi.mf", "um")
+                .add("NomPl.mf", "ī")
+                .add("NomPl.n", "a")
+                .add("AccPl.mf", "ōs")
+                .makeRules("Second.mf", "mf")
+                .makeRules("Second.n", "n")
+                .makeRules("Second.us", "mf.us")
+                .makeRules("Second.ius", "mf.iu.us")
+                .makeRules("Second.um", "n.um")
+                .makeRules("Second.ium", "n.iu.um")
+                .makeRules("Second.er", "mf.er")
+                .makeRules("Second.r", "mf.r");
 
-        rulesBuilder("Second.mf")
-                .add(secondShared)
-                .add("AccSi", "um")
-                .add("NomPl", "ī")
-                .add("AccPl", "ōs").makeRules();
-
-        rulesBuilder("Second.n")
-                .add(secondShared)
-                .add("NomPl", "a").makeRules();
-
-        rulesBuilder("Second.us")
-                .add("Second.mf")
-                .add("NomSi", "us")
-                .add("VocSi", "e").makeRules();
-
-        rulesBuilder("Second.um")
-                .add("Second.n")
-                .add("NomSi", "um").makeRules();
-
-        EnumMap<CaseNumber,Rulef> secondiu = makeMapBuilder("Second.iu")
-                .add("GenSi", "ī,-ī").enumMap;
-
-        rulesBuilder("Second.ius")
-                .add("Second.us")
-                .add(secondiu)
-                .add("VocSi", "<").makeRules();
-
-        rulesBuilder("Second.ium")
-                .add("Second.um")
-                .add(secondiu).makeRules();
-
-        rulesBuilder("Second.er")
-                .add("Second.mf")
-                .add("NomSi", "-er").makeRules();
-
-        rulesBuilder("Second.r")
-                .add("Second.mf")
-                .add("NomSi", ":").makeRules();
-
-        EnumMap<CaseNumber,Rulef> thirdShared = makeMapBuilder("Third.shared")
+        new ErulesEntriesMap("Third")
+                .add("NomSi.pap", "--<ns")
+                .add("AccSi.mf", "em")
+                .add("AccSi.mf.pi", "īm")
                 .add("GenSi", "is")
                 .add("DatSi", "ī")
                 .add("AblSi", "e")
+                .add("AblSi.pi", "ī")
+                .add("NomPl.mf", "ēs")
+                .add("NomPl.n", "a")
+                .add("NomPl.n.i", "ia")
+                .add("AccPl.mf", "ēs")
+                .add("AccPl.mf.i", "ēs,īs")
                 .add("GenPl", "um")
-                .add("DatPl", "ibus").enumMap;
+                .add("GenPl.i", "ium")
+                .add("DatPl", "ibus")
+                .makeRules("Third.c.mf", "mf")
+                .makeRules("Third.c.n", "n")
+                .makeRules("Third.i.mf", "mf.i")
+                .makeRules("Third.i.n", "n.i")
+                .makeRules("Third.pi.mf", "mf.i.pi")
+                .makeRules("Third.pi.n", "n.i.pi")
+                .makeRules("Third.adj.mf", "mf.i")
+                .makeRules("Third.adj.n", "n.i");
 
-        rulesBuilder("Third.c.mf")
-                .add(thirdShared)
-                .add("AccSi", "em")
-                .add("NomPl", "ēs")
-                .add("AccPl", "ēs").makeRules();
-
-        rulesBuilder("Third.c.n")
-                .add(thirdShared)
-                .add("NomPl", "a").makeRules();
-
-        EnumMap<CaseNumber,Rulef> thirdiShared = makeMapBuilder("Third.i.shared")
-                .add("GenPl", "ium").enumMap;
-
-        rulesBuilder("Third.i.mf")
-                .add("Third.c.mf")
-                .add(thirdiShared)
-                .add("AccPl", "ēs,īs")
-                .makeRules();
-
-        rulesBuilder("Third.i.n")
-                .add("Third.c.n")
-                .add(thirdiShared)
-                .add("NomPl", "ia").makeRules();
-
-        EnumMap<CaseNumber,Rulef> thirdpiShared = makeMapBuilder("Third.pi.shared")
-                .add(thirdiShared)
-                .add("AblSi", "ī").enumMap;
-
-        rulesBuilder("Third.pi.mf")
-                .add("Third.i.mf")
-                .add(thirdpiShared)
-                .add("AccSi", "īm")
-                .makeRules();
-
-        rulesBuilder("Third.pi.n")
-                .add("Third.i.n")
-                .add(thirdpiShared).makeRules();
-
-        rulesBuilder("Third.adj.mf")
-                .add("Third.pi.mf")
-                .add("AccSi", "em").makeRules();
-
-        rulesBuilder("Third.adj.n")
-                .add("Third.pi.n").makeRules();
-
-        // amāns, amantis
-        EnumMap<CaseNumber,Rulef> thirdpapShared = makeMapBuilder("Third.pap.shared")
-                .add("NomSi", "--<ns").enumMap;
-
-        rulesBuilder("Third.pap.mf")
-                .add("Third.adj.mf")
-                .add(thirdpapShared).makeRules();
-
-        rulesBuilder("Third.pap.n")
-                .add("Third.adj.n")
-                .add(thirdpapShared).makeRules();
-
-        EnumMap<CaseNumber,Rulef> fourthShared = makeMapBuilder("Fourth.shared")
+        new ErulesEntriesMap("Fourth")
+                .add("NomSi.us", "us")
+                .add("NomSi.u", "ū")
                 .add("GenSi", "ūs")
                 .add("AblSi", "ū")
                 .add("GenPl", "uum")
-                .add("DatPl", "ibus").enumMap;
+                .add("DatPl", "ibus")
+                .add("AccSi.mf", "um")
+                .add("DatSi.mf", "uī")
+                .add("NomPl.mf", "ūs")
+                .add("AccPl.mf", "ūs")
+                .add("DatSi.n", "ū")
+                .add("NomPl.n", "ua")
+                .makeRules("Fourth.mf", "mf")
+                .makeRules("Fourth.n", "n")
+                .makeRules("Fourth.us", "mf.us")
+                .makeRules("Fourth.u", "n.u");
 
-        rulesBuilder("Fourth.mf")
-                .add(fourthShared)
-                .add("AccSi", "um")
-                .add("DatSi", "uī")
-                .add("NomPl", "ūs")
-                .add("AccPl", "ūs").makeRules();
-
-        rulesBuilder("Fourth.n")
-                .add(fourthShared)
-                .add("DatSi", "ū")
-                .add("NomPl", "ua").makeRules();
-
-        rulesBuilder("Fourth.us")
-                .add("Fourth.mf")
-                .add("NomSi", "us").makeRules();
-
-        rulesBuilder("Fourth.u")
-                .add("Fourth.n")
-                .add("NomSi", "ū").makeRules();
-
-        EnumMap<CaseNumber,Rulef> fifthShared = makeMapBuilder("Fifth.shared")
+        new ErulesEntriesMap("Fifth")
                 .add("NomSi", "ēs")
                 .add("AccSi", "em")
                 .add("NomPl", "ēs")
                 .add("AblSi", "ē")
                 .add("GenPl", "ērum")
-                .add("DatPl", "ēbus").enumMap;
-
-        rulesBuilder("Fifth.c")
-                .add(fifthShared)
-                .add("GenSi", "eī")
-                .add("DatSi", "eī").makeRules();
-
-        rulesBuilder("Fifth.v")
-                .add(fifthShared)
-                .add("GenSi", "ēī")
-                .add("DatSi", "ēī").makeRules();
+                .add("DatPl", "ēbus")
+                .add("GenSi.c", "eī")
+                .add("DatSi.c", "eī")
+                .add("GenSi.v", "ēī")
+                .add("DatSi.v", "ēī")
+                .makeRules("Fifth.c", "c")
+                .makeRules("Fifth.v", "v");
 
     }
 
@@ -328,9 +316,9 @@ public class NounForms {
         public final String id;
         public final Formf gstemf;
         public final Erules rules;
-        public final Form.Stored<CaseNumber> stored;
+        public final FormMap<CaseNumber> stored;
 
-        public FormEntry(String id, Formf gstemf, Erules rules, Form.Stored<CaseNumber> stored) {
+        public FormEntry(String id, Formf gstemf, Erules rules, FormMap<CaseNumber> stored) {
             this.id = id;
             this.gstemf = gstemf;
             this.rules = rules;
@@ -341,8 +329,12 @@ public class NounForms {
             return gstemf;
         }
 
-        public boolean getForm(CaseNumber key, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return NounForms.getForm(key, stored, Gstem, this, rules, formBuilder, chooser);
+        public IForm getForm(CaseNumber key, Alts.Chooser chooser) {
+            return Noun.getForm(key, stored, Gstem, this, rules, chooser);
+        }
+
+        public String getId() {
+            return id;
         }
 
         public String getSpec() {
@@ -379,7 +371,7 @@ public class NounForms {
             if (rules == null || !rules.haveNomSiRule()) {
                 irregulars.add(CaseNumber.NomSi);
             }
-            Form.Stored<CaseNumber> stored = null;
+            FormMap<CaseNumber> stored = null;
             if (!irregulars.isEmpty()) {
                 FormMap<CaseNumber> formMap = new FormMap<CaseNumber>(CaseNumber.class);
                 for (CaseNumber key : irregulars) {
@@ -473,8 +465,8 @@ public class NounForms {
             return e.getGstem() != null;
         }
         @Override
-        public boolean apply(FormEntry e, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return e.getGstem().apply(formBuilder, chooser);
+        public IFormBuilder apply(FormEntry e, Alts.Chooser chooser) {
+            return Forms.applyFormf(e.getGstem(), chooser);
         }
     };
 
@@ -482,9 +474,9 @@ public class NounForms {
         List<String> formList = Lists.newArrayList();
         CollectAlts collectAlts = new CollectAlts();
         do {
-            FormBuilder formBuilder = new FormBuilder();
-            if (entry.getForm(key, formBuilder, collectAlts)) {
-                formList.add(formBuilder.getForm());
+            Object fs = entry.getForm(key, collectAlts);
+            if (fs != null) {
+                formList.add(fs.toString());
             }
         }
         while(collectAlts.incrementPositions());
