@@ -97,6 +97,8 @@ public class Verb {
     }
 
     public static final StoredStemf Astem = new StoredStemf("astem");
+    public static final StoredStemf Pstem = new StoredStemf("pstem");
+    public static final StoredStemf Jstem = new StoredStemf("jstem");
 
     public static boolean haveAstemAndConj(IEntry t) {
         return t.getAstem() != null && t.getConjugation() != null;
@@ -242,12 +244,20 @@ public class Verb {
         return Pair.of(makeEndingRule(id, pn, Voice.Act, ae), makeEndingRule(id, pn, Voice.Pas, pe));
     }
 
-    public static EnumMap<PersonNumber,Pair<Rulef,Rulef>> pendingsMap
+    public static EnumMap<PersonNumber, Pair<Rulef,Rulef>> pendingsMap
             = new EnumMap<PersonNumber, Pair<Rulef,Rulef>>(PersonNumber.class);
+
+    public static EnumMap<PersonNumber, Rulef> perfEndingsMap =
+            new EnumMap<PersonNumber, Rulef>(PersonNumber.class);
 
     private static void putEndingPair(String ks, String ae, String pe) {
         PersonNumber pn = PersonNumber.valueOf(ks);
         pendingsMap.put(pn, makeEndingPair("pendingsMap", pn, ae, pe));
+    }
+
+    public static void putPerfEnding(String ks, String e) {
+        PersonNumber pn = PersonNumber.valueOf(ks);
+        perfEndingsMap.put(pn, FormRule.makeRule("PerfEndings", pn, Suffix.csplit(e)));
     }
 
     static {
@@ -256,6 +266,13 @@ public class Verb {
         putEndingPair("FpPl", "mus", "mur");
         putEndingPair("SpPl", "tis", "minī");
         putEndingPair("TpPl", "nt",  "ntur");
+
+        putPerfEnding("FpSi", "ī");
+        putPerfEnding("SpSi", "istī");
+        putPerfEnding("TpSi", "it");
+        putPerfEnding("FpPl", "imus");
+        putPerfEnding("SpPl", "istis");
+        putPerfEnding("TpPl", "ērunt");
     }
 
     public static Pair<Rulef,Rulef> piFpSiPair =  makeEndingPair("pi",  PersonNumber.FpSi, "ō", "or");
@@ -400,12 +417,15 @@ public class Verb {
         public boolean test (IEntry t) {
             return stemf.test(t);
         }
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+        public IForm applyEnding(IFormBuilder formBuilder, PersonNumber personNumber, Alts.Chooser chooser) {
             return regEndings.applyEnding(
                     personNumber,
                     verbChoices.voice,
-                    Forms.applyStemf(stemf, entry, chooser),
+                    formBuilder,
                     chooser);
+        }
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+            return applyEnding(Forms.applyStemf(stemf, entry, chooser), personNumber, chooser);
         }
     }
 
@@ -439,6 +459,30 @@ public class Verb {
 
     public static RegularPersonNumberForms SubImpAct = new RegularPersonNumberForms("SubImpAct", subImpStem);
     public static RegularPersonNumberForms SubImpPas = new RegularPersonNumberForms("SubImpPas", subImpStem);
+
+    public static final RegularPersonNumberForms IndPerAct = new RegularPersonNumberForms("IndPerAct", Pstem) {
+        @Override
+        public IForm applyEnding(IFormBuilder formBuilder, PersonNumber personNumber, Alts.Chooser chooser) {
+            return Forms.applyRule(perfEndingsMap.get(personNumber), formBuilder, chooser);
+        }
+    };
+
+    public static final RegularPersonNumberForms SubPerAct =
+            new RegularPersonNumberForms("SubPerAct", new ModStemf(Pstem, "SubPer.stem", "erī"));
+
+    public static final RegularPersonNumberForms IndPluAct =
+            new RegularPersonNumberForms("IndPluAct", new ModStemf(Pstem, "IndPlu.stem", "erā"));
+
+    public static final RegularPersonNumberForms SubPluAct =
+            new RegularPersonNumberForms("SubPluAct", new ModStemf(Pstem, "SubPlu.stem", "issē"));
+
+    public static final RegularPersonNumberForms IndFupAct =
+            new RegularPersonNumberForms("IndFupAct", new ModStemf(Pstem, "IndFup.stem", "eri")) {
+                @Override
+                public IFormBuilder applyEnding(IFormBuilder iFormBuilder, PersonNumber personNumber, Alts.Chooser chooser) {
+                    return conjugationEnding(Conjugation.first, personNumber, Voice.Act, piFpSiPair, iFormBuilder, chooser);
+                }
+            };
 
     public static final List<String> stemNames = Lists.newArrayList("astem", "pstem", "jstem");
 
@@ -521,7 +565,7 @@ public class Verb {
     }
 
     public static class EntryBuilder {
-        public final String id;
+        String id;
         Map<String,Formf> formfMap;
         Conjugation conjugation;
         Map<String,System> irregularSystems;
@@ -535,9 +579,17 @@ public class Verb {
             this.traitsMap = new TraitsMap();
             this.english = null;
         }
+        public EntryBuilder () {
+            this(null);
+        }
 
         public FormsEntry makeEntry() {
             return new FormsEntry(id, formfMap, conjugation, traitsMap, irregularSystems, english);
+        }
+
+        public EntryBuilder setId(String nid) {
+            this.id = Suffix.unaccentString(nid);
+            return this;
         }
 
         public Formf makeFormf(String name, List<String> sl) {
@@ -550,7 +602,28 @@ public class Verb {
         }
 
         public EntryBuilder storeStem(String sn, String ss) {
+            if (id == null && sn == "astem") {
+                setId(sn);
+            }
             return storeFormf(sn, Suffix.csplit(ss));
+        }
+
+        public EntryBuilder storeStems(List<String> sl) {
+            int n = sl.size();
+            if (n > 0) {
+                storeStem("astem", sl.get(0));
+            }
+            if (n > 1) {
+                storeStem("pstem", sl.get(1));
+            }
+            if (n > 2) {
+                storeStem("jstem", sl.get(2));
+            }
+            return this;
+        }
+
+        public EntryBuilder storeStems(String ss) {
+            return storeStems(Suffix.ssplit(ss));
         }
 
         public EntryBuilder setConjugation(Conjugation c) {
@@ -639,15 +712,14 @@ public class Verb {
     public static class StemPersonNumberSystem extends IrregularPersonNumberSystem {
         public final Formf stem;
 
-        public StemPersonNumberSystem(PersonNumberForms formSystem, List<String> sl) {
+        public StemPersonNumberSystem(RegularPersonNumberForms formSystem, List<String> sl) {
             super(formSystem);
             this.stem = Suffix.makeFormf(formSystem.getName(), "stem", sl);
         }
         @Override
         public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return regEndings.applyEnding(personNumber, formSystem.verbChoices.voice, Forms.applyFormf(stem, chooser), chooser);
+            RegularPersonNumberForms regs = (RegularPersonNumberForms) formSystem;
+            return regs.applyEnding(Forms.applyFormf(stem, chooser), personNumber, chooser);
         }
-
     }
-
 }

@@ -7,7 +7,6 @@ import latin.forms.FormBuilder;
 import latin.forms.Forms;
 import latin.forms.IPhrase;
 import latin.forms.Rulef;
-import latin.forms.Suffix;
 import org.junit.Test;
 
 import java.util.List;
@@ -91,29 +90,30 @@ public class ConjugationTest {
 
     public static List<Verb.FormsEntry> verbs = Lists.newArrayList();
 
-    public static Verb.FormsEntry makeVerb(String astem, String cn) {
-        Verb.EntryBuilder b = new Verb.EntryBuilder(Suffix.unaccentString(astem));
+    public static Verb.FormsEntry makeVerb(String stems, String cn) {
+        Verb.EntryBuilder b = new Verb.EntryBuilder();
+        b.storeStems(stems);
         b.setConjugation(cn);
-        b.storeStem("astem", astem);
         return b.makeEntry();
     }
-    public static Verb.FormsEntry makeVerb(String astem, String cn, String es) {
-        Verb.EntryBuilder b = new Verb.EntryBuilder(Suffix.unaccentString(astem));
+    public static Verb.FormsEntry makeVerb(String stems, String cn, String es) {
+        Verb.EntryBuilder b = new Verb.EntryBuilder();
+        b.storeStems(stems);
         b.setConjugation(cn);
-        b.storeStem("astem", astem);
         b.setEnglish(es);
         return b.makeEntry();
     }
 
     static {
-        verbs.add(makeVerb("amā", "first", "love"));
-        verbs.add(makeVerb("tenē", "second", "hold held"));
-        verbs.add(makeVerb("dici", "thirdc", "say says said"));
-        verbs.add(makeVerb("capi", "thirdi", "capture"));
-        verbs.add(makeVerb("audī", "fourth", "hear heard"));
+        verbs.add(makeVerb("amā amāv", "first", "love"));
+        verbs.add(makeVerb("tenē tenu", "second", "hold held"));
+        verbs.add(makeVerb("dici dix", "thirdc", "say says said"));
+        verbs.add(makeVerb("capi cep", "thirdi", "capture"));
+        verbs.add(makeVerb("audī audīv", "fourth", "hear heard"));
 
         Verb.EntryBuilder b = new Verb.EntryBuilder("esse")
                 .setEnglish(English.beForms)
+                .storeStem("pstem", "fu")
                 .makeStoredInfinitive(Verb.ActInf, "esse")
                 .makeStoredForms(Verb.IndPreAct, "sum es est sumus estis sunt")
                 .makeStoredStem(Verb.IndImpAct, "erā")
