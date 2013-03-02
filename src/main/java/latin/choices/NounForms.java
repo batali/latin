@@ -3,8 +3,10 @@ package latin.choices;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -111,8 +113,8 @@ public class NounForms {
         return getErules(name, true);
     }
 
-    public static ImmutableSet<String> splitFeatures(String fs) {
-        return ImmutableSet.copyOf(Splitter.on('.').omitEmptyStrings().split(fs));
+    public static Iterable<String> splitFeatures(String fs) {
+        return Splitter.on('.').omitEmptyStrings().split(fs);
     }
 
     public static class ErulesEntriesMap extends EnumMap<CaseNumber, List<Erule>> {
@@ -129,7 +131,7 @@ public class NounForms {
             int p = ks.indexOf('.');
             if (p > 0) {
                 key = CaseNumber.valueOf(ks.substring(0,p));
-                features = splitFeatures(ks.substring(p+1,ks.length()));
+                features = ImmutableSet.copyOf(splitFeatures(ks.substring(p+1,ks.length())));
             }
             else {
                 key = CaseNumber.valueOf(ks);
@@ -196,7 +198,7 @@ public class NounForms {
         }
 
         public EnumMap<CaseNumber,Erule> selectRules(String tfs) {
-            return selectRules(splitFeatures(tfs));
+            return selectRules(Sets.newHashSet(splitFeatures(tfs)));
         }
 
         public ErulesEntriesMap makeRules(String name, String tfs) {
@@ -207,9 +209,91 @@ public class NounForms {
 
     }
 
+    public static class ErulesEntries {
+
+        private String id;
+        private ListMultimap<CaseNumber,Erule> listMultimap;
+        public ErulesEntries(String id) {
+            this.id = id;
+            this.listMultimap = ArrayListMultimap.create();
+        }
+
+        public ErulesEntries add(String ks, String es) {
+            int p = ks.indexOf('.');
+            CaseNumber key = null;
+            ImmutableSet<String> features = ImmutableSet.of();
+            if (p > 0) {
+                key = CaseNumber.valueOf(ks.substring(0,p));
+                features = ImmutableSet.copyOf(splitFeatures(ks.substring(p + 1, ks.length())));
+            }
+            else {
+                key = CaseNumber.valueOf(ks);
+            }
+            ImmutableList<FormRule> rules =
+                    ImmutableList.copyOf(Suffix.csplitter(es, FormRule.toFormRule));
+            listMultimap.put(key, new Erule(ks, ImmutableSet.copyOf(features), rules));
+            return this;
+        }
+
+        public Erule selectRule(CaseNumber key, Set<String> targetSet) {
+            List<Erule> matchers = Lists.newArrayList();
+            for (Erule nrule : listMultimap.get(key)) {
+                Set<String> nset = nrule.features;
+                if (targetSet.containsAll(nset)) {
+                    boolean addp = true;
+                    List<Erule> removed = Lists.newArrayList();
+                    for (Erule mrule : matchers) {
+                        Set<String> mset = mrule.features;
+                        if (mset.containsAll(nset)) {
+                            addp = false;
+                            break;
+                        }
+                        if (nset.containsAll(mset)) {
+                            removed.add(mrule);
+                        }
+                    }
+                    if (addp) {
+                        matchers.removeAll(removed);
+                        matchers.add(nrule);
+                    }
+                }
+            }
+            if (matchers.isEmpty()) {
+                return null;
+            }
+            else {
+                Preconditions.checkState(matchers.size()==1);
+                return matchers.get(0);
+            }
+        }
+
+        public EnumMap<CaseNumber,Erule> selectRules(Set<String> tfeatures) {
+            EnumMap<CaseNumber,Erule> rmap = new EnumMap<CaseNumber,Erule>(CaseNumber.class);
+            for (CaseNumber key : listMultimap.keys()) {
+                Erule rule = selectRule(key, tfeatures);
+                if (rule != null) {
+                    rmap.put(key, rule);
+                }
+            }
+            return rmap;
+        }
+
+        public EnumMap<CaseNumber,Erule> selectRules(String tfs) {
+            return selectRules(Sets.newHashSet(splitFeatures(tfs)));
+        }
+
+        public ErulesEntries makeRules(String name, String tfs) {
+            Erules erules = new Erules(name, selectRules(tfs));
+            erulesMap.put(erules.name, erules);
+            return this;
+        }
+
+    }
+
+
     static {
 
-        new ErulesEntriesMap("First")
+        new ErulesEntries("First")
                 .add("NomSi.a", "a")
                 .add("AccSi", "am")
                 .add("GenSi", "ae")
@@ -223,7 +307,7 @@ public class NounForms {
                 .makeRules("First.mf", "")
                 .makeRules("First.a", "a");
 
-        new ErulesEntriesMap("Second")
+        new ErulesEntries("Second")
                 .add("NomSi.us", "us")
                 .add("NomSi.um", "um")
                 .add("NomSi.er", "-er")
@@ -250,7 +334,7 @@ public class NounForms {
                 .makeRules("Second.er", "mf.er")
                 .makeRules("Second.r", "mf.r");
 
-        new ErulesEntriesMap("Third")
+        new ErulesEntries("Third")
                 .add("NomSi.pap", "--<ns")
                 .add("AccSi.mf", "em")
                 .add("AccSi.mf.pi", "īm")
@@ -275,7 +359,7 @@ public class NounForms {
                 .makeRules("Third.adj.mf", "mf.i")
                 .makeRules("Third.adj.n", "n.i");
 
-        new ErulesEntriesMap("Fourth")
+        new ErulesEntries("Fourth")
                 .add("NomSi.us", "us")
                 .add("NomSi.u", "ū")
                 .add("GenSi", "ūs")
@@ -293,7 +377,7 @@ public class NounForms {
                 .makeRules("Fourth.us", "mf.us")
                 .makeRules("Fourth.u", "n.u");
 
-        new ErulesEntriesMap("Fifth")
+        new ErulesEntries("Fifth")
                 .add("NomSi", "ēs")
                 .add("AccSi", "em")
                 .add("NomPl", "ēs")

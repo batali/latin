@@ -1,11 +1,12 @@
 
 package latin.forms;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import latin.choices.Alts;
-import latin.choices.Completeness;
+import latin.choices.Aspect;
 import latin.choices.PersonNumber;
 import latin.choices.Time;
 import latin.choices.Voice;
@@ -56,19 +57,15 @@ public class EnglishTest {
         testVerbForms("dry", "dry dries dried dried drying");
     }
 
-    public void showVerbGroups(English.VerbForms fv, PersonNumber pn, Time tm, Completeness cm, Voice v) {
-        List<String> strings = English.getVerbGroup(fv, pn, tm, cm, v, Alts.firstAlt);
-        System.out.println(String.format("%s %s %s %s : %s",
-                tm.toString(),
-                cm.toString(),
-                pn.toString(),
-                v.toString(),
-                strings.toString()));
+
+    public void showVerbGroups(English.VerbForms fv, PersonNumber pn, Time tm, Aspect cm, Voice v) {
+        IPhrase vbp = English.getVerbGroup(fv, pn, tm, cm, v, Alts.firstAlt);
+        System.out.println(Joiner.on('.').join(tm, cm, v, pn) + " : " + Forms.printPhrase(vbp).toString());
     }
 
     public void showVerbGroups(English.VerbForms fv) {
         for (Time tm : Time.values()) {
-            for (Completeness cm : Completeness.values()) {
+            for (Aspect cm : Aspect.values()) {
                 for (Voice v : Voice.values()) {
                     for (PersonNumber pn : PersonNumber.values()) {
                         showVerbGroups(fv, pn, tm, cm, v);

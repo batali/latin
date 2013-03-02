@@ -2,12 +2,8 @@
 package latin.choices;
 
 import latin.forms.FormRule;
-import latin.forms.RuleMapBuilder;
 import latin.forms.Rulef;
 import latin.forms.Suffix;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.EnumMap;
 
 public enum Conjugation {
 
@@ -68,38 +64,6 @@ public enum Conjugation {
         }
     }
 
-    public static Pair<EnumMap<PersonNumber,Rulef>,EnumMap<PersonNumber,Rulef>> pendingsPair =
-            Pair.of(
-                    new RuleMapBuilder<PersonNumber>(PersonNumber.class, "act.pe")
-                            .add("SpSi", "s")
-                            .add("TpSi", "t")
-                            .add("FpPl", "mus")
-                            .add("SpPl", "tis")
-                            .add("TpPl", "nt").enumMap,
-                    new RuleMapBuilder<PersonNumber>(PersonNumber.class, "pas.pe")
-                            .add("SpSi", "ris")
-                            .add("TpSi", "tur")
-                            .add("FpPl", "mur")
-                            .add("SpPl", "minī")
-                            .add("TpPl", "ntur").enumMap);
-
-    public static Pair<Rulef,Rulef> piFpSiPair =
-            Pair.of(FormRule.parseRule("pi.act", PersonNumber.FpSi, "ō"),
-                    FormRule.parseRule("pi.pas", PersonNumber.FpSi, "or"));
-
-    public static Pair<Rulef,Rulef> regFpSiPair =
-            Pair.of(FormRule.parseRule("reg.act", PersonNumber.FpSi, "m"),
-                    FormRule.parseRule("reg.pas", PersonNumber.FpSi, "r"));
-
-    public static Rulef endingRule(PersonNumber personNumber, Voice voice,
-                                   Pair<Rulef,Rulef> fpSiPair) {
-        if (personNumber.equals(PersonNumber.FpSi)) {
-            return voice.select(fpSiPair);
-        }
-        else {
-            return voice.select(pendingsPair).get(personNumber);
-        }
-    }
 
 }
 

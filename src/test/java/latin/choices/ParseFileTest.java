@@ -5,6 +5,7 @@ import junit.framework.Assert;
 import latin.forms.DocElement;
 import latin.forms.FormMap;
 import latin.forms.Formf;
+import latin.forms.Forms;
 import latin.forms.Suffix;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -58,7 +59,7 @@ public class ParseFileTest {
     }
 
     public void parseEntry(String id) throws Exception {
-        DocElement docElement = DocElement.fromFile(new File(wordsDir, id + ".xml"));
+        DocElement docElement = DocElement.fromFile(Forms.wordsFile(id));
         parseEntry(id, docElement);
     }
 

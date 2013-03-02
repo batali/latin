@@ -2,8 +2,12 @@
 package latin.choices;
 
 import com.google.common.collect.Lists;
+import latin.forms.English;
 import latin.forms.FormBuilder;
+import latin.forms.Forms;
+import latin.forms.IPhrase;
 import latin.forms.Rulef;
+import latin.forms.Suffix;
 import org.junit.Test;
 
 import java.util.List;
@@ -21,7 +25,7 @@ public class ConjugationTest {
                 if (r != null) {
                     r.apply(fb, Alts.firstAlt);
                 }
-                Rulef e = Conjugation.endingRule(personNumber, voice, Conjugation.piFpSiPair);
+                Rulef e = Verb.endingRule(personNumber, voice, Verb.piFpSiPair);
                 e.apply(fb, Alts.firstAlt);
                 String fs = fb.getForm();
                 System.out.println(personNumber.toString() + " " + voice.toString() + " " + fs);
@@ -75,28 +79,47 @@ public class ConjugationTest {
     public void showVerbForms(Verb.FormsEntry entry, Verb.PersonNumberSystem personNumberForms) {
         for (PersonNumber personNumber : PersonNumber.values()) {
             List<String> forms = getForms(entry, personNumberForms, personNumber);
-            System.out.println(personNumber.toString() + " " + forms.toString());
+            String es = "";
+            if (personNumberForms.getMood().isIndicative()) {
+                IPhrase iPhrase = English.getVerbGroup(entry.english, personNumberForms.getVerbChoices(), personNumber, Alts.firstAlt);
+                es = Forms.printPhrase(iPhrase).toString();
+            }
+            System.out.println(personNumber.toString() + " " + forms.toString() + " " + es);
         }
     }
 
+
     public static List<Verb.FormsEntry> verbs = Lists.newArrayList();
 
+    public static Verb.FormsEntry makeVerb(String astem, String cn) {
+        Verb.EntryBuilder b = new Verb.EntryBuilder(Suffix.unaccentString(astem));
+        b.setConjugation(cn);
+        b.storeStem("astem", astem);
+        return b.makeEntry();
+    }
+    public static Verb.FormsEntry makeVerb(String astem, String cn, String es) {
+        Verb.EntryBuilder b = new Verb.EntryBuilder(Suffix.unaccentString(astem));
+        b.setConjugation(cn);
+        b.storeStem("astem", astem);
+        b.setEnglish(es);
+        return b.makeEntry();
+    }
+
     static {
-        /*
-        verbs.add(Verb.makeEntry("amā", "first"));
-        verbs.add(Verb.makeEntry("tenē", "second"));
-        verbs.add(Verb.makeEntry("dici", "thirdc"));
-        verbs.add(Verb.makeEntry("capi", "thirdi"));
-        verbs.add(Verb.makeEntry("audī", "fourth"));
-        Verb.FormsEntry esse = new Verb.FormsEntry("esse");
-        esse.setStoredForms(Verb.IndPreAct, "sum es est sumus estis sunt");
-        esse.setIrregularSystem(Verb.ActInf, "esse");
-        esse.setIrregularStem(Verb.IndImpAct, "erā");
-        esse.setStoredForms(Verb.IndFutAct, "erō eris erit erimus eritis erunt");
-        esse.setIrregularStem(Verb.SubPreAct, "sī");
-        esse.setIrregularStem(Verb.SubImpAct, "essē");
-        verbs.add(esse);
-        */
+        verbs.add(makeVerb("amā", "first", "love"));
+        verbs.add(makeVerb("tenē", "second", "hold held"));
+        verbs.add(makeVerb("dici", "thirdc", "say says said"));
+        verbs.add(makeVerb("capi", "thirdi", "capture"));
+        verbs.add(makeVerb("audī", "fourth", "hear heard"));
+
+        Verb.EntryBuilder b = new Verb.EntryBuilder("esse")
+                .setEnglish(English.beForms)
+                .makeStoredInfinitive(Verb.ActInf, "esse")
+                .makeStoredForms(Verb.IndPreAct, "sum es est sumus estis sunt")
+                .makeStoredStem(Verb.IndImpAct, "erā")
+                .makeStoredForms(Verb.IndFutAct, "erō eris erit erimus eritis erunt")
+                .makeStoredStem(Verb.SubPreAct, "sī");
+        verbs.add(b.makeEntry());
     }
 
     @Test
@@ -108,10 +131,9 @@ public class ConjugationTest {
 
     public void showInfinitives(Verb.FormsEntry e) {
         for (Verb.InfinitiveFormSystem fs : Verb.getFormSystems(Verb.InfinitiveFormSystem.class)) {
-            FormBuilder fb = new FormBuilder();
             Verb.InfinitiveSystem ss = (Verb.InfinitiveSystem) e.getSystem(fs);
             if (ss != null) {
-                System.out.println(fs.getName() + " " + fb.getForm());
+                System.out.println(fs.getName() + " " + ss.getForm(e, Alts.firstAlt).toString());
             }
         }
     }

@@ -9,6 +9,10 @@ public class FormBuilder implements IFormBuilder {
         this.stringBuilder = new StringBuilder();
     }
 
+    public FormBuilder(CharSequence cs) {
+        this.stringBuilder = new StringBuilder(cs);
+    }
+
     @Override
     public boolean isEmpty() {
         return length() == 0;
@@ -63,4 +67,18 @@ public class FormBuilder implements IFormBuilder {
         return getForm();
     }
 
+    @Override
+    public boolean spaceBefore() {
+        return true;
+    }
+
+    @Override
+    public boolean spaceAfter() {
+        return true;
+    }
+
+    @Override
+    public String sequenceString(IForm nxt) {
+        return stringBuilder.toString();
+    }
 }

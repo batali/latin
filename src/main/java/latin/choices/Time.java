@@ -3,41 +3,42 @@ package latin.choices;
 
 public enum Time {
 
-    Pas {
-        @Override
-        public boolean isPast() {
-            return true;
-        }
-    },
+    Pas (-1),
+    Pre (0),
+    Fut (1);
 
-    Pre {
-        @Override
-        public boolean isPresent() {
-            return true;
-        }
-    },
+    public final int cmpVal;
 
-    Fut {
-        @Override
-        public boolean isFuture() {
-            return true;
-        }
-    };
+    Time (int cmpVal) {
+        this.cmpVal = cmpVal;
+    }
 
     public boolean isPast() {
-        return false;
+        return cmpVal < 0;
     }
 
     public boolean isPresent() {
-        return false;
+        return cmpVal == 0;
     }
 
     public boolean isFuture() {
-        return false;
+        return cmpVal > 0;
     }
 
     public static Time fromString(String ks) {
         return EkeyHelper.ekeyFromString(Time.class, ks);
+    }
+
+    public static Time fromCmpVal(int cmpval) {
+        if (cmpval < 0) {
+            return Pas;
+        }
+        else if (cmpval == 0) {
+            return Pre;
+        }
+        else {
+            return Fut;
+        }
     }
 
 }

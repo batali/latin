@@ -273,7 +273,7 @@ public abstract class FormRule implements Rulef {
         }
     };
 
-    static class AltsRule extends AbstractList<FormRule> implements Rulef {
+    public static class AltsRule extends AbstractList<FormRule> implements Rulef {
 
         public final String id;
         public final ImmutableList<FormRule> alts;

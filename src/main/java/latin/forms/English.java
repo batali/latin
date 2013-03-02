@@ -2,11 +2,11 @@
 package latin.forms;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import latin.choices.Alts;
-import latin.choices.Completeness;
+import latin.choices.Aspect;
 import latin.choices.PersonNumber;
 import latin.choices.Time;
+import latin.choices.VerbChoices;
 import latin.choices.Voice;
 
 import java.util.EnumMap;
@@ -325,7 +325,7 @@ public class English {
         return builder.make();
     }
 
-    public static TensedEntry beForms = new VerbForms(new EnumMap<VerbKey, Formf>(VerbKey.class)) {
+    public static VerbForms beForms = new VerbForms(new EnumMap<VerbKey, Formf>(VerbKey.class)) {
 
         public final Formf Was = Suffix.makeFormf("be", "was", "was");
         public final Formf Were = Suffix.makeFormf("be", "were", "were");
@@ -388,41 +388,60 @@ public class English {
 
     public static final Formf Will = Suffix.makeFormf("will", "will");
 
-    public static List<String> getVerbGroup(TensedEntry baseVerb,
-                                           PersonNumber personNumber, Time time, Completeness completeness, Voice voice,
-                                           Alts.Chooser chooser) {
+    public static ListPhrase getVerbGroup(TensedEntry baseVerb,
+                                          PersonNumber personNumber, Time time, Aspect aspect, Voice voice,
+                                          Alts.Chooser chooser) {
         VerbKey nextKey = null;
-        List<String> formList = Lists.newArrayList();
+        ListPhrase iForms = new ListPhrase();
         if (time.isFuture()) {
-            Forms.addForm(Will.apply(chooser), formList);
+            iForms.add(Will.apply(chooser));
             nextKey = VerbKey.Base;
         }
-        if (completeness.isComplete()) {
+        if (aspect.isComplete()) {
             if (nextKey == null) {
-                Forms.addForm(haveForms.getTensedForm(personNumber, time, chooser), formList);
+                iForms.add(haveForms.getTensedForm(personNumber, time, chooser));
             }
             else {
-                Forms.addForm(haveForms.getKeyForm(nextKey, chooser), formList);
+                iForms.add(haveForms.getKeyForm(nextKey, chooser));
             }
             nextKey = VerbKey.Part;
         }
         if (voice.isPassive()) {
             if (nextKey == null) {
-                Forms.addForm(beForms.getTensedForm(personNumber, time, chooser), formList);
+                iForms.add(beForms.getTensedForm(personNumber, time, chooser));
             }
             else {
-                Forms.addForm(beForms.getKeyForm(nextKey, chooser), formList);
+                iForms.add(beForms.getKeyForm(nextKey, chooser));
             }
             nextKey = VerbKey.Part;
         }
         if (nextKey == null) {
-            Forms.addForm(baseVerb.getTensedForm(personNumber, time, chooser), formList);
+            iForms.add(baseVerb.getTensedForm(personNumber, time, chooser));
         }
         else {
-            Forms.addForm(baseVerb.getKeyForm(nextKey, chooser), formList);
+            iForms.add(baseVerb.getKeyForm(nextKey, chooser));
         }
-        return formList;
+        return iForms;
     }
+
+    public static ListPhrase getVerbGroup(TensedEntry baseVerb,
+                                          VerbChoices verbChoices,
+                                          PersonNumber personNumber,
+                                          Alts.Chooser chooser) {
+        return getVerbGroup(baseVerb, personNumber, verbChoices.time, verbChoices.aspect, verbChoices.voice, chooser);
+    }
+
+    public static final Forms.StringIForm A = new Forms.StringIForm("a") {
+        @Override
+        public String sequenceString(IForm next) {
+            if (next != null && Suffix.startMatches(next, "V")) {
+                return "an";
+            }
+            else {
+                return "a";
+            }
+        }
+    };
 }
 
 
