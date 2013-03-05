@@ -11,7 +11,6 @@ import latin.slots.PropExpression;
 import latin.slots.PropParser;
 import latin.slots.SettingHandler;
 import latin.slots.SettingSpecException;
-import latin.slots.SettingTraits;
 import latin.slots.SimpleSetting;
 import latin.slots.SlotSettingSpec;
 import latin.slots.StringParser;
@@ -124,6 +123,11 @@ public class SlotMap implements UseSettingSpecHandler<ISlot>, GetSlotHandler, Pa
     @Override
     public Setter onValue(String pathString, String choiceName, int index, boolean sv) throws SettingSpecException {
         return getValueSlot(pathString).getSetter(choiceName, index, sv);
+    }
+
+    @Override
+    public Setter onValue(String pathString, String choiceName, boolean sv) throws SettingSpecException {
+        return getValueSlot(pathString).getSetter(choiceName, sv);
     }
 
     public Setter getSetter(ISetting iSetting) throws SettingSpecException {
@@ -274,12 +278,6 @@ public class SlotMap implements UseSettingSpecHandler<ISlot>, GetSlotHandler, Pa
         ca[1] = ts;
     }
 
-    public void useSlots(UseSlotHandler<?> useSlotHandler) throws SettingSpecException {
-        for (ISlot iSlot : slotMap.values()) {
-            SettingTraits traits = iSlot.getSlotSettingSpec().getTraits();
-            traits.useSlot(useSlotHandler, iSlot);
-        }
-    }
 
     public Setter addBaseSupport(Setter setter) throws ContradictionException {
         Preconditions.checkState(setter.getStatus() == 0);
@@ -287,14 +285,17 @@ public class SlotMap implements UseSettingSpecHandler<ISlot>, GetSlotHandler, Pa
         baseSupporterMap.put(setter, baseSupporter);
         propagator.recordSupported(setter, baseSupporter);
         propagator.propagateLoop();
+        propagator.clear();
         return setter;
     }
 
     public void removeBaseSupport(Setter setter) throws ContradictionException  {
         BaseSupporter baseSupporter = baseSupporterMap.remove(setter);
+        Preconditions.checkNotNull(baseSupporter);
         if (baseSupporter != null) {
-            baseSupporter.retract(propagator);
+            baseSupporter.retractAll(propagator);
             propagator.retractLoop();
+            propagator.clear();
         }
     }
 
@@ -309,7 +310,7 @@ public class SlotMap implements UseSettingSpecHandler<ISlot>, GetSlotHandler, Pa
     public void removeAllBaseSupport() throws ContradictionException {
         for (BaseSupporter baseSupporter : baseSupporterMap.values()) {
             if (baseSupporter.hasSupported()) {
-                baseSupporter.retract(propagator);
+                baseSupporter.retractAll(propagator);
                 propagator.retractLoop();
             }
         }

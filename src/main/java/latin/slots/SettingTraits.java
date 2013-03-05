@@ -3,7 +3,6 @@ package latin.slots;
 
 import com.google.common.base.Preconditions;
 import latin.setter.ISlot;
-import latin.setter.UseSlotHandler;
 
 import java.util.List;
 
@@ -17,7 +16,7 @@ public abstract class SettingTraits {
     }
 
     public int compareChoices(ISetting s1, ISetting s2) {
-        return 0;
+        return s1.getChoiceName().compareTo(s2.getChoiceName());
     }
 
     public int compareProps(ISetting s1, ISetting s2) {
@@ -55,10 +54,6 @@ public abstract class SettingTraits {
     public abstract <T> T getValueSetting(PathHandler<T> pathHandler, String pathString, String choiceName, boolean sv, List<String> choiceNames)
         throws SettingSpecException;
 
-    public static SlotSettingSpec getBooleanSettingSpec() {
-        return BooleanSettingTraits.booleanSpec;
-    }
-
     public static SlotSettingSpec getValueSettingSpec(List<String> choiceNames) {
         int s = choiceNames.size();
         Preconditions.checkState(s >= 2);
@@ -78,8 +73,5 @@ public abstract class SettingTraits {
         }
         return cls.cast(slot);
     }
-
-    public abstract <T> T useSlot(UseSlotHandler<T> handler, ISlot iSlot) throws SettingSpecException;
-
 }
 

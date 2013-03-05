@@ -1,40 +1,39 @@
 
 package latin.slots;
 
-import latin.setter.SlotMap;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class SettingListTest {
 
-    public static SlotSpecMap slotSpecMap;
-    public static SettingHandler<ISetting> settingHandler;
+    public SlotSpecMap slotSpecMap;
+    public SettingHandler<ISetting> settingHandler;
 
-    @BeforeClass
-    public static void setup() {
+    @Before
+    public void setUp() {
         slotSpecMap = new SlotSpecMap();
         settingHandler = slotSpecMap.getSettingHandler(ISetting.class, SimpleSetting.pathHandler);
+        slotSpecMap.putValueSpec("h", "ho", "ha");
+        slotSpecMap.putValueSpec("a", "1", "2", "3", "4");
+        slotSpecMap.putValueSpec("b", "t", "u", "v");
         slotSpecMap.putBooleanSpec("p");
         slotSpecMap.putBooleanSpec("q");
         slotSpecMap.putBooleanSpec("r");
         slotSpecMap.putBooleanSpec("s");
         slotSpecMap.putBooleanSpec("t");
         slotSpecMap.putBooleanSpec("z");
-        slotSpecMap.putValueSpec("a", "2", "3", "4");
-        slotSpecMap.putValueSpec("b", "v", "w", "x");
-        slotSpecMap.putValueSpec("h", "ho", "ha");
     }
 
-    public static List<ISetting> parseSettingList(String sls) throws Exception {
+    public List<ISetting> parseSettingList(String sls) throws Exception {
         StringParser stringParser = new StringParser(sls);
         List<ISetting> settings = PropParser.parseSettingList(stringParser, settingHandler);
         return SettingList.sortSettingList(settings);
     }
 
-    public static ISetting parseSetting(String ss) throws Exception {
+    public ISetting parseSetting(String ss) throws Exception {
         StringParser stringParser = new StringParser(ss);
         return PropParser.parseSetting(stringParser, settingHandler);
     }
@@ -93,13 +92,5 @@ public class SettingListTest {
         Assert.assertFalse(SettingList.isSubset(parseSettingList("t z"), sl1));
     }
 
-    @Test
-    public void testPoop() throws Exception {
-        List<ISetting> sl1 = parseSettingList("p q !r");
-        PrintingHandler<SettingPoop> poopPrintingHandler = new PrintingHandler<SettingPoop>(SettingPoop.poopPathHandler);
-        for (ISetting iSetting : sl1) {
-            iSetting.getTraits().applyOn(poopPrintingHandler, iSetting);
-        }
-    }
 
 }

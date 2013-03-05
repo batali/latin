@@ -36,8 +36,7 @@ public class BaseSupporter implements Supporter {
         }
     }
 
-    @Override
-    public void retract(Propagator propagator) {
+    public void retractAll(Propagator propagator) {
         retractSet(supported, this, propagator);
     }
 

@@ -2,12 +2,14 @@
 package latin.forms;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import latin.choices.Alts;
 import latin.choices.Aspect;
 import latin.choices.PersonNumber;
 import latin.choices.Time;
 import latin.choices.VerbChoices;
 import latin.choices.Voice;
+import latin.choices.Number;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -92,12 +94,6 @@ public class English {
         Poss;
     }
 
-    public static enum TenseKey {
-        Base,
-        TpSi,
-        Past;
-    }
-
     public static enum VerbKey {
         Base,
         TpSi,
@@ -106,12 +102,25 @@ public class English {
         Prog;
     }
 
-    public static EnumMap<NounKey,Rulef> defaultNounRules = new RuleMapBuilder<NounKey>(NounKey.class, "default")
-            .add(NounKey.Sing, FormRule.noopRule)
-            .add(NounKey.Plur, S)
-            .add(NounKey.Poss, POSS)
-            .enumMap;
-
+    public static class CountNoun {
+        public final ImmutableList<Formf> formfList;
+        public CountNoun(ImmutableList<Formf> formfList) {
+            Preconditions.checkArgument(!formfList.isEmpty());
+            this.formfList = formfList;
+        }
+        public IForm getForm(Number number, Alts.Chooser chooser) {
+            if (number.isSingular()) {
+                return Forms.applyFormf(formfList.get(0), chooser);
+            }
+            else if (formfList.size() >= 2) {
+                return Forms.applyFormf(formfList.get(1), chooser);
+            }
+            else {
+                IFormBuilder formBuilder = Forms.applyFormf(formfList.get(0), chooser);
+                return Forms.applyRule(pluralRule(formBuilder), formBuilder, chooser);
+            }
+        }
+    }
 
     public static class NounForms {
 

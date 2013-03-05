@@ -133,7 +133,7 @@ public class PropParser {
         return parseProp(stringParser, false);
     }
 
-    public static ISetting parseSetting(StringParser stringParser, SettingHandler<ISetting> settingHandler) throws SettingSpecException {
+    public static ISetting parseSetting(StringParser stringParser, SettingHandler<? extends ISetting> settingHandler) throws SettingSpecException {
         if (stringParser.ignoreSpaces().atEnd(false)) {
             return null;
         }
@@ -158,7 +158,7 @@ public class PropParser {
         return settingHandler.getValueSetting(pathSpec, choiceName, sv);
     }
 
-    public static List<ISetting> parseSettingList(StringParser stringParser, SettingHandler<ISetting> settingHandler) throws SettingSpecException {
+    public static List<ISetting> parseSettingList(StringParser stringParser, SettingHandler<? extends ISetting> settingHandler) throws SettingSpecException {
         List<ISetting> sl = Lists.newArrayList();
         while(true) {
             ISetting setting = parseSetting(stringParser, settingHandler);

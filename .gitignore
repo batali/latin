@@ -1,6 +1,7 @@
 *.class
 target
 log
+notes
 *.iml
 *.ipr
 *.iws

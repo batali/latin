@@ -23,4 +23,8 @@ public class ValueExpression extends AtomicExpression {
         return bettingHandler.getValueSetting(pathString, choiceName, sv);
     }
 
+    public <T> T getSetting(boolean sv, SettingHandler<T> settingHandler) throws SettingSpecException {
+        return settingHandler.getValueSetting(pathString, choiceName, sv);
+    }
+
 }

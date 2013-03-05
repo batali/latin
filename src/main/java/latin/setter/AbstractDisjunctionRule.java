@@ -44,7 +44,6 @@ public abstract class AbstractDisjunctionRule implements SupportRule {
         if (trueCount == 0) {
             List<? extends Setter> setters = getSetters();
             if (falseCount == setters.size()) {
-                System.out.println("contra here");
                 propagator.recordContradiction(this);
             }
             else if (falseCount + 1 == setters.size()) {
@@ -56,18 +55,6 @@ public abstract class AbstractDisjunctionRule implements SupportRule {
                 }
             }
         }
-    }
-
-    @Override
-    public void recordSupported(Setter setter, boolean tv, Propagator propagator) throws ContradictionException {
-        addCount(tv, 1);
-        deduce(propagator);
-    }
-
-    @Override
-    public void recordRetracted(Setter setter, boolean tv, Propagator propagator) {
-        addCount(tv, -1);
-        retract(propagator);
     }
 
     public boolean checkCounts() {

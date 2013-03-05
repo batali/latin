@@ -66,14 +66,14 @@ public class Propagator {
     public void recordContradiction(SupportRule atRule) throws ContradictionException {
         oContradictionRule = Optional.of(atRule);
         contradictionSupportCollector.recordSupporter(atRule);
-        throw new ContradictionException();
+        throw new ContradictionException("rule");
     }
 
     public void recordContradiction(SupportRule atRule, Setter s1, Setter s2) throws ContradictionException {
         oContradictionRule = Optional.of(atRule);
         contradictionSupportCollector.recordSupported(s1);
         contradictionSupportCollector.recordSupported(s2);
-        throw new ContradictionException();
+        throw new ContradictionException("values");
     }
 
     public void recordSupported(Setter setter, Supporter supporter) {
@@ -128,16 +128,24 @@ public class Propagator {
     public void retractFromContradiction() {
         if (wasContradiction()) {
             int bpc = beforePropagateCount;
-            Setter csetter = deducedQueue.poll();
-            Preconditions.checkNotNull(csetter);
-            removeUnannounced(csetter);
+            System.out.println("bpc " + bpc);
+            Setter bcsetter = deducedQueue.poll();
+            Preconditions.checkNotNull(bcsetter);
+            System.out.println("bcs " + bcsetter.toString());
+            removeUnannounced(bcsetter);
+            Preconditions.checkState(!bcsetter.haveSupporter());
             SupportRule crule = getContradictionRule();
-            csetter.announceRetracted(this, crule);
+            bcsetter.announceRetracted(this, crule);
+            Setter csetter = null;
             while ((csetter = deducedQueue.poll()) != null) {
-                if (deducedQueue.size() > bpc) {
+                if (deducedQueue.size() >= bpc) {
                     removeUnannounced(csetter);
                 }
                 else {
+                    System.out.println("dqs " + deducedQueue.size());
+                    if (csetter.haveSupporter()) {
+                        System.out.println("cs " + csetter.toString());
+                    }
                     Preconditions.checkState(!csetter.haveSupporter());
                 }
             }

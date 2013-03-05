@@ -15,18 +15,13 @@ public class ValueSettingTraits extends SettingTraits {
     }
 
     @Override
-    public int compareChoices(ISetting s1, ISetting s2) {
-        return s1.getIndex() - s2.getIndex();
-    }
-
-    @Override
     public String settingString(ISetting s) {
         return valueSettingString(s.getPathString(), s.getChoiceName(), s.getValue());
     }
 
     @Override
     public <T> T applyOn(PathHandler<T> pathHandler, ISetting s) throws SettingSpecException {
-        return pathHandler.onValue(s.getPathString(), s.getChoiceName(), s.getIndex(), s.getValue());
+        return pathHandler.onValue(s.getPathString(), s.getChoiceName(), s.getValue());
     }
 
     @Override

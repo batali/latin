@@ -1,29 +1,20 @@
 
 package latin.setter;
 
-import latin.slots.ISetting;
-import latin.slots.NormalForm;
-import latin.slots.SettingHandler;
-import latin.slots.SimpleSetting;
 import latin.slots.SlotSpecMap;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Set;
 
 public class PropagateTest {
 
-    public static SlotSpecMap slotSpecMap;
-    public static SettingHandler<ISetting> settingHandler;
-
     public SlotMap slotMap;
 
-    @BeforeClass
-    public static void setupClass() throws Exception {
-        slotSpecMap = new SlotSpecMap();
-        settingHandler = NormalForm.getSettingHandler(slotSpecMap, SimpleSetting.pathHandler);
+    @Before
+    public void makeSlotMap() throws Exception {
+        SlotSpecMap slotSpecMap = new SlotSpecMap();
         slotSpecMap.putBooleanSpec("p");
         slotSpecMap.putBooleanSpec("q");
         slotSpecMap.putBooleanSpec("r");
@@ -35,10 +26,6 @@ public class PropagateTest {
         slotSpecMap.putValueSpec("b", "v", "w", "x");
         slotSpecMap.putValueSpec("c", "0", "1");
         slotSpecMap.putValueSpec("d", "i", "o", "u");
-    }
-
-    @Before
-    public void makeSlotMap() throws Exception {
         slotMap = new SlotMap();
         slotSpecMap.useSlotSpecs(slotMap);
     }
@@ -102,6 +89,45 @@ public class PropagateTest {
     }
 
     @Test
+    public void testSimpleContradiction() throws Exception {
+        slotMap.addRules("t | u");
+        slotMap.addRules("p -> !t");
+        slotMap.addRules("p -> !u");
+        Setter ts = slotMap.getSetter("t");
+        Setter us = slotMap.getSetter("u");
+        Setter ps = slotMap.getSetter("p");
+        Assert.assertEquals(0, ts.getStatus());
+        Assert.assertEquals(0, us.getStatus());
+        Assert.assertEquals(0, ps.getStatus());
+        try {
+            slotMap.addBaseSupport(ps);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            System.out.println("Simple Contra " + ce.getMessage());
+        }
+        slotMap.getPropagator().retractFromContradiction();
+        Assert.assertTrue(slotMap.checkCounts(false));
+    }
+
+    @Test
+    public void testSetValueContradiction() throws Exception {
+        slotMap.addRules("p -> d=i");
+        slotMap.addRules("p -> d=o");
+        Setter ps = slotMap.getSetter("p");
+        Assert.assertEquals(0, ps.getStatus());
+        try {
+            slotMap.addBaseSupport(ps);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            System.out.println("SetValueContra " + ce.getMessage());
+        }
+        slotMap.getPropagator().retractFromContradiction();
+        Assert.assertTrue(slotMap.checkCounts(false));
+    }
+
+    @Test
     public void testContradiction() throws Exception {
         slotMap.addRules("t | u | v");
         slotMap.addRules("u | !v");
@@ -116,7 +142,7 @@ public class PropagateTest {
             Assert.fail();
         }
         catch(ContradictionException ce) {
-            System.out.println("contra");
+            System.out.println("contra " + ce.getMessage());
         }
         slotMap.checkCounts(true);
         Propagator propagator = slotMap.getPropagator();
@@ -154,6 +180,7 @@ public class PropagateTest {
         slotMap.addRules("a!=1 -> p");
         slotMap.addRules("a!=2 -> !p");
 
+        /*
         slotMap.addSupport("!r");
         slotMap.addSupport("d=i");
         slotMap.showSlots();
@@ -166,12 +193,13 @@ public class PropagateTest {
         slotMap.showSlots();
         slotMap.getTotalSupportedCount(ca);
         System.out.println("va mtk " + ca[0] + " ts " + ca[1]);
+        */
         try {
             slotMap.addSupport("a=3");
             Assert.fail();
         }
         catch(ContradictionException ce) {
-            System.out.println("contra");
+            System.out.println("testValueContradiction " + ce.getMessage());
         }
         Propagator propagator = slotMap.getPropagator();
         Set<Setter> baseSetters = propagator.contradictionSupportCollector.getBaseSetters();

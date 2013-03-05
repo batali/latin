@@ -21,22 +21,6 @@ public class ValueSlot extends AbstractSlot {
         return this;
     }
 
-    public int supportMode() {
-        if (supported.isEmpty()) {
-            return 0;
-        }
-        else {
-            Setter s1 = supported.iterator().next();
-            if (s1.getValue()) {
-                Preconditions.checkState(supported.size() == 1);
-                return 1;
-            }
-            else {
-                return -1;
-            }
-        }
-    }
-
     public abstract class ValueSlotSetter extends Setter {
 
         public abstract ValueSlotSetter getTrueSetter();
@@ -59,6 +43,8 @@ public class ValueSlot extends AbstractSlot {
                 super.announceRetracted(propagator, stopAfter);
             }
         }
+
+        public abstract int getIndex();
     }
 
     public class FalseValueSlotSetter extends ValueSlotSetter {
@@ -194,44 +180,47 @@ public class ValueSlot extends AbstractSlot {
         }
 
         @Override
-        public void retract(Propagator propagator) {
-            int sm = supportMode();
-            if (sm > 0 && falseCount + 1 < setters.size()) {
-                BaseSupporter.retractSet(supported, this, propagator);
-            }
-            else if (sm == 0 && disjunctionReDeduceTest()) {
-                propagator.addRededucer(this);
-            }
-            else if (sm < 0) {
-                if (trueCount == 0) {
-                    BaseSupporter.retractSet(supported, this, propagator);
-                }
-                else {
-                    propagator.addRededucer(this);
-                }
-            }
-        }
-
-        @Override
         public void recordSupported(Setter setter, boolean tv, Propagator propagator) throws ContradictionException {
+            addCount(tv, 1);
             if (tv) {
                 if (oValueSetter.isPresent()) {
-                    System.out.println("contra thre");
                     propagator.recordContradiction(this, oValueSetter.get(), setter);
                 }
                 else {
                     oValueSetter = Optional.of(setter);
                 }
             }
-            super.recordSupported(setter, tv, propagator);
+            deduce(propagator);
+//            super.recordSupported(setter, tv, propagator);
+        }
+
+        public boolean amSupportingValue() {
+            Setter s = oValueSetter.orNull();
+            return s != null && supported.contains(s);
         }
 
         @Override
         public void recordRetracted(Setter setter, boolean tv, Propagator propagator) {
-            if (tv && Objects.equal(oValueSetter.orNull(), setter)) {
-                oValueSetter = Optional.absent();
+            addCount(tv, -1);
+            if (tv) {
+                if (Objects.equal(oValueSetter.orNull(), setter)) {
+                    oValueSetter = Optional.absent();
+                }
+                if (supported.isEmpty()) {
+                    propagator.addRededucer(this);
+                }
+                else {
+                    BaseSupporter.retractSet(supported, this, propagator);
+                }
             }
-            super.recordRetracted(setter, tv, propagator);
+            else {
+                if (!supported.isEmpty()) {
+                    BaseSupporter.retractSet(supported, this, propagator);
+                }
+                else if (oValueSetter.isPresent()) {
+                    propagator.addRededucer(this);
+                }
+            }
         }
 
         public String toString () {

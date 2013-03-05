@@ -18,6 +18,8 @@ public abstract class AtomicExpression implements PropExpression {
 
     public abstract <T> T applyOn(boolean sv, SettingHandler<T> bettingHandler) throws SettingSpecException;
 
+    public abstract<T> T getSetting(boolean sv, SettingHandler<T> settingHandler) throws SettingSpecException;
+
     @Override
     public List<List<ISetting>> getCnf(boolean sv, SettingHandler<ISetting> settingHandler) throws SettingSpecException {
         return NormalForm.singletonCnf(applyOn(sv, settingHandler));

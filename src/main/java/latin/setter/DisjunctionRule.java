@@ -45,12 +45,23 @@ public class DisjunctionRule extends AbstractDisjunctionRule {
     }
 
     @Override
-    public void retract(Propagator propagator) {
-        if (supported != null) {
-            propagator.recordRetracted(supported, this);
+    public void recordSupported(Setter setter, boolean tv, Propagator propagator) throws ContradictionException {
+        addCount(tv, 1);
+        deduce(propagator);
+    }
+
+    @Override
+    public void recordRetracted(Setter setter, boolean tv, Propagator propagator) {
+        addCount(tv, -1);
+        if (tv) {
+            if (supported == null && disjunctionReDeduceTest()) {
+                propagator.addRededucer(this);
+            }
         }
-        else if (disjunctionReDeduceTest()) {
-            propagator.addRededucer(this);
+        else {
+            if (supported != null) {
+                propagator.recordRetracted(supported, this);
+            }
         }
     }
 
