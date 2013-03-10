@@ -23,6 +23,10 @@ public abstract class BooleanSetting implements Supported {
         return supporter;
     }
 
+    public boolean haveSupporter() {
+        return supporter != null;
+    }
+
     public abstract boolean booleanValue();
 
     public BooleanSetting getTrueSetting() {
@@ -44,6 +48,21 @@ public abstract class BooleanSetting implements Supported {
 
     public boolean supportable() {
         return getStatus() >= 0;
+    }
+
+    public void supportedBlockers(Set<Supported> sblockers) {
+        if (supporter == null) {
+            BooleanSetting op = getOpposite();
+            if (op.haveSupporter()) {
+                sblockers.add(op);
+            }
+        }
+    }
+
+    public void handleSupport(SupportHandler handler) {
+        if (supporter != null && handler.handleSupport(supporter, this)) {
+            supporter.handleSupport(handler);
+        }
     }
 
     @Override

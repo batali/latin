@@ -63,6 +63,14 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         return setProp;
     }
 
+    public int setterCount() {
+        return valueProps.size();
+    }
+
+    public ValueProp getIndexSetter(int i) {
+        return valueProps.get(i);
+    }
+
     public abstract class ValuePropSetting extends BooleanSetting {
         public ValuePropSetting() {
             super();
@@ -118,6 +126,18 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
 
         public boolean booleanValue() {
             return true;
+        }
+
+        public void supportedBlockers(Set<Supported> sblockers) {
+            if (!haveSupporter()) {
+                BooleanSetting op = getOpposite();
+                if (op.haveSupporter() && !supportedSet.contains(op)) {
+                    sblockers.add(op);
+                }
+                if (setProp != null && !Objects.equal(setProp, this) && setProp.haveSupporter() && !supportedSet.contains(setProp)) {
+                    sblockers.add(setProp);
+                }
+            }
         }
 
         public ValueProp(T value) {
@@ -250,11 +270,10 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         return getCounts(valueProps);
     }
 
-    public void collectSupport(SupportCollector supportCollector) {
+    public SupportCollector collectSupport(SupportCollector supportCollector) {
        if (setProp != null) {
-           Supporter ps = setProp.getSupporter();
-           if (!Objects.equal(ps, getRule())) {
-               supportCollector.recordSupporter(setProp, ps);
+           if (!supportedSet.contains(setProp)) {
+               supportCollector.recordSupporter(setProp);
            }
            else {
                for (ValueProp vp : valueProps) {
@@ -262,5 +281,19 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
                }
            }
        }
+        return supportCollector;
+    }
+
+    public void handleSupport(SupportHandler handler) {
+        if (setProp != null) {
+            if (!supportedSet.contains(setProp)) {
+                setProp.handleSupport(handler);
+            }
+            else {
+                for (ValueProp vp : valueProps) {
+                    vp.getOpposite().handleSupport(handler);
+                }
+            }
+        }
     }
 }

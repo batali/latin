@@ -80,9 +80,18 @@ public class Drule extends AbstractDrule {
         return name;
     }
 
-    public void collectSupport(SupportCollector supportCollector) {
+    public SupportCollector collectSupport(SupportCollector supportCollector) {
         for (BooleanSetting bs : setters) {
             supportCollector.recordSupporter(bs.getOpposite());
         }
+        return supportCollector;
+    }
+
+    public void handleSupport(SupportHandler handler)  {
+        for (BooleanSetting bs : setters) {
+            BooleanSetting op = bs.getOpposite();
+            op.handleSupport(handler);
+        }
     }
 }
+

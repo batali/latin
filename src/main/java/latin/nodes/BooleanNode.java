@@ -1,6 +1,8 @@
 
 package latin.nodes;
 
+import com.google.common.base.Preconditions;
+
 public class BooleanNode extends BooleanSetting
         implements Node<Boolean>, Setter<Boolean>, BooleanSettings {
 
@@ -24,6 +26,15 @@ public class BooleanNode extends BooleanSetting
         public String toString() {
             return "!" + getPathString();
         }
+    }
+
+    public int setterCount() {
+        return 2;
+    }
+
+    public Setter<Boolean> getIndexSetter(int i) {
+        Preconditions.checkElementIndex(i, 2);
+        return (i == 0) ? falseSetting : this;
     }
 
     private final FalseSetter falseSetting = new FalseSetter();

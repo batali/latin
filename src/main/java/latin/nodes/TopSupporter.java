@@ -1,41 +1,33 @@
 
 package latin.nodes;
 
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
-import java.util.List;
+import java.util.Set;
 
 public class TopSupporter implements Supporter {
-    public List<Supported> supportedList;
+    private Set<Supported> supportedSet;
     public TopSupporter() {
-        this.supportedList = Lists.newArrayList();
+        this.supportedSet = Sets.newHashSet();
     }
     public Supported peekSupported() {
-        if (supportedList.isEmpty()) {
+        if (supportedSet.isEmpty()) {
             return null;
         }
         else {
-            return supportedList.get(0);
+            return supportedSet.iterator().next();
         }
     }
+
     public boolean addSupported(Supported supported) {
-        if (!supportedList.contains(supported)) {
-            this.supportedList.add(supported);
-            return true;
-        }
-        else {
-            return false;
-        }
+        return supportedSet.add(supported);
     }
+
     public boolean removeSupported(Supported supported) {
-        if (supportedList.contains(supported)) {
-            supportedList.remove(supported);
-            return true;
-        }
-        else {
-            return false;
-        }
+        return supportedSet.remove(supported);
     }
+
     public void retractAll(RetractQueue retractQueue) {
         Supported s = null;
         while ((s = peekSupported())!=null) {
@@ -43,12 +35,23 @@ public class TopSupporter implements Supporter {
                retractQueue.addRetracted(s);
            }
         }
+        Preconditions.checkState(supportedSet.isEmpty());
     }
 
     public String toString() {
-        return "top:" + supportedList.toString();
+        return "top:" + supportedSet.toString();
     }
 
-    public void collectSupport(SupportCollector supportCollector) {
+    public SupportCollector collectSupport(SupportCollector supportCollector) {
+        return supportCollector;
     }
+
+    @Override
+    public void handleSupport(SupportHandler handler) {
+    }
+
+    public boolean haveSupported() {
+        return !supportedSet.isEmpty();
+    }
+
 }

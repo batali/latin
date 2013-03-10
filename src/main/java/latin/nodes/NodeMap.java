@@ -5,12 +5,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AtomicLongMap;
 import latin.veritas.PropExpression;
 import latin.veritas.PropParser;
 import latin.veritas.Psetting;
 import latin.veritas.StringParser;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -21,12 +24,10 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
     private Map<String,Node<?>> nodeMap;
     private Map<String,List<Drule>> ruleMap;
-    private Map<BooleanSetting,TopSupporter> topSupporterMap;
 
     public NodeMap() {
         this.nodeMap = Maps.newTreeMap();
         this.ruleMap = Maps.newTreeMap();
-        this.topSupporterMap = Maps.newHashMap();
     }
 
     public BooleanNode makeBooleanNode(String path) {
@@ -104,13 +105,15 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
                 System.out.println(s.toString());
             }
             else {
-                if (n instanceof ChoiceSettings) {
-                    ChoiceSettings cs = (ChoiceSettings) n;
-                    System.out.println(n.toString() + cs.allChoiceNames().toString());
+                List<String> sl = Lists.newArrayList();
+                int nc = n.setterCount();
+                for (int i = 0; i < nc; i++) {
+                    Setter<?> st = n.getIndexSetter(i);
+                    if (st.supportable()) {
+                        sl.add(n.getIndexSetter(i).toString());
+                    }
                 }
-                else {
-                    System.out.println(n.toString() + ":?");
-                }
+                System.out.println(n.toString() + sl.toString());
             }
         }
     }
@@ -121,6 +124,8 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         }
         @Override
         public void addRededucer(Deducer deducer) {
+        }
+        public void retractLoop() {
         }
     }
 
@@ -148,12 +153,6 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
                     System.out.println("ce " + ce.getMessage());
                     CRQ crq = new CRQ();
                     Supporter atRule = ce.atRule;
-                    if (atRule != null) {
-                        System.out.println("At rule " + atRule.toString() + " " + ns.toString());
-                        SupportCollector supportCollector = new SupportCollector();
-                        atRule.collectSupport(supportCollector);
-                        System.out.println(supportCollector.getTopSupporters().toString());
-                    }
                     Preconditions.checkState(ns.unsetSupporter());
                     ns.announceUnset(crq, atRule);
                     while ((ns = queue.poll()) != null) {
@@ -199,40 +198,10 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         }
     }
 
-    public void supportSetting(BooleanSetting bs) throws ContradictionException {
-        Preconditions.checkState(bs.supportable());
-        if (bs.getSupporter() == null) {
-            TopSupporter ts = new TopSupporter();
-            if (bs.setSupporter(ts)) {
-                topSupporterMap.put(bs, ts);
-                DQ dq = new DQ();
-                dq.addDeduced(bs);
-                dq.propagateLoop();
-            }
-        }
-    }
-
     public BooleanSetting parseSetting (String ss) {
         StringParser sp = new StringParser(ss);
         Psetting ps = PropParser.parseSetting(sp, Psetting.simpleHandler);
         return ps.getSetting(this);
-    }
-
-    public void retractSetting(BooleanSetting bs) throws ContradictionException {
-        TopSupporter ts = topSupporterMap.get(bs);
-        Preconditions.checkNotNull(ts);
-        RQ rq = new RQ();
-        ts.retractAll(rq);
-        rq.retractLoop();
-        topSupporterMap.remove(bs);
-    }
-
-    public void supportSetting(String ss) throws ContradictionException {
-        supportSetting(parseSetting(ss));
-    }
-
-    public void retractSetting(String ss) throws ContradictionException {
-        retractSetting(parseSetting(ss));
     }
 
     public boolean checkCounts() {
@@ -258,4 +227,238 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         return rv;
     }
 
+    public class SupSetter implements SupportHandler {
+
+        final Set<Supporter> seen;
+        final AtomicLongMap<TopSupporter> cm;
+        final DQ dq;
+        final RQ rq;
+        final Set<BooleanSetting> tsettings;
+
+        public SupSetter (Set<BooleanSetting> tsettings){
+            this.seen = Sets.newHashSet();
+            this.cm = AtomicLongMap.create();
+            this.rq = new RQ();
+            this.dq = new DQ();
+            this.tsettings = tsettings;
+        }
+
+        public SupSetter () {
+            this(new HashSet<BooleanSetting>());
+        }
+
+        public void recordBlockingSupporter(Supported setting) throws ContradictionException {
+            Preconditions.checkState(!tsettings.contains(setting));
+            Supporter ss = setting.getSupporter();
+            if (ss != null) {
+                if (ss instanceof TopSupporter) {
+                    TopSupporter tss = (TopSupporter) ss;
+                    System.out.println("Retracting blocker " + setting.toString());
+                    retractTopSupporter(tss);
+                    Preconditions.checkState(!setting.haveSupporter());
+                }
+                else {
+                    seen.clear();
+                    ss.handleSupport(this);
+                }
+            }
+        }
+
+        public Set<Supported> recordBlockingSet(Set<Supported> blockingSupporters) throws ContradictionException {
+            Iterator<Supported> it = blockingSupporters.iterator();
+            while (it.hasNext()) {
+                Supported sup = it.next();
+                recordBlockingSupporter(sup);
+                if (!sup.haveSupporter()) {
+                    it.remove();
+                }
+            }
+            return blockingSupporters;
+        }
+
+        public Set<Supported> retractBlockingSet(Set<Supported> blocking) throws ContradictionException {
+            int tc = blocking.size();
+            int sc = recordBlockingSet(blocking).size();
+            System.out.println("starting " + sc + "/" + tc);
+            while (!blocking.isEmpty()) {
+                retractNext();
+                int nsc = keepSupported(blocking).size();
+                if (nsc == sc) {
+                    System.out.println("No retract " + nsc);
+                    break;
+                }
+                sc = nsc;
+            }
+            return blocking;
+        }
+
+        public Set<Supported> keepSupported(Set<Supported> settings) {
+            Iterator<Supported> it = settings.iterator();
+            while (it.hasNext()) {
+                if (!it.next().haveSupporter()) {
+                    it.remove();
+                }
+            }
+            return settings;
+        }
+
+
+
+        public boolean handleSupport(Supporter supporter, Supported supported) {
+            if (seen.add(supporter)) {
+                if (supporter instanceof TopSupporter) {
+                    Supported sd = supporter.peekSupported();
+                    System.out.println("recording tp " + supporter.toString() + " " + tsettings.contains(sd));
+                    if (sd != null && !tsettings.contains(sd)) {
+                        cm.incrementAndGet((TopSupporter) supporter);
+                    }
+                }
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+
+        public TopSupporter findNext() {
+            TopSupporter bts = null;
+            long bc = 0;
+            Set<TopSupporter> removed = Sets.newHashSet();
+            for (Map.Entry<TopSupporter,Long> e : cm.asMap().entrySet()) {
+                long ec = e.getValue();
+                TopSupporter ets = e.getKey();
+                Supported esp = ets.peekSupported();
+                if (esp == null) {
+                    removed.add(ets);
+                    continue;
+                }
+                Preconditions.checkState(!tsettings.contains(esp));
+                if (bts == null || ec > bc) {
+                    bts = ets;
+                    bc = ec;
+                }
+            }
+            for (TopSupporter rt : removed) {
+                cm.remove(rt);
+            }
+            return bts;
+        }
+
+        public void retractTopSupporter(TopSupporter topSupporter) throws ContradictionException {
+            if (topSupporter.haveSupported()) {
+                topSupporter.retractAll(rq);
+                rq.retractLoop();
+            }
+        }
+
+        public boolean retractNext() throws ContradictionException {
+            TopSupporter bts = findNext();
+            if (bts != null) {
+                long bc = cm.get(bts);
+                System.out.println("Retracting bs " + bts.toString() + " " + bc);
+                retractTopSupporter(bts);
+                cm.remove(bts);
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        public void retractBlockers () throws ContradictionException {
+            Set<Supported> blocking = SupportCollector.collectBlockers(tsettings);
+            Preconditions.checkState(retractBlockingSet(blocking).isEmpty());
+        }
+
+        public boolean supportSetting(BooleanSetting tsetting) throws ContradictionException {
+            if (tsetting.haveSupporter()) {
+                return true;
+            }
+            else if (tsetting.supportable()) {
+                TopSupporter tops = new TopSupporter();
+                try {
+                    if (tsetting.setSupporter(tops)) {
+                        dq.addDeduced(tsetting);
+                        dq.propagateLoop();
+                        return true;
+                    }
+                }
+                catch(ContradictionException ce) {
+                    System.out.println("contra");
+                    System.out.println("tops " + tops.toString());
+                    seen.clear();
+                    ce.atRule.handleSupport(this);
+                }
+            }
+            else {
+                Set<Supported> blockers = Sets.newHashSet();
+                tsetting.supportedBlockers(blockers);
+                if (!blockers.isEmpty()) {
+                    System.out.println("blocking " + blockers.toString());
+                    recordBlockingSet(blockers);
+                }
+            }
+            return false;
+        }
+
+        public boolean supportSettings () throws ContradictionException {
+            int step = 0;
+            int nts = tsettings.size();
+            while (true) {
+                int nss = 0;
+                for (BooleanSetting tsetting : tsettings) {
+                    if (supportSetting(tsetting)) {
+                        nss += 1;
+                    }
+                }
+                step += 1;
+                System.out.println("step " + step + " set " + nss + "/" + nts);
+                if (nss == nts) {
+                    return true;
+                }
+                if (!retractNext()) {
+                    System.out.println("Nothing to retract");
+                    return false;
+                }
+            }
+        }
+    }
+
+    public boolean support(Set<BooleanSetting> tsettings) throws ContradictionException {
+        SupSetter supSetter = new SupSetter(tsettings);
+        supSetter.retractBlockers();
+        return supSetter.supportSettings();
+    }
+
+    public boolean support (String... ssl) throws ContradictionException {
+        Set<BooleanSetting> tsettings = Sets.newHashSet();
+        for (String ss : ssl) {
+            tsettings.add(parseSetting(ss));
+        }
+        return support(tsettings);
+    }
+
+    public boolean retract(Set<Supported> settings) throws ContradictionException {
+        SupSetter supSetter = new SupSetter();
+        return supSetter.retractBlockingSet(settings).isEmpty();
+    }
+
+    public boolean retract(String... ssl)  throws ContradictionException {
+        Set<Supported> settings = Sets.newHashSet();
+        for (String ss : ssl) {
+            settings.add(parseSetting(ss));
+        }
+        return retract(settings);
+    }
+
 }
+
+
+
+
+
+
+
+
+

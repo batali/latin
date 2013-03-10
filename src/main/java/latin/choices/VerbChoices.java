@@ -2,18 +2,18 @@ package latin.choices;
 
 public enum VerbChoices {
 
-    ImpAct (false, -1, true),
     ImpPas (false, -1, false),
-    PreAct (false, 0, true),
+    ImpAct (false, -1, true),
     PrePas (false, 0, false),
-    FutAct (false, 1, true),
+    PreAct (false, 0, true),
     FutPas (false, 1, false),
-    PluAct (true, -1, true),
+    FutAct (false, 1, true),
     PluPas (true, -1, false),
-    PerAct (true, 0, true),
+    PluAct (true, -1, true),
     PerPas (true, 0, false),
-    FupAct (true, 1, true),
-    FupPas (true, 1, false);
+    PerAct (true, 0, true),
+    FupPas (true, 1, false),
+    FupAct (true, 1, true);
 
     public final Aspect aspect;
     public final Time time;

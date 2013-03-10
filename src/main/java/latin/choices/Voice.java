@@ -4,15 +4,16 @@ package latin.choices;
 import org.apache.commons.lang3.tuple.Pair;
 
 public enum Voice {
-    Act {
-        @Override
-        public boolean isActive() {
-            return true;
-        }
-    },
+
     Pas {
         @Override
         public boolean isPassive() {
+            return true;
+        }
+    },
+    Act {
+        @Override
+        public boolean isActive() {
             return true;
         }
     };

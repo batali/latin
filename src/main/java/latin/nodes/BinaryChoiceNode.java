@@ -25,6 +25,15 @@ public class BinaryChoiceNode<T> implements Node<T>, ChoiceSettings, BooleanSett
         return Lists.newArrayList(falseSetting.value.toString(), trueSetting.value.toString());
     }
 
+    public int setterCount() {
+        return 2;
+    }
+
+    public BinarySetting getIndexSetter(int i) {
+        Preconditions.checkElementIndex(i, 2);
+        return (i == 0)? falseSetting : trueSetting;
+    }
+
     public final BinarySetting falseSetting;
     public final BinarySetting trueSetting;
     public final String pathString;
