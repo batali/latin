@@ -13,6 +13,7 @@ public class Drule extends AbstractDrule {
     private Supported supported;
 
     public Drule(String name, List<? extends BooleanSetting> setters) {
+        super(setters.size());
         this.setters = setters;
         for (BooleanSetting s : setters) {
             s.addRule(this);
@@ -36,35 +37,16 @@ public class Drule extends AbstractDrule {
         return true;
     }
 
-    @Override
-    public Supported peekSupported() {
-        return supported;
-    }
 
     @Override
-    public void recordSet(BooleanSetting setting, boolean sp, DeduceQueue deduceQueue) throws ContradictionException {
-        addCount(sp, 1);
-        deduce(deduceQueue);
-    }
-
-
-    @Override
-    public void recordUnset(BooleanSetting  setting, boolean sp, RetractQueue retractQueue) {
-        addCount(sp, -1);
+    public void afterUnset(boolean sp, RetractQueue retractQueue) {
         if (sp) {
             if (disjunctionDeduceTest(setters)) {
                 retractQueue.addRededucer(this);
             }
         }
         else {
-            Supported os = supported;
-            if (os != null) {
-                if(os.unsetSupporter()) {
-                    Preconditions.checkState(supported == null);
-                    Preconditions.checkState(os != null);
-                    retractQueue.addRetracted(os);
-                }
-            }
+            retractQueue.removeSupport(supported);
         }
     }
 
@@ -95,10 +77,13 @@ public class Drule extends AbstractDrule {
     }
 
     public void collectContradictionSupport(SupportCollector supportCollector) {
-        Preconditions.checkState(trueCount == 0 && falseCount == setters.size());
         for (BooleanSetting bs : setters) {
             supportCollector.recordSupporter(bs.getOpposite());
         }
+    }
+
+    public boolean doesSupport() {
+        return supported != null;
     }
 
 }

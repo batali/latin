@@ -27,6 +27,10 @@ public abstract class BooleanSetting implements Supported {
         return supporter != null;
     }
 
+    public boolean supportedBy(Supporter asupporter) {
+        return Objects.equal(supporter, asupporter);
+    }
+
     public abstract boolean booleanValue();
 
     public BooleanSetting getTrueSetting() {
@@ -59,38 +63,19 @@ public abstract class BooleanSetting implements Supported {
         }
     }
 
-
     public void setSupport(Supporter newSupporter) {
         Preconditions.checkState(supportable());
         Preconditions.checkState(supporter == null);
         supporter = newSupporter;
     }
 
-    public Supporter removeSupport() {
+    public boolean removeSupport() {
         Supporter osupporter = supporter;
         supporter = null;
-        return osupporter;
-    }
-
-    @Override
-    public boolean setSupporter(Supporter newSupporter) throws ContradictionException {
-
-        if (getSupporter() != null) {
-            return false;
+        if (osupporter != null) {
+            osupporter.removeSupported(this);
         }
-        Preconditions.checkState(getOpposite().getSupporter()==null);
-        supporter = newSupporter;
-        Preconditions.checkState(newSupporter.addSupported(this));
-        return true;
-    }
-
-    @Override
-    public boolean unsetSupporter() {
-        Supporter os = supporter;
-        supporter = null;
-        Preconditions.checkState(os != null);
-        Preconditions.checkState(os.removeSupported(this));
-        return true;
+        return osupporter != null;
     }
 
     public Set<BSRule> getRules() {
@@ -112,13 +97,13 @@ public abstract class BooleanSetting implements Supported {
     public void announceUnset(RetractQueue retractQueue, BSRule stopAt) {
         BooleanSetting op = getOpposite();
         for (BSRule r : op.getRules()) {
-            r.recordUnset(op, false, retractQueue);
+            r.recordUnset(op, false, retractQueue, stopAt);
             if (Objects.equal(r, stopAt)) {
                 return;
             }
         }
         for (BSRule r : getRules()) {
-            r.recordUnset(this, true, retractQueue);
+            r.recordUnset(this, true, retractQueue, stopAt);
             if (Objects.equal(r, stopAt)) {
                 return;
             }

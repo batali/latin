@@ -27,7 +27,7 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
     }
 
     public ValueNode(String pathString, List<T> values) {
-        super();
+        super(values.size());
         this.pathString = pathString;
         this.valueProps = Lists.newArrayList();
         this.setProp = null;
@@ -71,6 +71,17 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         return valueProps.get(i);
     }
 
+    public boolean retract(RetractQueue retractQueue) {
+        boolean rv = false;
+        Supported s = null;
+        while ((s = peekSupported()) != null) {
+            if (retractQueue.removeSupport(s)) {
+                rv = true;
+            }
+        }
+        return rv;
+    }
+
     public abstract class ValuePropSetting extends BooleanSetting {
         public ValuePropSetting() {
             super();
@@ -82,7 +93,7 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         }
         @Override
         public void announceUnset(RetractQueue retractQueue, BSRule stopAt) {
-            recordUnset(getTrueSetting(), booleanValue(), retractQueue);
+            recordUnset(getTrueSetting(), booleanValue(), retractQueue, stopAt);
             if (!Objects.equal(getRule(), stopAt)) {
                 super.announceUnset(retractQueue, stopAt);
             }
@@ -128,6 +139,15 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
             return true;
         }
 
+        public boolean supportable() {
+            if (setProp == null) {
+                return super.supportable();
+            }
+            else {
+                return Objects.equal(setProp, this);
+            }
+        }
+
         public void supportedBlockers(Set<Supported> sblockers) {
             if (!haveSupporter()) {
                 BooleanSetting op = getOpposite();
@@ -159,44 +179,38 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         }
 
         @Override
-        public boolean setSupporter(Supporter newSupporter) throws ContradictionException {
-            if (super.setSupporter(newSupporter)) {
-                if (setProp == null) {
-                    setProp = this;
-                }
-                return true;
-            }
-            else {
-                return false;
+        public void setSupport(Supporter newSupporter) {
+            super.setSupport(newSupporter);
+            if (setProp == null) {
+                setProp = this;
             }
         }
 
-        @Override
-        public boolean unsetSupporter() {
-            Preconditions.checkState(super.unsetSupporter());
-            if (Objects.equal(setProp, this)) {
-                setProp = null;
+        public boolean removeSupport() {
+            try {
+                return super.removeSupport();
             }
-            return true;
+            finally {
+                if (Objects.equal(setProp, this)) {
+                    setProp = null;
+                }
+            }
         }
     }
 
-    public void recordSet(BooleanSetting setter, boolean sp, DeduceQueue deduceQueue) throws ContradictionException {
-        addCount(sp, 1);
-        deduce(deduceQueue);
+    @Override
+    public boolean contradictionCheck() {
+        return trueCount > 1 || falseCount == settingCount;
     }
 
     public void deduce(DeduceQueue deduceQueue) throws ContradictionException {
-        if (trueCount > 1) {
-            throw new ContradictionException("multiple", getRule());
-        }
-        else if (trueCount == 1) {
+        if (trueCount == 1)  {
             if (setProp != null && setProp.getSupporter() != getRule() && falseCount + 1 < valueProps.size()) {
                 for (ValueProp vp : valueProps) {
                     if (vp.supporter == null) {
                         ValuePropSetting op = vp.getOpposite();
-                        if (op.supportable() && op.setSupporter(getRule())) {
-                            deduceQueue.addDeduced(op);
+                        if (op.supportable()) {
+                            deduceQueue.setSupport(op, this);
                         }
                     }
                 }
@@ -207,23 +221,21 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         }
     }
 
-    @Override
-    public void recordUnset(BooleanSetting setting, boolean sp, RetractQueue retractQueue) {
-        addCount(sp, -1);
+    public void afterUnset(boolean sp, RetractQueue retractQueue) {
         if (sp) {
             if (!supportedSet.isEmpty()) {
-                retractAll(retractQueue);
+                retract(retractQueue);
             }
             else if (disjunctionDeduceTest(valueProps)) {
                 retractQueue.addRededucer(getRule());
-            }
         }
         else {
-            if (setProp != null && setProp.getSupporter() != getRule()) {
-                retractQueue.addRededucer(getRule());
-            }
-            else if (!supportedSet.isEmpty()) {
-                retractAll(retractQueue);
+                if (setProp != null && setProp.getSupporter() != getRule()) {
+                    retractQueue.addRededucer(getRule());
+                }
+                else if (!supportedSet.isEmpty()) {
+                    retract(retractQueue);
+                }
             }
         }
     }
@@ -239,7 +251,6 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         return supportedSet.remove(supported);
     }
 
-    @Override
     public Supported peekSupported() {
         if (supportedSet.isEmpty()) {
             return null;
@@ -283,18 +294,20 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
 
     public void collectContradictionSupport(SupportCollector supportCollector) {
         if (trueCount == 0) {
-            Preconditions.checkState(falseCount == valueProps.size());
             for (ValueProp valueProp : valueProps) {
                 supportCollector.recordSupporter(valueProp.getOpposite());
             }
         }
         else {
-            Preconditions.checkState(trueCount > 1);
             for (ValueProp valueProp : valueProps) {
                 if (valueProp.haveSupporter()) {
                     supportCollector.recordSupporter(valueProp);
                 }
             }
         }
+    }
+
+    public boolean doesSupport() {
+        return !supportedSet.isEmpty();
     }
 }

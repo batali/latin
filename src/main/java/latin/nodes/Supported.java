@@ -10,11 +10,10 @@ public interface Supported {
     public int getStatus();
     public boolean supportable();
     public void setSupport(Supporter newSupporter);
-    public Supporter removeSupport();
-    public boolean setSupporter(Supporter newSupporter) throws ContradictionException;
-    public boolean unsetSupporter();
+    public boolean removeSupport();
     public void announceSet(DeduceQueue deduceQueue) throws ContradictionException;
     public void announceUnset(RetractQueue retractQueue, BSRule stopAt);
     public void supportedBlockers(Set<Supported> blockers);
+    public boolean supportedBy(Supporter supporter);
 
 }

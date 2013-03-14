@@ -75,7 +75,7 @@ public abstract class AbstractDisjunctionRule implements BSRule {
         }
     }
 
-    public void retract(RetractQueue rq) {
+    public boolean retract(RetractQueue rq) {
         if (falseCount + 1 < settings.size()) {
             if (dsupported != null) {
                 dsupported.removeSupport();
@@ -86,6 +86,7 @@ public abstract class AbstractDisjunctionRule implements BSRule {
         else if (trueCount == 0 && falseCount + 1 == settings.size()) {
             rq.addRededucer(this);
         }
+        return true;
     }
 
     public void recordSet(BooleanSetting setting, boolean sv) throws ContradictionException {

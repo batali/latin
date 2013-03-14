@@ -19,9 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
@@ -92,11 +90,11 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
             Drule drule = new Drule(rn, Psetting.transformPsettings(cnf.get(i), this));
             nrules.add(drule);
         }
-        DQ dq = new DQ();
+        Propagator propagator = new Propagator();
         for (Drule r : nrules) {
-            r.setCounts(dq);
+            r.setCounts(propagator);
         }
-        dq.propagateLoop();
+        propagator.deduceLoop();
     }
 
     public void makeDrules(String name, String ps) throws ContradictionException {
@@ -129,116 +127,6 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         }
     }
 
-    public static class CRQ implements RetractQueue {
-        @Override
-        public void addRetracted(Supported supported) {
-        }
-        @Override
-        public void addRededucer(Deducer deducer) {
-        }
-        public void retractLoop() {
-        }
-    }
-
-    public static class DQ implements DeduceQueue {
-        private Queue<Supported> queue;
-        private SupportCollector contradictionSupport;
-        public DQ () {
-            this.queue = new LinkedBlockingQueue<Supported>();
-            this.contradictionSupport = null;
-        }
-        public void addDeduced(Supported supported) {
-            queue.add(supported);
-        }
-        public boolean isEmpty() {
-            return queue.isEmpty();
-        }
-        public Supported peek() {
-            return queue.peek();
-        }
-        public SupportCollector getContradictionSupport() {
-            try {
-                return contradictionSupport;
-            }
-            finally {
-                contradictionSupport = null;
-            }
-        }
-        public void propagateLoop() throws ContradictionException {
-            Supported ns = null;
-            Preconditions.checkState(contradictionSupport == null);
-            while ((ns = queue.poll()) != null) {
-                try {
-                    ns.announceSet(this);
-                }
-                catch(ContradictionException ce) {
-                    System.out.println("ce " + ce.getMessage() + " " + ns);
-                    CRQ crq = new CRQ();
-                    BSRule atRule = ce.atRule;
-                    contradictionSupport = new SupportCollector();
-                    atRule.collectContradictionSupport(contradictionSupport);
-                    Preconditions.checkState(ns.unsetSupporter());
-                    ns.announceUnset(crq, atRule);
-                    while ((ns = queue.poll()) != null) {
-                        Preconditions.checkState(ns.unsetSupporter());
-                    }
-                    throw ce;
-                }
-            }
-        }
-    }
-
-    public static class RQ implements RetractQueue {
-        private Queue<Supported> rqueue;
-        private Queue<Deducer> rdqueue;
-        public RQ() {
-            this.rqueue = new LinkedBlockingQueue<Supported>();
-            this.rdqueue = new LinkedBlockingQueue<Deducer>();
-        }
-        @Override
-        public void addRetracted(Supported supported) {
-            rqueue.add(supported);
-        }
-
-        @Override
-        public void addRededucer(Deducer deducer) {
-            rdqueue.add(deducer);
-        }
-
-        public void wetractLoop()  {
-            Supported rs = null;
-            while ((rs = rqueue.poll()) != null) {
-                rs.announceUnset(this, null);
-            }
-        }
-
-        public void retractLoop() throws ContradictionException {
-            wetractLoop();
-            rededuceLoop();
-        }
-
-        public boolean haveRededucers() {
-            return rdqueue.peek() != null;
-        }
-
-        public void clearRededucers() {
-            rdqueue.clear();
-        }
-
-        public void rededuceLoop() throws ContradictionException {
-            if (haveRededucers()) {
-                DQ dq = new DQ();
-                Deducer d = null;
-                while ((d = rdqueue.poll()) != null) {
-                    d.deduce(dq);
-                    if (!dq.isEmpty()) {
-                        System.out.println("Rededuced " + dq.peek().toString());
-                        dq.propagateLoop();
-                    }
-                }
-            }
-        }
-    }
 
     public BooleanSetting parseSetting (String ss) {
         StringParser sp = new StringParser(ss);
@@ -270,14 +158,12 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
     }
 
 
-        public class NupSetter {
-        final DQ dq;
-        final RQ rq;
+    public class NupSetter {
+        final Propagator dq;
         final List<BooleanSetting> tsettings;
 
         public NupSetter(List<BooleanSetting> tsettings) {
-            this.dq = new DQ();
-            this.rq = new RQ();
+            this.dq = new Propagator();
             this.tsettings = tsettings;
         }
 
@@ -303,12 +189,14 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
                 return false;
             }
             try {
-                rtop.retractAll(rq);
-                rq.retractLoop();
+                rtop.retract(dq);
+                dq.retractLoop();
                 return true;
             }
             catch(ContradictionException ce) {
-                return retractContradictionSupport();
+                SupportCollector csc = new SupportCollector();
+                ce.atRule.collectContradictionSupport(csc);
+                return retractTopSupport(csc);
             }
         }
 
@@ -336,14 +224,6 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
             return true;
         }
 
-        public boolean retractContradictionSupport() {
-            SupportCollector supportCollector = dq.getContradictionSupport();
-            if (supportCollector == null) {
-                return false;
-            }
-            return retractTopSupport(supportCollector);
-        }
-
         public boolean supportSetting(BooleanSetting tsetting) throws ContradictionException {
             BooleanSetting op = tsetting.getOpposite();
             while(true) {
@@ -356,25 +236,27 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
                     return true;
                 }
                 else {
-                    TopSupporter ntop = new TopSupporter();
+                    TopSupporter ntop = new TopSupporter(tsetting);
                     try {
-                        tsetting.setSupporter(ntop);
-                        dq.addDeduced(tsetting);
-                        dq.propagateLoop();
+                        ntop.deduce(dq);
+                        dq.deduceLoop();
                         return true;
                     }
                     catch(ContradictionException ce) {
-                        if (!retractContradictionSupport()) {
-                            ntop.retractAll(rq);
-                            rq.wetractLoop();
-                            rq.clearRededucers();
+                        SupportCollector csc = new SupportCollector();
+                        ce.atRule.collectContradictionSupport(csc);
+                        if (retractTopSupport(csc)) {
+                            return true;
+                        }
+                        else {
+                            ntop.retract(dq);
+                            dq.retractLoop();
                             return false;
                         }
                     }
                 }
             }
         }
-
 
         public void supportSettings() throws ContradictionException {
             for (BooleanSetting tsetting : tsettings) {
@@ -389,17 +271,13 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
     public class BupSetter extends SupportCollector {
 
         final AtomicLongMap<TopSupporter> cm;
-        final DQ dq;
-        final RQ rq;
-        final CRQ crq;
+        final Propagator dq;
         final Set<BooleanSetting> tsettings;
 
         public BupSetter (Set<BooleanSetting> tsettings){
             super();
             this.cm = AtomicLongMap.create();
-            this.rq = new RQ();
-            this.dq = new DQ();
-            this.crq = new CRQ();
+            this.dq = new Propagator();
             this.tsettings = tsettings;
         }
 
@@ -473,10 +351,11 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
         public boolean collectTopSupporter(Supporter supporter) {
             if (supporter instanceof TopSupporter) {
-                Supported sd = supporter.peekSupported();
+                TopSupporter tops = (TopSupporter) supporter;
+                Supported sd = tops.peekSupported();
                 System.out.println("recording tp " + supporter.toString() + " " + tsettings.contains(sd));
                 if (sd != null && !tsettings.contains(sd)) {
-                    cm.incrementAndGet((TopSupporter) supporter);
+                    cm.incrementAndGet(tops);
                 }
             }
             return true;
@@ -512,9 +391,9 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         }
 
         public void retractTopSupporter(TopSupporter topSupporter) throws ContradictionException {
-            if (topSupporter.haveSupported()) {
-                topSupporter.retractAll(rq);
-                rq.retractLoop();
+            if (topSupporter.doesSupport()) {
+                topSupporter.retract(dq);
+                dq.retractLoop();
             }
         }
 
@@ -545,13 +424,11 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
                 return true;
             }
             else if (tsetting.supportable()) {
-                TopSupporter tops = new TopSupporter();
+                TopSupporter tops = new TopSupporter(tsetting);
                 try {
-                    if (tsetting.setSupporter(tops)) {
-                        dq.addDeduced(tsetting);
-                        dq.propagateLoop();
-                        return true;
-                    }
+                    tops.deduce(dq);
+                    dq.deduceLoop();
+                    return true;
                 }
                 catch(ContradictionException ce) {
                     System.out.println("contra");

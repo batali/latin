@@ -2,7 +2,8 @@
 package latin.nodes;
 
 public interface RetractQueue {
-    public void addRetracted(Supported supported);
+    public boolean addRetracted(Supported supported);
     public void addRededucer (Deducer deducer);
     public void retractLoop () throws ContradictionException;
+    public boolean removeSupport(Supported supported);
 }

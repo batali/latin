@@ -1,33 +1,26 @@
 
 package latin.nodes;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.Set;
 
 public class TopSupporter implements Supporter {
 
-    public interface Selector {
-        public TopSupporter select(Collection<TopSupporter> topSupporters);
+    private @Nullable Supported supported;
+
+    public TopSupporter(@Nullable Supported supported) {
+        this.supported = supported;
     }
 
-    private Set<Supported> supportedSet;
     public TopSupporter() {
-        this.supportedSet = Sets.newHashSet();
-    }
-    public Supported peekSupported() {
-        if (supportedSet.isEmpty()) {
-            return null;
-        }
-        else {
-            return supportedSet.iterator().next();
-        }
+        this(null);
     }
 
-    public boolean contains(Supported supported) {
-        return supportedSet.contains(supported);
+    public boolean contains(Supported s) {
+        return Objects.equal(supported, s);
     }
 
     public boolean containsAny(Collection<? extends Supported> supporteds) {
@@ -39,26 +32,41 @@ public class TopSupporter implements Supporter {
         return false;
     }
 
-    public boolean addSupported(Supported supported) {
-        return supportedSet.add(supported);
+    public Supported peekSupported() {
+        return supported;
     }
 
-    public boolean removeSupported(Supported supported) {
-        return supportedSet.remove(supported);
-    }
-
-    public void retractAll(RetractQueue retractQueue) {
-        Supported s = null;
-        while ((s = peekSupported())!=null) {
-           if (s.unsetSupporter()) {
-               retractQueue.addRetracted(s);
-           }
+    public boolean deduce(DeduceQueue deduceQueue) throws ContradictionException {
+        if (supported != null && supported.supportable()) {
+            return deduceQueue.setSupport(supported, this);
         }
-        Preconditions.checkState(supportedSet.isEmpty());
+        else {
+            return false;
+        }
+    }
+
+    public boolean doesSupport() {
+        return supported != null && supported.supportedBy(this);
+    }
+
+    public boolean addSupported(Supported s) {
+        supported = s;
+        return true;
+    }
+
+    public boolean removeSupported(Supported s) {
+        Preconditions.checkState(Objects.equal(s, supported));
+        supported = null;
+        return true;
+    }
+
+    public boolean retract(RetractQueue rq) {
+        return (supported != null && supported.supportedBy(this) && rq.removeSupport(supported));
     }
 
     public String toString() {
-        return "top:" + supportedSet.toString();
+        String ss = supported != null ? supported.toString() : "";
+        return "top[" + ss + "]";
     }
 
     public SupportCollector collectSupport(SupportCollector supportCollector) {
@@ -66,7 +74,7 @@ public class TopSupporter implements Supporter {
     }
 
     public boolean haveSupported() {
-        return !supportedSet.isEmpty();
+        return supported != null;
     }
 
 }
