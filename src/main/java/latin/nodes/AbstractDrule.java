@@ -26,8 +26,8 @@ public abstract class AbstractDrule implements BSRule {
         }
     }
 
-    public boolean disjunctionDeduceTest(List<? extends BooleanSetting> settings) {
-        return trueCount == 0 && falseCount + 1 >= settings.size();
+    public boolean disjunctionDeduceTest() {
+        return trueCount == 0 && falseCount + 1 >= settingCount;
     }
 
     public boolean contradictionCheck() {

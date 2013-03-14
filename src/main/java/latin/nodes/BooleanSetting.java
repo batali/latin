@@ -51,7 +51,7 @@ public abstract class BooleanSetting implements Supported {
     }
 
     public boolean supportable() {
-        return getStatus() >= 0;
+        return !getOpposite().haveSupporter();
     }
 
     public void supportedBlockers(Set<Supported> sblockers) {

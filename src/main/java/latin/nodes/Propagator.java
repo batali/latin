@@ -19,14 +19,7 @@ public class Propagator implements DeduceQueue, RetractQueue {
         this.rdqueue = new LinkedBlockingQueue<Deducer>();
         this.crq = new RetractQueue() {
             @Override
-            public boolean addRetracted(Supported supported) {
-                return false;  //To change body of implemented methods use File | Settings | File Templates.
-            }
-            @Override
             public void addRededucer(Deducer deducer) {
-            }
-            @Override
-            public void retractLoop() throws ContradictionException {
             }
             @Override
             public boolean removeSupport(Supported supported) {
@@ -53,7 +46,6 @@ public class Propagator implements DeduceQueue, RetractQueue {
         }
     }
 
-    @Override
     public boolean addRetracted(Supported supported) {
         rqueue.add(supported);
         return true;
@@ -101,7 +93,6 @@ public class Propagator implements DeduceQueue, RetractQueue {
         }
     }
 
-    @Override
     public void retractLoop() throws ContradictionException {
         Supported retracted = null;
         while ((retracted = rqueue.poll()) != null) {

@@ -1,7 +1,6 @@
 
 package latin.nodes;
 
-import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -61,43 +60,48 @@ public abstract class AbstractDisjunctionRule implements BSRule {
         return falseCount == settings.size();
     }
 
+    public boolean deduceCheck() {
+        return trueCount == 0 && falseCount + 1 == settings.size();
+    }
+
     public void deduce(DeduceQueue dq) throws ContradictionException {
-        if (trueCount == 0 && falseCount + 1 == settings.size()) {
+        if (deduceCheck()) {
             for (BooleanSetting setting : settings) {
-                Preconditions.checkState(dsupported == null);
-                if (!setting.haveSupporter() && setting.supportable()) {
-                    setting.setSupport(this);
-                    dsupported = setting;
-                    dq.addDeduced(setting);
-                    break;
+                if (setting.supportable()) {
+                    dq.setSupport(setting, this);
+                    return;
                 }
             }
+            throw new ContradictionException("No supportable", this);
         }
     }
 
-    public boolean retract(RetractQueue rq) {
-        if (falseCount + 1 < settings.size()) {
-            if (dsupported != null) {
-                dsupported.removeSupport();
-                dsupported = null;
-                rq.addRetracted(dsupported);
-            }
-        }
-        else if (trueCount == 0 && falseCount + 1 == settings.size()) {
-            rq.addRededucer(this);
-        }
-        return true;
+    public boolean canRededuce(BooleanSetting setting, boolean sv) {
+        return sv && deduceCheck();
     }
 
-    public void recordSet(BooleanSetting setting, boolean sv) throws ContradictionException {
+    public boolean retractDsupported(RetractQueue rq) {
+        return rq.removeSupport(dsupported);
+    }
+
+    public void recordSet(BooleanSetting setting, boolean sv, DeduceQueue dq) throws ContradictionException {
         addCount(sv, 1);
         if (contradictionCheck()) {
             throw new ContradictionException("DisjunctionRule", this);
         }
+        else {
+            deduce(dq);
+        }
     }
 
-    public void recordUnset(BooleanSetting setting, boolean sv) {
+    public void recordUnset(BooleanSetting setting, boolean sv, RetractQueue rq) {
         addCount(sv, -1);
+        if (!sv) {
+            rq.removeSupport(dsupported);
+        }
+        else if (deduceCheck()) {
+            rq.addRededucer(this);
+        }
     }
 
     public void collectContradictionSupport(SupportCollector supportCollector) {

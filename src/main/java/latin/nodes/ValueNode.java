@@ -226,7 +226,7 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
             if (!supportedSet.isEmpty()) {
                 retract(retractQueue);
             }
-            else if (disjunctionDeduceTest(valueProps)) {
+            else if (disjunctionDeduceTest()) {
                 retractQueue.addRededucer(getRule());
         }
         else {
@@ -309,5 +309,25 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
 
     public boolean doesSupport() {
         return !supportedSet.isEmpty();
+    }
+
+    @Override
+    public boolean deduceCheck() {
+        if (setProp != null) {
+            return falseCount + 1 < settingCount;
+        }
+        else {
+            return disjunctionDeduceTest();
+        }
+    }
+
+    @Override
+    public boolean canRededuce(BooleanSetting setting, boolean sv) {
+        if (sv) {
+            return disjunctionDeduceTest();
+        }
+        else {
+            return setProp != null;
+        }
     }
 }

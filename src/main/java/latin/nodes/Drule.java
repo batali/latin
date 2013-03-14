@@ -41,7 +41,7 @@ public class Drule extends AbstractDrule {
     @Override
     public void afterUnset(boolean sp, RetractQueue retractQueue) {
         if (sp) {
-            if (disjunctionDeduceTest(setters)) {
+            if (disjunctionDeduceTest()) {
                 retractQueue.addRededucer(this);
             }
         }
@@ -86,5 +86,14 @@ public class Drule extends AbstractDrule {
         return supported != null;
     }
 
+    @Override
+    public boolean deduceCheck() {
+        return disjunctionDeduceTest();
+    }
+
+    @Override
+    public boolean canRededuce(BooleanSetting setting, boolean sv) {
+        return sv && disjunctionDeduceTest();
+    }
 }
 
