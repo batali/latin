@@ -23,6 +23,8 @@ public abstract class AbstractDrule implements BSRule {
         }
     }
 
+    public abstract Supported peekSupported();
+
     public void retractAll(RetractQueue retractQueue) {
         Supported s = null;
         while ((s = peekSupported()) != null) {
@@ -81,4 +83,5 @@ public abstract class AbstractDrule implements BSRule {
         Pair<Integer,Integer> cp = getCounts();
         return trueCount == cp.getLeft() && falseCount == cp.getRight();
     }
+
 }

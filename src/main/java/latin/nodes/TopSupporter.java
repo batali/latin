@@ -4,9 +4,15 @@ package latin.nodes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
+import java.util.Collection;
 import java.util.Set;
 
 public class TopSupporter implements Supporter {
+
+    public interface Selector {
+        public TopSupporter select(Collection<TopSupporter> topSupporters);
+    }
+
     private Set<Supported> supportedSet;
     public TopSupporter() {
         this.supportedSet = Sets.newHashSet();
@@ -18,6 +24,19 @@ public class TopSupporter implements Supporter {
         else {
             return supportedSet.iterator().next();
         }
+    }
+
+    public boolean contains(Supported supported) {
+        return supportedSet.contains(supported);
+    }
+
+    public boolean containsAny(Collection<? extends Supported> supporteds) {
+        for (Supported supported : supporteds) {
+           if (contains(supported)) {
+               return true;
+           }
+        }
+        return false;
     }
 
     public boolean addSupported(Supported supported) {
@@ -44,10 +63,6 @@ public class TopSupporter implements Supporter {
 
     public SupportCollector collectSupport(SupportCollector supportCollector) {
         return supportCollector;
-    }
-
-    @Override
-    public void handleSupport(SupportHandler handler) {
     }
 
     public boolean haveSupported() {

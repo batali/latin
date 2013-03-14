@@ -59,15 +59,22 @@ public abstract class BooleanSetting implements Supported {
         }
     }
 
-    public void handleSupport(SupportHandler handler) {
-        if (supporter != null && handler.handleSupport(supporter, this)) {
-            supporter.handleSupport(handler);
-        }
+
+    public void setSupport(Supporter newSupporter) {
+        Preconditions.checkState(supportable());
+        Preconditions.checkState(supporter == null);
+        supporter = newSupporter;
+    }
+
+    public Supporter removeSupport() {
+        Supporter osupporter = supporter;
+        supporter = null;
+        return osupporter;
     }
 
     @Override
     public boolean setSupporter(Supporter newSupporter) throws ContradictionException {
-        Preconditions.checkState(supportable());
+
         if (getSupporter() != null) {
             return false;
         }
@@ -102,7 +109,7 @@ public abstract class BooleanSetting implements Supported {
     }
 
     @Override
-    public void announceUnset(RetractQueue retractQueue, Supporter stopAt) {
+    public void announceUnset(RetractQueue retractQueue, BSRule stopAt) {
         BooleanSetting op = getOpposite();
         for (BSRule r : op.getRules()) {
             r.recordUnset(op, false, retractQueue);

@@ -32,7 +32,7 @@ public class BooleanNode extends BooleanSetting
         return 2;
     }
 
-    public Setter<Boolean> getIndexSetter(int i) {
+    public BooleanSetting getIndexSetter(int i) {
         Preconditions.checkElementIndex(i, 2);
         return (i == 0) ? falseSetting : this;
     }

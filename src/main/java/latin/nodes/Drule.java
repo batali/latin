@@ -47,6 +47,7 @@ public class Drule extends AbstractDrule {
         deduce(deduceQueue);
     }
 
+
     @Override
     public void recordUnset(BooleanSetting  setting, boolean sp, RetractQueue retractQueue) {
         addCount(sp, -1);
@@ -82,16 +83,23 @@ public class Drule extends AbstractDrule {
 
     public SupportCollector collectSupport(SupportCollector supportCollector) {
         for (BooleanSetting bs : setters) {
-            supportCollector.recordSupporter(bs.getOpposite());
+            int st = bs.getStatus();
+            if (st > 0) {
+                supportCollector.recordSupporter(bs);
+            }
+            else if (st < 0) {
+                supportCollector.recordSupporter(bs.getOpposite());
+            }
         }
         return supportCollector;
     }
 
-    public void handleSupport(SupportHandler handler)  {
+    public void collectContradictionSupport(SupportCollector supportCollector) {
+        Preconditions.checkState(trueCount == 0 && falseCount == setters.size());
         for (BooleanSetting bs : setters) {
-            BooleanSetting op = bs.getOpposite();
-            op.handleSupport(handler);
+            supportCollector.recordSupporter(bs.getOpposite());
         }
     }
+
 }
 

@@ -114,11 +114,13 @@ public class BinaryOperatorExpression implements PropExpression {
 
     public static List<List<Psetting>> getIffCnf(PropExpression lhs, PropExpression rhs, boolean bv, Psetting.Handler handler) {
         if (bv) {
-            return Psetting.combineNormalForms(getIfCnf(lhs, rhs, true, handler),
+            return Psetting.combineNormalForms(
+                    getIfCnf(lhs, rhs, true, handler),
                     getIfCnf(rhs, lhs, true, handler));
         }
         else {
-            return Psetting.mergeNormalForms(getIfCnf(lhs, rhs, false, handler),
+            return Psetting.mergeNormalForms(
+                    getIfCnf(lhs, rhs, false, handler),
                     getIfCnf(rhs, lhs, false, handler));
         }
     }

@@ -1,7 +1,9 @@
 
 package latin.nodes;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import java.util.Collection;
@@ -11,7 +13,7 @@ import java.util.Set;
 
 public class SupportCollector {
 
-    Set<Supporter> seen;
+    public final Set<Supporter> seen;
 
     public SupportCollector() {
         this.seen = Sets.newHashSet();
@@ -21,12 +23,23 @@ public class SupportCollector {
         return recordSupporter(supported, supported.getSupporter());
     }
 
+    public boolean collectSupporter(Supporter supporter) {
+        return supporter != null && seen.add(supporter);
+    }
+
     public SupportCollector recordSupporter(Supported supported, Supporter supporter) {
-        if (supporter != null && seen.add(supporter)) {
+        if (collectSupporter(supporter)) {
             supporter.collectSupport(this);
         }
         return this;
     }
+
+    public static final Predicate<Supporter> isTopSupporter = new Predicate<Supporter>() {
+        @Override
+        public boolean apply(Supporter supporter) {
+            return supporter instanceof TopSupporter;
+        }
+    };
 
     public static Iterator<TopSupporter> topSupporterIterator(Iterable<Supporter> supporters) {
         final Iterator<Supporter> sit = supporters.iterator();
@@ -42,6 +55,10 @@ public class SupportCollector {
                 return endOfData();
             }
         };
+    }
+
+    public Iterable<TopSupporter> topSupporters() {
+        return Iterables.filter(seen, TopSupporter.class);
     }
 
     public void clear() {

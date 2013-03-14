@@ -111,20 +111,20 @@ public class NodeMapTest {
         BooleanSetting rs = nodeMap.makeBooleanNode("r");
         nodeMap.makeDrules("r1", "p->q");
         nodeMap.makeDrules("r2", "q->r");
-        nodeMap.support("p");
+        nodeMap.supports("p");
         checkStatus(ps, 1);
         checkStatus(qs, 1);
         checkStatus(rs, 1);
-        nodeMap.retract("q");
+        nodeMap.retracts("q");
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         checkStatus(rs, 0);
-        nodeMap.support("!r");
+        nodeMap.supports("!r");
         Assert.assertTrue(nodeMap.checkCounts());
         checkStatus(ps, -1);
         checkStatus(qs, -1);
         checkStatus(rs, -1);
-        nodeMap.retract("!r");
+        nodeMap.retracts("!r");
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         checkStatus(rs, 0);
@@ -169,13 +169,14 @@ public class NodeMapTest {
         nodeMap.makeDrules("r2", "p -> !q");
         checkStatus(ps, 0);
         checkStatus(qs, 0);
-        Assert.assertFalse(nodeMap.support("p"));
+        System.out.println("supports p");
+        nodeMap.supports("p");
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        Assert.assertTrue(nodeMap.retract("p"));
+        nodeMap.retracts("p");
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.support("!p");
+        nodeMap.supports("!p");
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
     }
@@ -204,7 +205,7 @@ public class NodeMapTest {
         nodeMap.retract("w");
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.retract("x");
+        nodeMap.retracts("x");
         Assert.assertTrue(nodeMap.support("w"));
         Assert.assertTrue(nodeMap.checkCounts());
         nodeMap.printNodes();
@@ -307,11 +308,11 @@ public class NodeMapTest {
         nodeMap.makeDrules("r1", "p -> f=a");
         nodeMap.makeDrules("r2", "q -> f=b");
         nodeMap.makeDrules("r3", "(r & s) -> (p & q)");
-        nodeMap.support("r");
+        nodeMap.supports("r");
         Assert.assertTrue(nodeMap.checkCounts());
         nodeMap.printNodes();
         System.out.println("hh");
-        nodeMap.support("s", "p");
+        nodeMap.supports("s", "p");
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
     }

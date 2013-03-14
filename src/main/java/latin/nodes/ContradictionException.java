@@ -3,9 +3,9 @@ package latin.nodes;
 
 public class ContradictionException extends Exception {
 
-    public final Supporter atRule;
+    public final BSRule atRule;
 
-    public ContradictionException(String message, Supporter atRule) {
+    public ContradictionException(String message, BSRule atRule) {
         super(message);
         this.atRule = atRule;
     }

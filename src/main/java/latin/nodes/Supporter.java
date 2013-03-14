@@ -8,5 +8,4 @@ public interface Supporter {
     public boolean removeSupported(Supported supported);
     public @Nullable Supported peekSupported();
     public SupportCollector collectSupport(SupportCollector supportCollector);
-    public void handleSupport(SupportHandler handler);
-}
+    }

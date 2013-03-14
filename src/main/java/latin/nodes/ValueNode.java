@@ -81,7 +81,7 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
             super.announceSet(deduceQueue);
         }
         @Override
-        public void announceUnset(RetractQueue retractQueue, Supporter stopAt) {
+        public void announceUnset(RetractQueue retractQueue, BSRule stopAt) {
             recordUnset(getTrueSetting(), booleanValue(), retractQueue);
             if (!Objects.equal(getRule(), stopAt)) {
                 super.announceUnset(retractQueue, stopAt);
@@ -131,10 +131,10 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         public void supportedBlockers(Set<Supported> sblockers) {
             if (!haveSupporter()) {
                 BooleanSetting op = getOpposite();
-                if (op.haveSupporter() && !supportedSet.contains(op)) {
+                if (op.haveSupporter()) {
                     sblockers.add(op);
                 }
-                if (setProp != null && !Objects.equal(setProp, this) && setProp.haveSupporter() && !supportedSet.contains(setProp)) {
+                if (setProp != null && !Objects.equal(setProp, this) && setProp.haveSupporter()) {
                     sblockers.add(setProp);
                 }
             }
@@ -163,9 +163,6 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
             if (super.setSupporter(newSupporter)) {
                 if (setProp == null) {
                     setProp = this;
-                }
-                else {
-                    throw new ContradictionException("already", newSupporter);
                 }
                 return true;
             }
@@ -284,14 +281,18 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         return supportCollector;
     }
 
-    public void handleSupport(SupportHandler handler) {
-        if (setProp != null) {
-            if (!supportedSet.contains(setProp)) {
-                setProp.handleSupport(handler);
+    public void collectContradictionSupport(SupportCollector supportCollector) {
+        if (trueCount == 0) {
+            Preconditions.checkState(falseCount == valueProps.size());
+            for (ValueProp valueProp : valueProps) {
+                supportCollector.recordSupporter(valueProp.getOpposite());
             }
-            else {
-                for (ValueProp vp : valueProps) {
-                    vp.getOpposite().handleSupport(handler);
+        }
+        else {
+            Preconditions.checkState(trueCount > 1);
+            for (ValueProp valueProp : valueProps) {
+                if (valueProp.haveSupporter()) {
+                    supportCollector.recordSupporter(valueProp);
                 }
             }
         }
