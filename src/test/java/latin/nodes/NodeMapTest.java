@@ -177,7 +177,7 @@ public class NodeMapTest {
         }
         catch (ContradictionException ce) {
             System.out.print(ce.getMessage());
-            tp.retract();
+            tp.retractContradiction();
         }
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
@@ -215,7 +215,7 @@ public class NodeMapTest {
         }
         catch(ContradictionException ce) {
             System.out.println(ce.getMessage());
-            tp.retract();
+            tp.retractContradiction();
         }
         Assert.assertTrue(nodeMap.checkCounts());
         nodeMap.printNodes();
@@ -238,7 +238,7 @@ public class NodeMapTest {
         }
         catch(ContradictionException ce) {
             System.out.println(ce.getMessage());
-            tp.retract();
+            tp.retractContradiction();
         }
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
@@ -292,7 +292,7 @@ public class NodeMapTest {
         }
         catch(ContradictionException ce) {
             System.out.println(" contra " + ce.getMessage());
-            tp.retract();
+            tp.retractContradiction();
         }
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
@@ -353,13 +353,13 @@ public class NodeMapTest {
         checkStatus(ps, 1);
         checkStatus(rs, 1);
         Retractor r = nodeMap.makeRetractor("w");
-        Assert.assertTrue(nodeMap.tryret(r, "p"));
+        Assert.assertTrue(nodeMap.tryret(tp, r, "p"));
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
         checkStatus(ps, 0);
         checkStatus(rs, 1);
         checkStatus(ws, 1);
-        Assert.assertTrue(nodeMap.tryret(r, "r"));
+        Assert.assertTrue(nodeMap.tryret(tp, r, "r"));
         checkStatus(ps, 0);
         checkStatus(rs, 0);
         checkStatus(ws, 1);

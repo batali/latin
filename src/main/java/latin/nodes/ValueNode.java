@@ -59,7 +59,11 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         return null;
     }
 
-    public Setter<T> getSupportedSetting() {
+    public Setter<T> getSupportedSetter() {
+        return setProp;
+    }
+
+    public BooleanSetting getSupportedSetting() {
         return setProp;
     }
 
@@ -105,15 +109,8 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         public String toString() {
             return pathString + opString() + valString();
         }
-        public boolean supportable() {
-            if (setProp == null) {
-                return super.supportable();
-            }
-            else {
-                return booleanValue() == Objects.equal(setProp, getTrueSetting());
-            }
-        }
     }
+
     class ValueProp extends ValuePropSetting implements Setter<T> {
 
         public final T value;
@@ -137,15 +134,6 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
 
         public boolean booleanValue() {
             return true;
-        }
-
-        public boolean supportable() {
-            if (setProp == null) {
-                return super.supportable();
-            }
-            else {
-                return Objects.equal(setProp, this);
-            }
         }
 
         public void supportedBlockers(Set<Supported> sblockers) {
@@ -179,10 +167,15 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
         }
 
         @Override
-        public void setSupport(Supporter newSupporter) {
-            super.setSupport(newSupporter);
-            if (setProp == null) {
-                setProp = this;
+        public boolean setSupport(Supporter newSupporter) {
+            if (super.setSupport(newSupporter)) {
+                if (setProp == null) {
+                    setProp = this;
+                }
+                return true;
+            }
+            else {
+                return false;
             }
         }
 
@@ -204,8 +197,18 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
     }
 
     public void deduce(DeduceQueue deduceQueue) throws ContradictionException {
-        if (trueCount == 1)  {
-            if (setProp != null && setProp.getSupporter() != getRule() && falseCount + 1 < valueProps.size()) {
+        if (trueCount > 1) {
+            int tc = 0;
+            for (ValueProp vp : valueProps) {
+                if (vp.haveSupporter()) {
+                    tc += 1;
+                }
+            }
+            Preconditions.checkState(tc == trueCount);
+            throw new ContradictionException("more", this);
+        }
+        else if (trueCount == 1)  {
+            if (falseCount + 1  < valueProps.size()) {
                 for (ValueProp vp : valueProps) {
                     if (vp.supporter == null) {
                         ValuePropSetting op = vp.getOpposite();
@@ -216,8 +219,21 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
                 }
             }
         }
-        else {
-            disjunctionDeduce(deduceQueue, valueProps);
+        else if (trueCount == 0 && falseCount + 1 == settingCount) {
+            boolean foundone = false;
+            for (ValueProp vp : valueProps) {
+                if (vp.supportable()) {
+                    foundone = true;
+                    deduceQueue.setSupport(vp , this);
+                    break;
+                }
+            }
+            if (!foundone) {
+                throw new ContradictionException("not found", getRule());
+            }
+        }
+        else if (falseCount == settingCount) {
+            throw new ContradictionException("none", getRule());
         }
     }
 
@@ -226,16 +242,16 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
             if (!supportedSet.isEmpty()) {
                 retract(retractQueue);
             }
-            else if (disjunctionDeduceTest()) {
+            else if (setProp == null && trueCount == 0 && falseCount + 1 == settingCount) {
                 retractQueue.addRededucer(getRule());
+            }
         }
         else {
-                if (setProp != null && setProp.getSupporter() != getRule()) {
-                    retractQueue.addRededucer(getRule());
-                }
-                else if (!supportedSet.isEmpty()) {
-                    retract(retractQueue);
-                }
+            if (setProp != null && supportedSet.contains(setProp)) {
+                retract(retractQueue);
+            }
+            else if (setProp != null && falseCount + 1 < settingCount) {
+                retractQueue.addRededucer(getRule());
             }
         }
     }
@@ -279,32 +295,21 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
     }
 
     public SupportCollector collectSupport(SupportCollector supportCollector) {
-       if (setProp != null) {
-           if (!supportedSet.contains(setProp)) {
-               supportCollector.recordSupporter(setProp);
-           }
-           else {
-               for (ValueProp vp : valueProps) {
-                   supportCollector.recordSupporter(vp.getOpposite());
-               }
-           }
-       }
-        return supportCollector;
-    }
-
-    public void collectContradictionSupport(SupportCollector supportCollector) {
-        if (trueCount == 0) {
+        if (setProp == null || supportedSet.contains(setProp)) {
             for (ValueProp valueProp : valueProps) {
                 supportCollector.recordSupporter(valueProp.getOpposite());
             }
         }
-        else {
+        else if (setProp != null) {
             for (ValueProp valueProp : valueProps) {
-                if (valueProp.haveSupporter()) {
-                    supportCollector.recordSupporter(valueProp);
-                }
+                supportCollector.recordSupporter(valueProp);
             }
         }
+        return supportCollector;
+    }
+
+    public void collectContradictionSupport(SupportCollector supportCollector) {
+        collectSupport(supportCollector);
     }
 
     public boolean doesSupport() {
@@ -313,7 +318,7 @@ public class ValueNode<T> extends AbstractDrule implements Node<T>, ChoiceSettin
 
     @Override
     public boolean deduceCheck() {
-        if (setProp != null) {
+        if (trueCount == 1) {
             return falseCount + 1 < settingCount;
         }
         else {

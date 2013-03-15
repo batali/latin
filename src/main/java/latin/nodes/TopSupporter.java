@@ -70,6 +70,7 @@ public class TopSupporter implements Supporter {
     }
 
     public SupportCollector collectSupport(SupportCollector supportCollector) {
+        supportCollector.seen.add(this);
         return supportCollector;
     }
 

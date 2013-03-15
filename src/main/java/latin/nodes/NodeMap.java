@@ -35,6 +35,37 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         return nodeMap.values();
     }
 
+    public List<Node<?>> unsetNodes() {
+        List<Node<?>> nodeList = Lists.newArrayList();
+        for (Node<?> node : nodeMap.values()) {
+            if (node.getSupportedSetting() == null) {
+                nodeList.add(node);
+            }
+        }
+        return nodeList;
+    }
+
+    public List<Node<?>> setNodes() {
+        List<Node<?>> nodeList = Lists.newArrayList();
+        for (Node<?> node : nodeMap.values()) {
+            if (node.getSupportedSetting() != null) {
+                nodeList.add(node);
+            }
+        }
+        return nodeList;
+    }
+
+    public List<BooleanSetting> setSettings() {
+        List<BooleanSetting> settingList = Lists.newArrayList();
+        for (Node<?> node : nodeMap.values()) {
+            BooleanSetting st = node.getSupportedSetting();
+            if (st != null) {
+                settingList.add(st);
+            }
+        }
+        return settingList;
+    }
+
     public BooleanNode makeBooleanNode(String path) {
         BooleanNode booleanNode = new BooleanNode(path);
         nodeMap.put(path, booleanNode);
@@ -81,7 +112,7 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         return bs;
     }
 
-    public void makeDrules(String name, List<List<Psetting>> cnf) throws ContradictionException {
+    public void makeDrules(String name, List<List<Psetting>> cnf) {
         int s = cnf.size();
         List<Drule> nrules = Lists.newArrayList();
         ruleMap.put(name, nrules);
@@ -90,26 +121,21 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
             Drule drule = new Drule(rn, Psetting.transformPsettings(cnf.get(i), this));
             nrules.add(drule);
         }
-        Propagator propagator = new Propagator();
-        for (Drule r : nrules) {
-            r.setCounts(propagator);
-        }
-        propagator.deduceLoop();
     }
 
-    public void makeDrules(String name, String ps) throws ContradictionException {
+    public void makeDrules(String name, String ps) {
         StringParser sp = new StringParser(ps);
         PropExpression pe = PropParser.parseProp(sp);
         makeDrules(name, pe.getCnf(true, Psetting.simpleHandler));
     }
 
-    public void makeDrules(String ps) throws ContradictionException {
+    public void makeDrules(String ps) {
         makeDrules("[" + ps + "]", ps);
     }
 
     public void printNodes() {
         for(Node<?> n : nodeMap.values()) {
-            Setter<?> s = n.getSupportedSetting();
+            Setter<?> s = n.getSupportedSetter();
             if (s != null) {
                 System.out.println(s.toString());
             }
@@ -540,8 +566,8 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         return new Retractor(parseSettings(ssl));
     }
 
-    public boolean tryret(Retractor rt, String ss) {
-        return rt.retractTopSupporter(parseSetting(ss));
+    public boolean tryret(TryPropagator tp, Retractor rt, String ss) {
+        return tp.retractTopSupporter(rt.selectTopSupporter(parseSetting(ss)));
     }
 
     public boolean trysup(TryPropagator tp, BooleanSetting setting) throws ContradictionException {

@@ -23,27 +23,19 @@ public class Propagator implements DeduceQueue, RetractQueue {
             }
             @Override
             public boolean removeSupport(Supported supported) {
-                return supported.removeSupport();
+                return supported != null && supported.removeSupport();
             }
         };
     }
 
-    public void addDeduced(Supported supported) {
+    public boolean addDeduced(Supported supported) {
         Preconditions.checkState(supported.haveSupporter());
         dqueue.add(supported);
+        return true;
     }
 
     public boolean setSupport(Supported supported, Supporter supporter) {
-        Preconditions.checkState(supported.supportable());
-        if (!supported.haveSupporter()) {
-            supported.setSupport(supporter);
-            supporter.addSupported(supported);
-            addDeduced(supported);
-            return true;
-        }
-        else {
-            return false;
-        }
+        return supported.setSupport(supporter) && addDeduced(supported);
     }
 
     public boolean addRetracted(Supported supported) {

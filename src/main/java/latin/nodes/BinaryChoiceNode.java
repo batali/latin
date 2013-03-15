@@ -88,7 +88,11 @@ public class BinaryChoiceNode<T> implements Node<T>, ChoiceSettings, BooleanSett
         }
     }
 
-    public BinarySetting getSupportedSetting() {
+    public BooleanSetting getSupportedSetting() {
+        return getSupportedSetter();
+    }
+
+    public BinarySetting getSupportedSetter() {
         if (trueSetting.supporter != null) {
             return trueSetting;
         }

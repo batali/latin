@@ -50,6 +50,16 @@ public abstract class BooleanSetting implements Supported {
         }
     }
 
+    public BooleanSetting getSupportedSetting() {
+        if (haveSupporter()) {
+            return this;
+        }
+        else {
+            BooleanSetting op = getOpposite();
+            return op.haveSupporter() ? op : null;
+        }
+    }
+
     public boolean supportable() {
         return !getOpposite().haveSupporter();
     }
@@ -63,10 +73,16 @@ public abstract class BooleanSetting implements Supported {
         }
     }
 
-    public void setSupport(Supporter newSupporter) {
+    public boolean setSupport(Supporter newSupporter) {
         Preconditions.checkState(supportable());
-        Preconditions.checkState(supporter == null);
-        supporter = newSupporter;
+        if (!haveSupporter()) {
+            supporter = newSupporter;
+            Preconditions.checkState(newSupporter.addSupported(this));
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public boolean removeSupport() {
@@ -115,5 +131,4 @@ public abstract class BooleanSetting implements Supported {
     public void addRule(BSRule r) {
         getRules().add(r);
     }
-
 }

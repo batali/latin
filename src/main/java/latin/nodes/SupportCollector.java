@@ -28,7 +28,7 @@ public class SupportCollector {
     }
 
     public SupportCollector recordSupporter(Supported supported, Supporter supporter) {
-        if (collectSupporter(supporter)) {
+        if (supporter != null && seen.add(supporter)) {
             supporter.collectSupport(this);
         }
         return this;

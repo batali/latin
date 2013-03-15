@@ -80,7 +80,20 @@ public class BooleanNode extends BooleanSetting
     }
 
     @Override
-    public Setter<Boolean> getSupportedSetting() {
+    public BooleanSetting getSupportedSetting() {
+        if (haveSupporter()) {
+            return this;
+        }
+        else if (falseSetting.haveSupporter()) {
+            return falseSetting;
+        }
+        else {
+            return null;
+        }
+    }
+
+    @Override
+    public Setter<Boolean> getSupportedSetter() {
         if (supporter != null) {
             return this;
         }

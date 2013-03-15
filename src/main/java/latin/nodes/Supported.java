@@ -9,7 +9,7 @@ public interface Supported {
     public boolean haveSupporter();
     public int getStatus();
     public boolean supportable();
-    public void setSupport(Supporter newSupporter);
+    public boolean setSupport(Supporter newSupporter);
     public boolean removeSupport();
     public void announceSet(DeduceQueue deduceQueue) throws ContradictionException;
     public void announceUnset(RetractQueue retractQueue, BSRule stopAt);
