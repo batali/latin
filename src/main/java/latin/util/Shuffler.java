@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -117,26 +116,12 @@ public class Shuffler {
         return chosen;
     }
 
-    public static List<Integer> chooseSmall(int n, int k) {
-        List<Integer> chosen = Lists.newArrayList();
-        while (chosen.size() < k) {
-            adjoin(random.nextInt(n), chosen);
-        }
-        return chosen;
-    }
-
-    public static List<Integer> chooseBig(int n, int k) {
-        List<Integer> ilist = Lists.newArrayList(Ranger.ranger(k));
-        Collections.shuffle(ilist, random);
-        return ilist.subList(0, k);
-    }
-
     public static List<Integer> choose(int n, int k) {
-        if (k > 20 || k + k >= n) {
-            return chooseBig(n, k);
+        if (n + n > k) {
+            return knuthChoose(n, k);
         }
         else {
-            return chooseSmall(n, k);
+            return floydChoose(n, k);
         }
     }
 

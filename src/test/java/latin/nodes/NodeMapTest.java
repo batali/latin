@@ -161,7 +161,7 @@ public class NodeMapTest {
     }
 
     @Test
-    public void testSmallContradiction() throws Exception {
+    public void testTrySmallContradiction() throws Exception {
         NodeMap nodeMap = new NodeMap();
         BooleanSetting ps = nodeMap.makeBooleanNode("p");
         BooleanSetting qs = nodeMap.makeBooleanNode("q");
@@ -169,20 +169,26 @@ public class NodeMapTest {
         nodeMap.makeDrules("r2", "p -> !q");
         checkStatus(ps, 0);
         checkStatus(qs, 0);
-        System.out.println("supports p");
-        nodeMap.supports("p");
+        System.out.println("trysup p");
+        TryPropagator tp = new TryPropagator();
+        try {
+            nodeMap.trysup(tp, "p");
+            Assert.fail();
+        }
+        catch (ContradictionException ce) {
+            System.out.print(ce.getMessage());
+            tp.retract();
+        }
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.retracts("p");
-        nodeMap.printNodes();
-        Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.supports("!p");
+        System.out.println("trysup !p");
+        Assert.assertTrue(nodeMap.trysup(tp, "!p"));
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
     }
 
     @Test
-    public void testBiggerContradiction() throws Exception {
+    public void testTryBiggerContradiction() throws Exception {
         NodeMap nodeMap = new NodeMap();
         BooleanSetting ps = nodeMap.makeBooleanNode("p");
         BooleanSetting qs = nodeMap.makeBooleanNode("q");
@@ -197,22 +203,26 @@ public class NodeMapTest {
         nodeMap.makeDrules("r3", "b -> (!r & !s)");
         nodeMap.makeDrules("r4", "w -> a");
         nodeMap.makeDrules("r5", "x -> b");
-        nodeMap.support("w");
+        TryPropagator tp = new TryPropagator();
+        System.out.println("trysup w");
+        Assert.assertTrue(nodeMap.trysup(tp, "w"));
+        tp.clear();
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        Assert.assertFalse(nodeMap.support("w", "x"));
-        Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.retract("w");
-        nodeMap.printNodes();
-        Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.retracts("x");
-        Assert.assertTrue(nodeMap.support("w"));
+        try {
+            nodeMap.trysup(tp, "x");
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            System.out.println(ce.getMessage());
+            tp.retract();
+        }
         Assert.assertTrue(nodeMap.checkCounts());
         nodeMap.printNodes();
     }
 
     @Test
-    public void testValueContradiction() throws Exception {
+    public void testTryValueContradiction() throws Exception {
         NodeMap nodeMap = new NodeMap();
         BooleanSetting ps = nodeMap.makeBooleanNode("p");
         BooleanSetting qs = nodeMap.makeBooleanNode("q");
@@ -221,10 +231,17 @@ public class NodeMapTest {
         nodeMap.makeDrules("r1", "p -> f=a");
         nodeMap.makeDrules("r2", "q -> f=b");
         nodeMap.makeDrules("r3", "r -> (p & q)");
-        Assert.assertFalse(nodeMap.support("r"));
+        TryPropagator tp = new TryPropagator();
+        try {
+            nodeMap.trysup(tp, "r");
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            System.out.println(ce.getMessage());
+            tp.retract();
+        }
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        Assert.assertTrue(nodeMap.retract("r"));
         Assert.assertTrue(nodeMap.checkCounts());
     }
 
@@ -263,9 +280,25 @@ public class NodeMapTest {
         slotMap.getTotalSupportedCount(ca);
         System.out.println("va mtk " + ca[0] + " ts " + ca[1]);
         */
-        Assert.assertFalse(nodeMap.support("a=3"));
+        TryPropagator tp = new TryPropagator();
+        String[] ssa = { "d=i", "b=v", "a=3" };
+        Assert.assertTrue(nodeMap.trysup(tp, "d=i"));
+        tp.clear();
+        Assert.assertTrue(nodeMap.trysup(tp, "b=v"));
+        tp.clear();
+        try {
+            nodeMap.trysup(tp, "a=3");
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            System.out.println(" contra " + ce.getMessage());
+            tp.retract();
+        }
+        nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
-        Assert.assertTrue(nodeMap.retract("a=3"));
+        Assert.assertTrue(nodeMap.trysup(tp, "a!=3"));
+        tp.clear();
+        nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
     }
 
@@ -297,25 +330,42 @@ public class NodeMapTest {
     }
 
     @Test
-    public void testTryContradiction() throws Exception {
-        System.out.println("try contra");
+    public void testTryRet() throws Exception {
+        System.out.println("tryret");
         NodeMap nodeMap = new NodeMap();
         BooleanSetting ps = nodeMap.makeBooleanNode("p");
         BooleanSetting qs = nodeMap.makeBooleanNode("q");
         BooleanSetting rs = nodeMap.makeBooleanNode("r");
-        BooleanSetting ss = nodeMap.makeBooleanNode("s");
-        nodeMap.makeValueNode("f", "a", "b", "c");
-        nodeMap.makeDrules("r1", "p -> f=a");
-        nodeMap.makeDrules("r2", "q -> f=b");
-        nodeMap.makeDrules("r3", "(r & s) -> (p & q)");
-        nodeMap.supports("r");
+        BooleanSetting ws = nodeMap.makeBooleanNode("w");
+        BooleanSetting xs = nodeMap.makeBooleanNode("x");
+        nodeMap.makeDrules("(w & x) -> p");
+        nodeMap.makeDrules("(w & q) -> r");
+        TryPropagator tp = new TryPropagator();
+        Assert.assertTrue(nodeMap.trysup(tp, "w"));
+        tp.clear();
+        Assert.assertTrue(nodeMap.trysup(tp, "x"));
+        tp.clear();
+        nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
+        Assert.assertTrue(nodeMap.trysup(tp, "q"));
+        tp.clear();
         nodeMap.printNodes();
-        System.out.println("hh");
-        nodeMap.supports("s", "p");
+        checkStatus(ps, 1);
+        checkStatus(rs, 1);
+        Retractor r = nodeMap.makeRetractor("w");
+        Assert.assertTrue(nodeMap.tryret(r, "p"));
         nodeMap.printNodes();
+        Assert.assertTrue(nodeMap.checkCounts());
+        checkStatus(ps, 0);
+        checkStatus(rs, 1);
+        checkStatus(ws, 1);
+        Assert.assertTrue(nodeMap.tryret(r, "r"));
+        checkStatus(ps, 0);
+        checkStatus(rs, 0);
+        checkStatus(ws, 1);
         Assert.assertTrue(nodeMap.checkCounts());
     }
+
 
     @Test
     public void testRetractSettings() throws Exception {

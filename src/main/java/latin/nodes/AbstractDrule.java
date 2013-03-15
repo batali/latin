@@ -1,6 +1,5 @@
 package latin.nodes;
 
-import com.google.common.base.Objects;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -48,6 +47,9 @@ public abstract class AbstractDrule implements BSRule {
                         deduceQueue.setSupport(setting, this);
                         break;
                     }
+                }
+                if (!foundone) {
+                    throw new ContradictionException("no unknown", this);
                 }
             }
         }
@@ -97,9 +99,6 @@ public abstract class AbstractDrule implements BSRule {
     @Override
     public void recordUnset(BooleanSetting  setting, boolean sp, RetractQueue retractQueue, BSRule stopAt) {
         addCount(sp, -1);
-        if (Objects.equal(this, stopAt)) {
-            return;
-        }
         afterUnset(sp, retractQueue);
     }
 }

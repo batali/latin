@@ -84,6 +84,7 @@ public abstract class BooleanSetting implements Supported {
 
     @Override
     public void announceSet(DeduceQueue deduceQueue) throws ContradictionException {
+        Preconditions.checkState(haveSupporter());
         BooleanSetting op = getOpposite();
         for (BSRule r : op.getRules()) {
             r.recordSet(op, false, deduceQueue);
@@ -95,6 +96,7 @@ public abstract class BooleanSetting implements Supported {
 
     @Override
     public void announceUnset(RetractQueue retractQueue, BSRule stopAt) {
+        Preconditions.checkState(!haveSupporter());
         BooleanSetting op = getOpposite();
         for (BSRule r : op.getRules()) {
             r.recordUnset(op, false, retractQueue, stopAt);

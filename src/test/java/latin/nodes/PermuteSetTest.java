@@ -35,13 +35,13 @@ public class PermuteSetTest {
         }
 
         public List<BooleanSetting> settingList() {
-            List<BooleanSetting> settingList = Lists.newArrayList();
+            List<BooleanSetting> settings = Lists.newArrayList();
             int s = sizes.size();
             for (int i = 0; i < s; i++) {
                 Node<?> node = nodes.get(i);
-                settingList.add(node.getIndexSetter(positions.get(i)));
+                settings.add(node.getIndexSetter(positions.get(i)));
             }
-            return settingList;
+            return settings;
         }
 
         public List<BooleanSetting> positionSettingList(Long p) {
@@ -72,7 +72,6 @@ public class PermuteSetTest {
     @Test
     public void testPermuter()  throws ContradictionException {
 
-
         NodeMap nodeMap = new NodeMap();
         nodeMap.makeBooleanNode("an");
         nodeMap.makeBooleanNode("hu");
@@ -98,10 +97,7 @@ public class PermuteSetTest {
         nodeMap.makeDrules("pro=they == (p=3 & nm=pl & cs=S)");
         nodeMap.makeDrules("pro=them == (p=3 & nm=pl & cs=O)");
 
-
         PermuterSetter ps = new PermuterSetter(nodeMap);
-        List<BooleanSetting> settingList = ps.settingList();
-        System.out.println(settingList.toString());
         System.out.println(ps.totalCount);
         Random random = new Random();
         for (int i = 0; i < 20; i++) {

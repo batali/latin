@@ -134,6 +134,14 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         return ps.getSetting(this);
     }
 
+    public List<BooleanSetting> parseSettings(String[] ssa) {
+        List<BooleanSetting> settings = Lists.newArrayList();
+        for (String ss : ssa) {
+            settings.add(parseSetting(ss));
+        }
+        return settings;
+    }
+
     public boolean checkCounts() {
         boolean rv = true;
         for (List<Drule> drules : ruleMap.values()) {
@@ -156,7 +164,6 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         }
         return rv;
     }
-
 
     public class NupSetter {
         final Propagator dq;
@@ -527,6 +534,22 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
             tsettings.add(parseSetting(ss));
         }
         retracts(tsettings);
+    }
+
+    public Retractor makeRetractor(String... ssl) {
+        return new Retractor(parseSettings(ssl));
+    }
+
+    public boolean tryret(Retractor rt, String ss) {
+        return rt.retractTopSupporter(parseSetting(ss));
+    }
+
+    public boolean trysup(TryPropagator tp, BooleanSetting setting) throws ContradictionException {
+        return tp.trySupport(setting);
+    }
+
+    public boolean trysup(TryPropagator tp, String ss) throws ContradictionException {
+        return trysup(tp, parseSetting(ss));
     }
 
 }
