@@ -87,12 +87,10 @@ public abstract class AbstractDrule implements BSRule {
     @Override
     public void recordSet(BooleanSetting setting, boolean sp, DeduceQueue deduceQueue) throws ContradictionException {
         addCount(sp, 1);
-        /*
         if (contradictionCheck()) {
             throw new ContradictionException(String.format("%s %d %d / %d",
                     getClass().getSimpleName(), trueCount, falseCount, settingCount), this);
         }
-        */
         deduce(deduceQueue);
     }
 

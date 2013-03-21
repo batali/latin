@@ -169,16 +169,6 @@ public class TryPropagator {
         }
     }
 
-    public boolean retractSupport(Retractor retractor, BooleanSetting setting) {
-        while(setting.haveSupporter()) {
-            TopSupporter tops = retractor.selectTopSupporter(setting);
-            if (tops == null || !retractTopSupporter(tops)) {
-                break;
-            }
-        }
-        return !setting.haveSupporter();
-    }
-
     public boolean makeSupportable(BooleanSetting setting, Retractor retractor) {
         if (!setting.supportable()) {
             BooleanSetting op = setting.getOpposite();
@@ -233,5 +223,43 @@ public class TryPropagator {
         return setting.haveSupporter();
     }
 
+    public boolean trySupport(Collection<BooleanSetting> tsettings, Retractor retractor) {
+        for (BooleanSetting tsetting : tsettings) {
+            if (trySupport(tsetting, retractor)) {
+                retractor.addTsetting(tsetting);
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean trySupport(Collection<BooleanSetting> tsettings) {
+        return trySupport(tsettings, new Retractor());
+    }
+
+    public boolean retractSupport(BooleanSetting setting, Retractor retractor, SupportCollector supportCollector) {
+        Supporter supporter;
+        while ((supporter = setting.getSupporter()) != null) {
+            supportCollector.clear();
+            supporter.collectSupport(supportCollector);
+            TopSupporter tops = retractor.selectTopSupporter(supportCollector);
+            if (tops == null || !retractTopSupporter(tops)) {
+                break;
+            }
+        }
+        return !setting.haveSupporter();
+    }
+
+    public boolean retractSupports(Collection<BooleanSetting> settings, Retractor retractor) {
+        SupportCollector supportCollector = new SupportCollector();
+        for (BooleanSetting setting : settings) {
+            if (!retractSupport(setting, retractor, supportCollector)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 }

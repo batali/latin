@@ -63,6 +63,7 @@ public class Drule extends AbstractDrule {
         return name;
     }
 
+    @Override
     public SupportCollector collectSupport(SupportCollector supportCollector) {
         for (BooleanSetting bs : setters) {
             supportCollector.recordSupporter(bs.getOpposite());
@@ -70,10 +71,7 @@ public class Drule extends AbstractDrule {
         return supportCollector;
     }
 
-    public void collectContradictionSupport(SupportCollector supportCollector) {
-        collectSupport(supportCollector);
-    }
-
+    @Override
     public boolean doesSupport() {
         return supported != null;
     }
