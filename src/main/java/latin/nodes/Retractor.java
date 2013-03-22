@@ -56,7 +56,7 @@ public class Retractor {
 
     public TopSupporter selectTopSupporter (BSRule rule, Supported tst) {
         SupportCollector sc = new SupportCollector();
-        rule.collectSupport(sc);
+        sc.recordSupporter(rule);
         return selectTopSupporter(sc.topSupporters(), tst);
     }
 

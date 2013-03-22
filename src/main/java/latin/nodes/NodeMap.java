@@ -4,13 +4,11 @@ package latin.nodes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import latin.util.Shuffler;
 import latin.veritas.PropExpression;
 import latin.veritas.PropParser;
 import latin.veritas.Psetting;
 import latin.veritas.StringParser;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.Map;
 public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
     private Map<String,Node<?>> nodeMap;
-    private Map<String,List<Drule>> ruleMap;
+    private Map<String,List<DisjunctionRule>> ruleMap;
 
     public NodeMap() {
         this.nodeMap = Maps.newTreeMap();
@@ -70,7 +68,7 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
     public <T> Node<T> makeValueNode(String path, List<T> values) {
         int n = values.size();
         Preconditions.checkState(n > 1);
-        Node<T> node = (n == 2) ? new BinaryChoiceNode<T>(path, values) : new ValueNode<T>(path, values);
+        Node<T> node = (n == 2) ? new BinaryChoiceNode<T>(path, values) : new Vnode<T>(path, values);
         nodeMap.put(path, node);
         return node;
     }
@@ -109,12 +107,11 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
     public void makeDrules(String name, List<List<Psetting>> cnf) {
         int s = cnf.size();
-        List<Drule> nrules = Lists.newArrayList();
+        List<DisjunctionRule> nrules = Lists.newArrayList();
         ruleMap.put(name, nrules);
         for (int i = 0; i < s; i++) {
             String rn = name + "." + i;
-            Drule drule = new Drule(rn, Psetting.transformPsettings(cnf.get(i), this));
-            nrules.add(drule);
+            nrules.add(new DisjunctionRule(rn, cnf.get(i), this));
         }
     }
 
@@ -130,7 +127,7 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
     public void printNodes() {
         for(Node<?> n : nodeMap.values()) {
-            Setter<?> s = n.getSupportedSetter();
+            BooleanSetting s = n.getSupportedSetting();
             if (s != null) {
                 System.out.println(s.toString());
             }
@@ -138,9 +135,9 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
                 List<String> sl = Lists.newArrayList();
                 int nc = n.setterCount();
                 for (int i = 0; i < nc; i++) {
-                    BooleanSetting st = n.getIndexSetter(i);
+                    BooleanSetting st = n.getIndexSetting(i);
                     if (st.supportable()) {
-                        sl.add(n.getIndexSetter(i).toString());
+                        sl.add(n.getIndexSetting(i).toString());
                     }
                 }
                 System.out.println(n.toString() + sl.toString());
@@ -165,8 +162,8 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
 
     public boolean checkCounts() {
         boolean rv = true;
-        for (List<Drule> drules : ruleMap.values()) {
-            for (Drule dr : drules) {
+        for (List<DisjunctionRule> drules : ruleMap.values()) {
+            for (DisjunctionRule dr : drules) {
                 boolean bv = dr.checkCounts();
                 if (!bv) {
                     System.out.println("Bad at " + dr.name);
@@ -175,8 +172,8 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
             }
         }
         for (Node<?> node : nodeMap.values()) {
-            if (node instanceof ValueNode) {
-                boolean bv = ((ValueNode<?>)node).checkCounts();
+            if (node instanceof Vnode) {
+                boolean bv = ((Vnode<?>)node).checkCounts();
                 if (!bv) {
                     System.out.println("Bad at " + node.toString());
                     rv = false;

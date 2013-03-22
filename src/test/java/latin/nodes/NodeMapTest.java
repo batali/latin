@@ -1,6 +1,7 @@
 
 package latin.nodes;
 
+import com.google.common.base.Objects;
 import junit.framework.Assert;
 import latin.choices.Aspect;
 import latin.choices.Case;
@@ -107,9 +108,9 @@ public class NodeMapTest {
         System.out.println("testRules");
         NodeMap nodeMap = new NodeMap();
         TryPropagator tp = new TryPropagator();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
+        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
+        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
+        BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
         nodeMap.makeDrules("r1", "p->q");
         nodeMap.makeDrules("r2", "q->r");
         nodeMap.trysup(tp, "p");
@@ -138,11 +139,13 @@ public class NodeMapTest {
         BooleanSetting fa = nodeMap.parseSetting("f=a");
         BooleanSetting fb = nodeMap.parseSetting("f=b");
         BooleanSetting fc = nodeMap.parseSetting("f=c");
-        Assert.assertEquals(0, fa.getStatus());
+        BooleanSetting cfa = nodeMap.parseSetting("f=a");
+        Assert.assertTrue(Objects.equal(fa, cfa));
         checkStatus(fa, 0);
         checkStatus(fb, 0);
         checkStatus(fc, 0);
-        nodeMap.support("f=a");
+        Assert.assertTrue(nodeMap.support("f=a"));
+        System.out.println("f=a " + fa.haveSupporter());
         checkStatus(fa, 1);
         checkStatus(fb, -1);
         checkStatus(fc, -1);
@@ -164,26 +167,18 @@ public class NodeMapTest {
     @Test
     public void testTrySmallContradiction() throws Exception {
         NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
+        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
+        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
         nodeMap.makeDrules("r1", "p -> q");
         nodeMap.makeDrules("r2", "p -> !q");
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         System.out.println("trysup p");
-        TryPropagator tp = new TryPropagator();
-        try {
-            nodeMap.trysup(tp, "p");
-            Assert.fail();
-        }
-        catch (ContradictionException ce) {
-            System.out.print(ce.getMessage());
-            tp.retractContradiction();
-        }
+        Assert.assertFalse(nodeMap.support("p"));
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
         System.out.println("trysup !p");
-        Assert.assertTrue(nodeMap.trysup(tp, "!p"));
+        Assert.assertTrue(nodeMap.support("!p"));
         nodeMap.printNodes();
         Assert.assertTrue(nodeMap.checkCounts());
     }
@@ -191,14 +186,14 @@ public class NodeMapTest {
     @Test
     public void testTryBiggerContradiction() throws Exception {
         NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
-        BooleanSetting ss = nodeMap.makeBooleanNode("s");
-        BooleanSetting as = nodeMap.makeBooleanNode("a");
-        BooleanSetting bs = nodeMap.makeBooleanNode("b");
-        BooleanSetting ws = nodeMap.makeBooleanNode("w");
-        BooleanSetting xs = nodeMap.makeBooleanNode("x");
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        nodeMap.makeBooleanNode("r");
+        nodeMap.makeBooleanNode("s");
+        nodeMap.makeBooleanNode("a");
+        nodeMap.makeBooleanNode("b");
+        nodeMap.makeBooleanNode("w");
+        nodeMap.makeBooleanNode("x");
         nodeMap.makeDrules("r1", "p | q | r | s");
         nodeMap.makeDrules("r2", "a -> (!p & !q)");
         nodeMap.makeDrules("r3", "b -> (!r & !s)");
@@ -225,9 +220,9 @@ public class NodeMapTest {
     @Test
     public void testTryValueContradiction() throws Exception {
         NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        nodeMap.makeBooleanNode("r");
         nodeMap.makeValueNode("f", "a", "b", "c");
         nodeMap.makeDrules("r1", "p -> f=a");
         nodeMap.makeDrules("r2", "q -> f=b");
@@ -307,9 +302,9 @@ public class NodeMapTest {
     public void testRetractToSet() throws Exception {
         System.out.println("retract to set");
         NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        nodeMap.makeBooleanNode("r");
         nodeMap.makeValueNode("f", "a", "b", "c");
         nodeMap.makeDrules("r1", "p -> f=a");
         nodeMap.makeDrules("r2", "q -> r");
@@ -334,11 +329,11 @@ public class NodeMapTest {
     public void testTryRet() throws Exception {
         System.out.println("tryret");
         NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
-        BooleanSetting ws = nodeMap.makeBooleanNode("w");
-        BooleanSetting xs = nodeMap.makeBooleanNode("x");
+        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
+        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
+        BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
+        BooleanSetting ws = nodeMap.makeBooleanNode("w").trueSetting;
+        BooleanSetting xs = nodeMap.makeBooleanNode("x").trueSetting;
         nodeMap.makeDrules("(w & x) -> p");
         nodeMap.makeDrules("(w & q) -> r");
         TryPropagator tp = new TryPropagator();
@@ -372,12 +367,12 @@ public class NodeMapTest {
     public void testRetractSettings() throws Exception {
         System.out.println("try retract settings");
         NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
-        BooleanSetting ss = nodeMap.makeBooleanNode("s");
-        BooleanSetting ts = nodeMap.makeBooleanNode("t");
-        BooleanSetting us = nodeMap.makeBooleanNode("u");
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        nodeMap.makeBooleanNode("r");
+        nodeMap.makeBooleanNode("s");
+        nodeMap.makeBooleanNode("t");
+        nodeMap.makeBooleanNode("u");
         nodeMap.makeValueNode("f", "a", "b", "c");
         nodeMap.makeValueNode("g", "1", "2", "3");
         nodeMap.makeValueNode("h", "e", "o", "u");
@@ -396,32 +391,6 @@ public class NodeMapTest {
 
     }
 
-    @Test
-    public void testSupSettings() throws Exception {
-        System.out.println("try sup settings");
-        NodeMap nodeMap = new NodeMap();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p");
-        BooleanSetting qs = nodeMap.makeBooleanNode("q");
-        BooleanSetting rs = nodeMap.makeBooleanNode("r");
-        BooleanSetting ss = nodeMap.makeBooleanNode("s");
-        BooleanSetting ts = nodeMap.makeBooleanNode("t");
-        BooleanSetting us = nodeMap.makeBooleanNode("u");
-        nodeMap.makeValueNode("f", "a", "b", "c");
-        nodeMap.makeValueNode("g", "1", "2", "3");
-        nodeMap.makeValueNode("h", "e", "o", "u");
-        nodeMap.makeDrules("r1", "p -> f=a");
-        nodeMap.makeDrules("r2", "q -> g=1");
-        nodeMap.makeDrules("r3", "r -> h=u");
-        nodeMap.makeDrules("r4", "s -> (p | q)");
-        nodeMap.makeDrules("r5", "t ^ s");
-        nodeMap.makeDrules("r6", "u == f!=c");
-        nodeMap.support("f=a", "h=u", "s");
-        nodeMap.printNodes();
-        nodeMap.support("g=1", "h!=u", "t");
-        nodeMap.printNodes();
-        nodeMap.support("r", "s", "!u");
-        nodeMap.printNodes();
-    }
 
 
 }

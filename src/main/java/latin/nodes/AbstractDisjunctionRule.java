@@ -3,22 +3,20 @@ package latin.nodes;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nullable;
-import java.util.List;
-
 public abstract class AbstractDisjunctionRule implements BSRule {
 
-    public final List<? extends BooleanSetting> settings;
     protected int trueCount;
     protected int falseCount;
-    protected @Nullable Supported dsupported;
+    protected final int settingCount;
 
-    public AbstractDisjunctionRule(List<? extends BooleanSetting> settings) {
-        this.settings = settings;
+    public AbstractDisjunctionRule(int settingCount) {
+        this.settingCount = settingCount;
         this.trueCount = 0;
         this.falseCount = 0;
-        this.dsupported = null;
     }
+
+    public abstract BooleanSetting getSetting(int p);
+    public abstract void retractSupported(RetractQueue rq);
 
     public void addCount(boolean tv, int delta) {
         if (tv) {
@@ -32,7 +30,8 @@ public abstract class AbstractDisjunctionRule implements BSRule {
     public Pair<Integer,Integer> getCounts() {
         int tc = 0;
         int fc = 0;
-        for (BooleanSetting setting : settings) {
+        for (int p = 0; p < settingCount; p++) {
+            BooleanSetting setting = getSetting(p);
             int st = setting.getStatus();
             if (st > 0) {
                 tc += 1;
@@ -56,17 +55,14 @@ public abstract class AbstractDisjunctionRule implements BSRule {
         return trueCount == cp.getLeft() && falseCount == cp.getRight();
     }
 
-    public boolean contradictionCheck() {
-        return falseCount == settings.size();
-    }
-
     public boolean deduceCheck() {
-        return trueCount == 0 && falseCount + 1 == settings.size();
+        return trueCount == 0 && falseCount + 1 >= settingCount;
     }
 
     public void deduce(DeduceQueue dq) throws ContradictionException {
         if (deduceCheck()) {
-            for (BooleanSetting setting : settings) {
+            for (int p = 0; p < settingCount; p++) {
+                BooleanSetting setting = getSetting(p);
                 if (setting.supportable()) {
                     dq.setSupport(setting, this);
                     return;
@@ -80,39 +76,31 @@ public abstract class AbstractDisjunctionRule implements BSRule {
         return sv && deduceCheck();
     }
 
-    public boolean retractDsupported(RetractQueue rq) {
-        return rq.removeSupport(dsupported);
-    }
-
     public void recordSet(BooleanSetting setting, boolean sv, DeduceQueue dq) throws ContradictionException {
         addCount(sv, 1);
-        if (contradictionCheck()) {
-            throw new ContradictionException("DisjunctionRule", this);
-        }
-        else {
+        if (deduceCheck()) {
             deduce(dq);
         }
     }
 
+    @Override
     public void recordUnset(BooleanSetting setting, boolean sv, RetractQueue rq) {
         addCount(sv, -1);
         if (!sv) {
-            rq.removeSupport(dsupported);
+            retractSupported(rq);
         }
         else if (deduceCheck()) {
             rq.addRededucer(this);
         }
     }
 
-    public void collectContradictionSupport(SupportCollector supportCollector) {
-        for (BooleanSetting setting : settings) {
-            supportCollector.recordSupporter(setting.getOpposite());
-        }
-    }
-
     @Override
     public SupportCollector collectSupport(SupportCollector supportCollector) {
-        collectContradictionSupport(supportCollector);
+        for (int p = 0; p < settingCount; p++) {
+            BooleanSetting setting = getSetting(p);
+            supportCollector.recordSupporter(setting.getOpposite());
+        }
         return supportCollector;
     }
+
 }

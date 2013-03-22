@@ -2,7 +2,6 @@
 package latin.nodes;
 
 import javax.annotation.Nullable;
-import java.util.Set;
 
 public interface Supported {
     public @Nullable Supporter getSupporter();
@@ -12,8 +11,7 @@ public interface Supported {
     public boolean setSupport(Supporter newSupporter);
     public boolean removeSupport();
     public void announceSet(DeduceQueue deduceQueue) throws ContradictionException;
-    public void announceUnset(RetractQueue retractQueue, BSRule stopAt);
-    public void supportedBlockers(Set<Supported> blockers);
+    public void announceUnset(RetractQueue retractQueue, Object stopAt);
     public boolean supportedBy(Supporter supporter);
 
 }

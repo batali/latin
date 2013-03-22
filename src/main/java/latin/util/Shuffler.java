@@ -19,19 +19,6 @@ public class Shuffler {
         return random.nextInt(m);
     }
 
-    public static <T> T chooseElement(List<T> tlist) {
-        int s = tlist.size();
-        if (s == 0) {
-            return null;
-        }
-        else if (s == 1) {
-            return tlist.get(0);
-        }
-        else {
-            return tlist.get(nextInt(s));
-        }
-    }
-
     public static <T> boolean adjoin (T newElement, Collection<T> collection) {
         if (collection.contains(newElement)) {
             return false;

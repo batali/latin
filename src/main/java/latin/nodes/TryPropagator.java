@@ -39,6 +39,20 @@ public class TryPropagator {
             public boolean setSupport(Supported supported, Supporter supporter) {
                 return supported.setSupport(supporter) && addDeduced(supported);
             }
+            public boolean propagateLoop() throws ContradictionException {
+                Supported s = null;
+                while ((s = dqueue.pollFirst()) != null) {
+                    try {
+                        s.announceSet(deduceQueue);
+                        aqueue.addLast(s);
+                    }
+                    catch(ContradictionException ce) {
+                        contraPair = Pair.of(s, ce.atRule);
+                        throw ce;
+                    }
+                }
+                return true;
+            }
         };
         this.retractQueue = new RetractQueue() {
             @Override
@@ -59,20 +73,7 @@ public class TryPropagator {
         return deduceQueue;
     }
 
-    public boolean propagateLoop() throws ContradictionException {
-        Supported s = null;
-        while ((s = dqueue.pollFirst()) != null) {
-            try {
-                s.announceSet(deduceQueue);
-                aqueue.addLast(s);
-            }
-            catch(ContradictionException ce) {
-                contraPair = Pair.of(s, ce.atRule);
-                throw ce;
-            }
-        }
-        return true;
-    }
+
 
     public void retractContradiction() {
         Supported s = null;
@@ -102,9 +103,8 @@ public class TryPropagator {
         if (supported.haveSupporter()) {
             return true;
         }
-        TopSupporter tsup = new TopSupporter(supported);
-        tsup.deduce(deduceQueue);
-        return propagateLoop();
+        TopSupporter tsup = new TopSupporter();
+        return deduceQueue.setSupport(supported, tsup) && deduceQueue.propagateLoop() && supported.haveSupporter();
     }
 
     public void clear() {
@@ -136,7 +136,7 @@ public class TryPropagator {
                 if (!dqueue.isEmpty()) {
                     System.out.println("rededuced " + dqueue.peekFirst());
                 }
-                propagateLoop();
+                deduceQueue.propagateLoop();
                 aqueue.clear();
             }
             catch(ContradictionException ce) {
@@ -208,6 +208,10 @@ public class TryPropagator {
                 }
             }
             catch (ContradictionException ce) {
+                System.out.println("contra " + ce.getMessage() + " " + setting.toString());
+                SupportCollector sc = new SupportCollector();
+                sc.recordSupporter(ce.atRule);
+                System.out.println("tops " + sc.topSupporters().toString());
                 TopSupporter tops = retractor.selectTopSupporter(ce.atRule, setting);
                 retractContradiction();
                 if (tops == null) {
@@ -243,7 +247,7 @@ public class TryPropagator {
         Supporter supporter;
         while ((supporter = setting.getSupporter()) != null) {
             supportCollector.clear();
-            supporter.collectSupport(supportCollector);
+            supportCollector.recordSupporter(supporter);
             TopSupporter tops = retractor.selectTopSupporter(supportCollector);
             if (tops == null || !retractTopSupporter(tops)) {
                 break;

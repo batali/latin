@@ -64,15 +64,6 @@ public abstract class BooleanSetting implements Supported {
         return !getOpposite().haveSupporter();
     }
 
-    public void supportedBlockers(Set<Supported> sblockers) {
-        if (supporter == null) {
-            BooleanSetting op = getOpposite();
-            if (op.haveSupporter()) {
-                sblockers.add(op);
-            }
-        }
-    }
-
     public boolean setSupport(Supporter newSupporter) {
         Preconditions.checkState(supportable());
         if (!haveSupporter()) {
@@ -111,17 +102,17 @@ public abstract class BooleanSetting implements Supported {
     }
 
     @Override
-    public void announceUnset(RetractQueue retractQueue, BSRule stopAt) {
+    public void announceUnset(RetractQueue retractQueue, Object stopAt) {
         Preconditions.checkState(!haveSupporter());
         BooleanSetting op = getOpposite();
         for (BSRule r : op.getRules()) {
-            r.recordUnset(op, false, retractQueue, stopAt);
+            r.recordUnset(op, false, retractQueue);
             if (Objects.equal(r, stopAt)) {
                 return;
             }
         }
         for (BSRule r : getRules()) {
-            r.recordUnset(this, true, retractQueue, stopAt);
+            r.recordUnset(this, true, retractQueue);
             if (Objects.equal(r, stopAt)) {
                 return;
             }

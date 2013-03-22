@@ -45,7 +45,7 @@ public class PermuteSetTest {
             int s = sizes.size();
             for (int i = 0; i < s; i++) {
                 Node<?> node = nodes.get(i);
-                settings.add(node.getIndexSetter(positions.get(i)));
+                settings.add(node.getIndexSetting(positions.get(i)));
             }
             return settings;
         }
@@ -57,7 +57,7 @@ public class PermuteSetTest {
             for (int i = 0; i < s; i++) {
                 Node<?> node = nodes.get(i);
                 int si = sizes.get(i);
-                settingList.add(node.getIndexSetter(LongMath.mod(ip, si)));
+                settingList.add(node.getIndexSetting(LongMath.mod(ip, si)));
                 ip /= si;
             }
             return settingList;
@@ -66,7 +66,7 @@ public class PermuteSetTest {
         public List<String> setVals() {
             List<String> vl = Lists.newArrayList();
             for (Node<?> node : nodes) {
-                Setter<?> s = node.getSupportedSetter();
+                BooleanSetting s = node.getSupportedSetting();
                 if (s != null) {
                     vl.add(s.toString());
                 }
@@ -79,7 +79,7 @@ public class PermuteSetTest {
         int nc = n.setterCount();
         for (BooleanSetting s : settings) {
             for (int i = 0; i < nc; i++) {
-                if (Objects.equal(s, n.getIndexSetter(i))) {
+                if (Objects.equal(s, n.getIndexSetting(i))) {
                     return s;
                 }
             }
@@ -95,7 +95,7 @@ public class PermuteSetTest {
         Preconditions.checkState(ns > 0);
         int rp = Shuffler.nextInt(ns);
         for (int i = 0; i < ns; i++) {
-            BooleanSetting setting = n.getIndexSetter((rp+i)%ns);
+            BooleanSetting setting = n.getIndexSetting((rp+i)%ns);
             if (setting.supportable()) {
                 try {
                     if (tp.trySupport(setting)) {
