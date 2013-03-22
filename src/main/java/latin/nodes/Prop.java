@@ -16,16 +16,24 @@ public abstract class Prop {
         return bv ? trueSetting : falseSetting;
     }
 
+    public static int getBooleanIndex(boolean bv) {
+        return bv ? 1 : 0;
+    }
+
+    public static boolean getIndexBoolean(int i) {
+        Preconditions.checkElementIndex(i, 2);
+        return i != 0;
+    }
+
+    public Setting getIndexSetting(int i) {
+        return getBooleanSetting(getIndexBoolean(i));
+    }
+
     public int setterCount() {
         return 2;
     }
 
     public abstract String getSettingString(boolean sv);
-
-    public Setting getIndexSetting(int p) {
-        Preconditions.checkElementIndex(p, 2);
-        return getBooleanSetting(p != 0);
-    }
 
     public boolean whenSet(Setting setting) {
         Preconditions.checkState(supportedSetting == null);

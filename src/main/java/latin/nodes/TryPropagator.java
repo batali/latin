@@ -18,32 +18,21 @@ public class TryPropagator {
     private DeduceQueue deduceQueue;
     private RetractQueue retractQueue;
 
-    private boolean addDeduced(Supported supported) {
-        dqueue.add(supported);
-        return true;
-    }
-
-    private boolean addRetracted(Supported supported) {
-        rqueue.add(supported);
-        return true;
-    }
-
     public TryPropagator () {
         this.aqueue = new LinkedList<Supported>();
         this.dqueue = new LinkedList<Supported>();
         this.rqueue = new LinkedList<Supported>();
         this.rdqueue = new LinkedList<Deducer>();
         this.contraPair = null;
-        this.deduceQueue = new DeduceQueue() {
+        this.deduceQueue = new AbstractDeduceQueue(dqueue) {
             @Override
-            public boolean setSupport(Supported supported, Supporter supporter) {
-                return supported.setSupport(supporter) && addDeduced(supported);
-            }
             public boolean propagateLoop() throws ContradictionException {
-                Supported s = null;
-                while ((s = dqueue.pollFirst()) != null) {
+                Supported s;
+                boolean rv = false;
+                while ((s = pollSupported()) != null) {
                     try {
-                        s.announceSet(deduceQueue);
+                        s.announceSet(this);
+                        rv = true;
                         aqueue.addLast(s);
                     }
                     catch(ContradictionException ce) {
@@ -51,10 +40,16 @@ public class TryPropagator {
                         throw ce;
                     }
                 }
-                return true;
+                return finish() && rv;
             }
+
+            public boolean finish() {
+               aqueue.clear();
+               return true;
+           }
+
         };
-        this.retractQueue = new RetractQueue() {
+        this.retractQueue = new AbstractRetractQueue(rqueue, rdqueue) {
             @Override
             public void addRededucer(Deducer deducer) {
                 if (contraPair == null) {
@@ -72,8 +67,6 @@ public class TryPropagator {
     public DeduceQueue getDeduceQueue() {
         return deduceQueue;
     }
-
-
 
     public void retractContradiction() {
         Supported s = null;
@@ -120,12 +113,16 @@ public class TryPropagator {
     }
 
     public boolean retractLoop() {
-        Supported s = null;
-        while((s = rqueue.pollFirst()) != null) {
-            s.announceUnset(retractQueue, null);
+        boolean rv = retractQueue.retractLoop();
+        if (rv) {
+            try {
+                retractQueue.rededuceLoop(deduceQueue);
+            }
+            catch(ContradictionException ce) {
+                retractContradiction();
+            }
         }
-        rededuceLoop();
-        return true;
+        return rv;
     }
 
     public void rededuceLoop() {

@@ -1,7 +1,7 @@
 
 package latin.nodes;
 
-import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import latin.choices.Aspect;
 import latin.choices.Case;
@@ -12,23 +12,55 @@ import latin.choices.VerbChoices;
 import latin.choices.Voice;
 import org.junit.Test;
 
+import java.util.LinkedList;
+
 public class NodeMapTest {
 
     @Test
     public void testSettings() throws Exception {
         NodeMap nodeMap = new NodeMap();
         nodeMap.makeBooleanNode("p");
-        nodeMap.makeBooleanNode("q");
-        nodeMap.makeBooleanNode("r");
         nodeMap.makeValueNode("f", "a", "b", "c");
         nodeMap.makeValueNode("g", "0", "1");
-        nodeMap.getBooleanSetting("p", false);
-        nodeMap.getValueSetting("f", "a", true);
-        BooleanSetting bs1 = nodeMap.getBooleanSetting("g", true);
-        BooleanSetting bs2 = nodeMap.getValueSetting("g", "1", true);
-        Assert.assertEquals(bs1, bs2);
-        nodeMap.printNodes();
+
+        BooleanSetting pt = nodeMap.getBooleanSetting("p", true);
+        BooleanSetting pf = nodeMap.getBooleanSetting("p", false);
+        Assert.assertSame(pt.getOpposite(), pf);
+        Assert.assertSame(pt, nodeMap.parseSetting("p"));
+        Assert.assertSame(pf, nodeMap.parseSetting("!p"));
+
+        BooleanSetting fat = nodeMap.getValueSetting("f", "a", true);
+        Assert.assertSame(fat, nodeMap.parseSetting("f=a"));
+        Assert.assertSame(fat.getOpposite(), nodeMap.getValueSetting("f", "a", false));
+        Assert.assertSame(fat.getOpposite(), nodeMap.parseSetting("f!=a"));
+        Assert.assertSame(fat.getOpposite(), nodeMap.parseSetting("!f=a"));
+        Assert.assertEquals("f=a", fat.toString());
+        Assert.assertEquals("f!=a", fat.getOpposite().toString());
+
+        BooleanSetting g1 = nodeMap.getBooleanSetting("g", true);
+        Assert.assertEquals("g=1", g1.toString());
+        Assert.assertSame(g1, nodeMap.getValueSetting("g", "1", true));
+        Assert.assertSame(g1, nodeMap.getValueSetting("g", "0", false));
+        Assert.assertSame(g1, nodeMap.parseSetting("g"));
+        Assert.assertSame(g1, nodeMap.parseSetting("g=1"));
+        Assert.assertSame(g1, nodeMap.parseSetting("g!=0"));
+        Assert.assertSame(g1, nodeMap.parseSetting("!g=0"));
+        BooleanSetting g0 = g1.getOpposite();
+        Assert.assertEquals("g=0", g0.toString());
+        Assert.assertSame(g0, nodeMap.getBooleanSetting("g", false));
+        Assert.assertSame(g0, nodeMap.getValueSetting("g", "0", true));
+        Assert.assertSame(g0, nodeMap.getValueSetting("g", "1", false));
+        Assert.assertSame(g0, nodeMap.parseSetting("!g"));
+        Assert.assertSame(g0, nodeMap.parseSetting("g=0"));
+        Assert.assertSame(g0, nodeMap.parseSetting("g!=1"));
+        Assert.assertSame(g0, nodeMap.parseSetting("!g=1"));
     }
+
+    public void checkStatus(BooleanSetting bs, int ts) {
+        Assert.assertEquals(bs.toString(), ts, bs.getStatus());
+    }
+
+
 
     @Test
     public void testEnumNodes() throws Exception {
@@ -99,70 +131,8 @@ public class NodeMapTest {
         System.out.println("aa");
     }
 
-    public void checkStatus(BooleanSetting bs, int ts) {
-        Assert.assertEquals(bs.toString(), ts, bs.getStatus());
-    }
 
-    @Test
-    public void testRules() throws Exception {
-        System.out.println("testRules");
-        NodeMap nodeMap = new NodeMap();
-        TryPropagator tp = new TryPropagator();
-        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
-        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
-        BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
-        nodeMap.makeDrules("r1", "p->q");
-        nodeMap.makeDrules("r2", "q->r");
-        nodeMap.trysup(tp, "p");
-        checkStatus(ps, 1);
-        checkStatus(qs, 1);
-        checkStatus(rs, 1);
-        nodeMap.retract("q");
-        checkStatus(ps, 0);
-        checkStatus(qs, 0);
-        checkStatus(rs, 0);
-        nodeMap.support("!r");
-        Assert.assertTrue(nodeMap.checkCounts());
-        checkStatus(ps, -1);
-        checkStatus(qs, -1);
-        checkStatus(rs, -1);
-        nodeMap.retract("!r");
-        checkStatus(ps, 0);
-        checkStatus(qs, 0);
-        checkStatus(rs, 0);
-    }
 
-    @Test
-    public void testValues() throws Exception {
-        NodeMap nodeMap = new NodeMap();
-        nodeMap.makeValueNode("f", "a", "b", "c");
-        BooleanSetting fa = nodeMap.parseSetting("f=a");
-        BooleanSetting fb = nodeMap.parseSetting("f=b");
-        BooleanSetting fc = nodeMap.parseSetting("f=c");
-        BooleanSetting cfa = nodeMap.parseSetting("f=a");
-        Assert.assertTrue(Objects.equal(fa, cfa));
-        checkStatus(fa, 0);
-        checkStatus(fb, 0);
-        checkStatus(fc, 0);
-        Assert.assertTrue(nodeMap.support("f=a"));
-        System.out.println("f=a " + fa.haveSupporter());
-        checkStatus(fa, 1);
-        checkStatus(fb, -1);
-        checkStatus(fc, -1);
-        nodeMap.retract("f=a");
-        checkStatus(fa, 0);
-        checkStatus(fb, 0);
-        checkStatus(fc, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
-        nodeMap.support("f!=b");
-        checkStatus(fa, 0);
-        checkStatus(fb, -1);
-        checkStatus(fc, 0);
-        nodeMap.retract("f!=b");
-        checkStatus(fa, 0);
-        checkStatus(fb, 0);
-        checkStatus(fc, 0);
-    }
 
     @Test
     public void testTrySmallContradiction() throws Exception {

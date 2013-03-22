@@ -1,9 +1,7 @@
 
 package latin.nodes;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import java.util.List;
 
@@ -38,16 +36,6 @@ public class BinaryChoiceNode<T> extends Prop implements Node<T>, ChoiceSettings
         else {
             return null;
         }
-    }
-
-    @Override
-    public List<String> allChoiceNames() {
-        return Lists.transform(values, new Function<T, String>() {
-            @Override
-            public String apply(T t) {
-                return t.toString();
-            }
-        });
     }
 
     public String getSettingString(boolean sv) {

@@ -1,7 +1,6 @@
 
 package latin.nodes;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -102,16 +101,6 @@ public class Vnode<T> extends AbstractDisjunctionRule implements Node<T>, Choice
         int i = getChoiceIndex(choiceName);
         ValueProp vp = valueProps.get(i);
         return vp.getBooleanSetting(sv);
-    }
-
-    @Override
-    public List<String> allChoiceNames() {
-        return Lists.transform(valueProps, new Function<ValueProp, String>() {
-            @Override
-            public String apply(ValueProp valueProp) {
-                return valueProp.value.toString();
-            }
-        });
     }
 
     @Override
