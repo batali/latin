@@ -23,7 +23,7 @@ public class PropagateTest {
     LinkedList<Supported> dqueue;
     LinkedList<Supported> rqueue;
     LinkedList<Deducer> rdqueue;
-    DeduceQueue deduceQueue;
+    AbstractDeduceQueue deduceQueue;
     RetractQueue retractQueue;
 
     @Before
@@ -42,6 +42,10 @@ public class PropagateTest {
 
     public void checkStatus(String ss, int ts) {
         checkStatus(nodeMap.parseSetting(ss), ts);
+    }
+
+    public void checkCounts() {
+        Assert.assertTrue(nodeMap.checkCounts());
     }
 
     public boolean psup(BooleanSetting bs, TopSupporter ts) throws ContradictionException {
@@ -69,29 +73,29 @@ public class PropagateTest {
         checkStatus(ps, 1);
         checkStatus(qs, 1);
         checkStatus(rs, 1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         Assert.assertTrue(rsup(tops) && !retractQueue.haveRededucer());
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         checkStatus(rs, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         TopSupporter topt = new TopSupporter();
         Assert.assertTrue(psup(rs.getOpposite(), topt));
         checkStatus(ps, -1);
         checkStatus(qs, -1);
         checkStatus(rs, -1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         Assert.assertTrue(rsup(topt) && !retractQueue.haveRededucer());
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         checkStatus(rs, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         TopSupporter topq = new TopSupporter();
         Assert.assertTrue(psup(qs, topq));
         checkStatus(ps, 0);
         checkStatus(qs, 1);
         checkStatus(rs, 1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
     }
 
     @Test
@@ -109,14 +113,14 @@ public class PropagateTest {
         checkStatus(qs, 1);
         checkStatus(rs, 1);
         checkStatus(ss, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         TopSupporter top2 = new TopSupporter();
         Assert.assertTrue(psup(ss, top2));
         checkStatus(ps, 1);
         checkStatus(qs, 1);
         checkStatus(rs, 1);
         checkStatus(ss, 1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         Assert.assertTrue(rsup(top1));
         Assert.assertTrue(retractQueue.haveRededucer());
         retractQueue.rededuceLoop(deduceQueue);
@@ -124,7 +128,7 @@ public class PropagateTest {
         checkStatus(qs, 0);
         checkStatus(rs, 1);
         checkStatus(ss, 1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
     }
 
     @Test
@@ -141,40 +145,40 @@ public class PropagateTest {
         checkStatus(fa, 1);
         checkStatus(fb, -1);
         checkStatus(fc, -1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         Assert.assertTrue(rsup(top1) && !retractQueue.haveRededucer());
         checkStatus(fa, 0);
         checkStatus(fb, 0);
         checkStatus(fc, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         TopSupporter top2 = new TopSupporter();
         Assert.assertTrue(psup(fb.getOpposite(), top2));
         checkStatus(fa, 0);
         checkStatus(fb, -1);
         checkStatus(fc, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         TopSupporter top3 = new TopSupporter();
         Assert.assertTrue(psup(fc.getOpposite(), top3));
         checkStatus(fa, 1);
         checkStatus(fb, -1);
         checkStatus(fc, -1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         Assert.assertTrue(rsup(top2) && !retractQueue.haveRededucer());
         checkStatus(fa, 0);
         checkStatus(fb, 0);
         checkStatus(fc, -1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         TopSupporter top4 = new TopSupporter();
         Assert.assertTrue(psup(fa.getOpposite(), top4));
         checkStatus(fa, -1);
         checkStatus(fb, 1);
         checkStatus(fc, -1);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
         Assert.assertTrue(rsup(top3) && !retractQueue.haveRededucer());
         checkStatus(fa, -1);
         checkStatus(fb, 0);
         checkStatus(fc, 0);
-        Assert.assertTrue(nodeMap.checkCounts());
+        checkCounts();
     }
 
     @Test
@@ -272,6 +276,7 @@ public class PropagateTest {
         checkStatus("CaseNumber=DatPl", -1);
         Assert.assertTrue(rsup(top2));
         retractQueue.rededuceLoop(deduceQueue);
+        checkCounts();
         TopSupporter top3 = new TopSupporter();
         Assert.assertTrue(psup("Number=Pl", top3));
         checkStatus("CaseNumber=AblSi", -1);
@@ -280,12 +285,134 @@ public class PropagateTest {
         checkStatus("CaseNumber=DatPl", -1);
         Assert.assertTrue(rsup(top1));
         retractQueue.rededuceLoop(deduceQueue);
+        checkCounts();
         TopSupporter top4 = new TopSupporter();
         Assert.assertTrue(psup("Case=Dat", top4));
         checkStatus("CaseNumber=AblSi", -1);
         checkStatus("CaseNumber=DatSi", -1);
         checkStatus("CaseNumber=AblPl", -1);
         checkStatus("CaseNumber=DatPl", 1);
+        checkCounts();
     }
 
+    @Test
+    public void testSmallContradiction() throws Exception {
+        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
+        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
+        nodeMap.makeDrules("r1", "p -> q");
+        nodeMap.makeDrules("r2", "p -> !q");
+        checkStatus(ps, 0);
+        checkStatus(qs, 0);
+        TopSupporter top1 = new TopSupporter();
+        try {
+            psup("p", top1);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            logger.info("testSmallContradiction: {}", ce.getMessage());
+            deduceQueue.retractContradiction(ce.atRule);
+        }
+        rsup(top1);
+        checkCounts();
+        TopSupporter top2 = new TopSupporter();
+        Assert.assertTrue(psup("!p", top2));
+        checkCounts();
+    }
+
+    @Test
+    public void testValueContradiction() throws Exception {
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
+        nodeMap.makeValueNode("f", "a", "b", "c");
+        nodeMap.makeDrules("r1", "p -> f=a");
+        nodeMap.makeDrules("r2", "q -> f=b");
+        nodeMap.makeDrules("r3", "r -> (p & q)");
+        Assert.assertTrue(rs.supportable());
+        TopSupporter top1 = new TopSupporter();
+        try {
+            psup(rs, top1);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            logger.info("testValueContradiction: {}", ce.getMessage());
+            deduceQueue.retractContradiction(ce.atRule);
+        }
+        rsup(top1);
+        checkCounts();
+    }
+
+    @Test
+    public void testBiggerContradiction() throws Exception {
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        nodeMap.makeBooleanNode("r");
+        nodeMap.makeBooleanNode("s");
+        nodeMap.makeBooleanNode("a");
+        nodeMap.makeBooleanNode("b");
+        nodeMap.makeBooleanNode("w");
+        nodeMap.makeBooleanNode("x");
+        nodeMap.makeDrules("r1", "p | q | r | s");
+        nodeMap.makeDrules("r2", "a -> (!p & !q)");
+        nodeMap.makeDrules("r3", "b -> (!r & !s)");
+        nodeMap.makeDrules("r4", "w -> a");
+        nodeMap.makeDrules("r5", "x -> b");
+        TopSupporter top1 = new TopSupporter();
+        Assert.assertTrue(psup("w", top1));
+        checkCounts();
+        TopSupporter top2 = new TopSupporter();
+        try {
+            psup("x", top2);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            logger.info("testValueContradiction: {}", ce.getMessage());
+            deduceQueue.retractContradiction(ce.atRule);
+        }
+        rsup(top2);
+        checkCounts();
+        checkStatus("w", 1);
+        checkStatus("x", 0);
+        TopSupporter top3 = new TopSupporter();
+        Assert.assertTrue(psup("!x", top3));
+        checkCounts();
+    }
+
+    @Test
+    public void testWeirdValueContradiction() throws Exception {
+        nodeMap.makeBooleanNode("p");
+        nodeMap.makeBooleanNode("q");
+        nodeMap.makeBooleanNode("r");
+        nodeMap.makeBooleanNode("s");
+        nodeMap.makeBooleanNode("t");
+        nodeMap.makeBooleanNode("u");
+        nodeMap.makeBooleanNode("v");
+        nodeMap.makeValueNode("a", "1", "2", "3", "4");
+        nodeMap.makeValueNode("b", "v", "w", "x");
+        nodeMap.makeValueNode("c", "0", "1");
+        nodeMap.makeValueNode("d", "i", "o", "u");
+        nodeMap.makeDrules("r1", "d=i -> b=v");
+        nodeMap.makeDrules("r2", "a!=1 == !c");
+        nodeMap.makeDrules("r3", "a=3 ^ t");
+        nodeMap.makeDrules("r4", "d=o -> (r & s)");
+        nodeMap.makeDrules("r5", "a!=1 -> p");
+        nodeMap.makeDrules("r6", "a!=2 -> !p");
+        TopSupporter top1 = new TopSupporter();
+        Assert.assertTrue(psup("d=i", top1));
+        BooleanSetting bv = nodeMap.parseSetting("b=v");
+        Assert.assertTrue(bv.haveSupporter());
+        BooleanSetting a3 = nodeMap.parseSetting("a=3");
+        Assert.assertTrue(a3.supportable());
+        TopSupporter top3 = new TopSupporter();
+        try {
+            psup(a3, top3);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            logger.info("testWeirdValueContradiction: {}", ce.getMessage());
+            deduceQueue.retractContradiction(ce.atRule);
+        }
+        rsup(top3);
+        checkCounts();
+    }
 }

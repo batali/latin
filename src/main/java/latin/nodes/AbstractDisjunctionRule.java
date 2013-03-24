@@ -68,7 +68,7 @@ public abstract class AbstractDisjunctionRule implements BSRule {
                     return;
                 }
             }
-            throw new ContradictionException("No supportable", this);
+            throw new ContradictionException(toString() + ": No supportable", this);
         }
     }
 

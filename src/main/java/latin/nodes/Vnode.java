@@ -163,7 +163,7 @@ public class Vnode<T> extends AbstractDisjunctionRule implements Node<T>, Choice
 
     public void deduce(DeduceQueue dq) throws ContradictionException {
         if (trueCount > 1) {
-            throw new ContradictionException("vnode", this);
+            throw new ContradictionException("Vnode[" + toString() + "]", this);
         }
         else if (trueCount == 1) {
             if (supportMode >= 0 && falseCount + 1 < settingCount) {

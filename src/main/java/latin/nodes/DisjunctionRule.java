@@ -27,6 +27,11 @@ public class DisjunctionRule extends AbstractDisjunctionRule {
     }
 
     @Override
+    public String toString() {
+        return name;
+    }
+
+    @Override
     public boolean addSupported(Supported newSupported) {
         supported = newSupported;
         return true;

@@ -2,10 +2,14 @@
 package latin.nodes;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
 
 public class AbstractDeduceQueue implements DeduceQueue {
+
+    private static Logger logger = LoggerFactory.getLogger(DeduceQueue.class);
 
     private Queue<Supported> supportedQueue;
 
@@ -36,9 +40,10 @@ public class AbstractDeduceQueue implements DeduceQueue {
     public boolean propagateLoop() throws ContradictionException {
         Supported s;
         boolean rv = false;
-        while ((s = pollSupported()) != null) {
+        while ((s = peekSupported()) != null) {
             s.announceSet(this);
             rv = true;
+            pollSupported();
         }
         return rv && finish();
     }
@@ -52,4 +57,21 @@ public class AbstractDeduceQueue implements DeduceQueue {
         return true;
     }
 
+    public void retractContradiction(BSRule contraRule) {
+        RetractQueue erq = AbstractRetractQueue.emptyRetractQueue;
+        Supported s = pollSupported();
+        Preconditions.checkNotNull(s);
+        logger.info("Retracting cs {}", s);
+        Preconditions.checkState(s.removeSupport());
+        s.announceUnset(erq, contraRule);
+        while((s = pollSupported()) != null) {
+            if (s.haveSupporter()) {
+                logger.info("Retracting ds {}", s);
+                s.removeSupport();
+            }
+            else {
+                logger.info("No support for ds {}", s);
+            }
+        }
+    }
 }

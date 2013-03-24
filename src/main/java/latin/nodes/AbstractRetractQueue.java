@@ -1,5 +1,6 @@
 package latin.nodes;
 
+import latin.util.EmptyQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +9,17 @@ import java.util.Queue;
 public class AbstractRetractQueue implements RetractQueue {
 
     private static Logger logger = LoggerFactory.getLogger(RetractQueue.class);
+
+    public static final AbstractRetractQueue emptyRetractQueue =
+            new AbstractRetractQueue(new EmptyQueue<Supported>(), new EmptyQueue<Deducer>()) {
+                @Override
+                public boolean addRetracted(Supported supported) {
+                    return true;
+                }
+                @Override
+                public void addRededucer(Deducer deducer) {
+                }
+            };
 
     private Queue<Supported> rqueue;
     private Queue<Deducer> dqueue;
