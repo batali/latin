@@ -1,18 +1,12 @@
 
 package latin.nodes;
 
-import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import latin.choices.Aspect;
-import latin.choices.Case;
-import latin.choices.CaseNumber;
-import latin.choices.Number;
 import latin.choices.Time;
 import latin.choices.VerbChoices;
 import latin.choices.Voice;
 import org.junit.Test;
-
-import java.util.LinkedList;
 
 public class NodeMapTest {
 
@@ -58,31 +52,6 @@ public class NodeMapTest {
 
     public void checkStatus(BooleanSetting bs, int ts) {
         Assert.assertEquals(bs.toString(), ts, bs.getStatus());
-    }
-
-
-
-    @Test
-    public void testEnumNodes() throws Exception {
-        NodeMap nodeMap = new NodeMap();
-        nodeMap.makeValueNode("Case", Case.class);
-        nodeMap.makeValueNode("Number", Number.class);
-        Node<?> cnNode = nodeMap.makeValueNode("CaseNumber", CaseNumber.class);
-        for (CaseNumber cn : CaseNumber.values()) {
-            Case ck = cn.getCase();
-            Number nk = cn.getNumber();
-            nodeMap.makeDrules(cn.toString(), String.format("(Case=%s & Number=%s) == CaseNumber=%s",
-                    ck.toString(), nk.toString(), cn.toString()));
-        }
-        nodeMap.support("Case=Abl");
-        nodeMap.support("Number=Si");
-//        System.out.prntln(cnNode.getSupportedSetting().toString());
-        nodeMap.support("Number=Pl");
-//        System.out.println(cnNode.getSupportedSetting().toString());
-        nodeMap.support("Case=Dat");
-//        System.out.println(cnNode.getSupportedSetting().toString());
-        nodeMap.support("CaseNumber=AccSi");
-        nodeMap.printNodes();
     }
 
     @Test

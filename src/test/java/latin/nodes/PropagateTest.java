@@ -3,14 +3,21 @@ package latin.nodes;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import latin.choices.Case;
+import latin.choices.Number;
+import latin.choices.CaseNumber;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.Set;
 
 public class PropagateTest {
+
+    private static Logger logger = LoggerFactory.getLogger(PropagateTest.class);
 
     NodeMap nodeMap;
     LinkedList<Supported> dqueue;
@@ -33,8 +40,16 @@ public class PropagateTest {
         Assert.assertEquals(bs.toString(), ts, bs.getStatus());
     }
 
+    public void checkStatus(String ss, int ts) {
+        checkStatus(nodeMap.parseSetting(ss), ts);
+    }
+
     public boolean psup(BooleanSetting bs, TopSupporter ts) throws ContradictionException {
         return deduceQueue.setSupport(bs, ts) && deduceQueue.propagateLoop();
+    }
+
+    public boolean psup(String ss, TopSupporter ts) throws ContradictionException {
+        return psup(nodeMap.parseSetting(ss), ts);
     }
 
     public boolean rsup(TopSupporter ts) {
@@ -43,6 +58,7 @@ public class PropagateTest {
 
     @Test
     public void testPropagateBoolean() throws Exception {
+        logger.info("testPropagateBoolean");
         BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
         BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
         BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
@@ -233,6 +249,43 @@ public class PropagateTest {
         supportCollector.recordSupporter(rs);
         Set<TopSupporter> tset3 = Sets.newHashSet(supportCollector.topSupporters());
         Assert.assertEquals(tseta, tset3);
+    }
+
+    @Test
+    public void testEnumNodes() throws Exception {
+        nodeMap.makeValueNode("Case", Case.class);
+        nodeMap.makeValueNode("Number", Number.class);
+        nodeMap.makeValueNode("CaseNumber", CaseNumber.class);
+        for (CaseNumber cn : CaseNumber.values()) {
+            Case ck = cn.getCase();
+            Number nk = cn.getNumber();
+            nodeMap.makeDrules(cn.toString(), String.format("(Case=%s & Number=%s) == CaseNumber=%s",
+                    ck.toString(), nk.toString(), cn.toString()));
+        }
+        TopSupporter top1 = new TopSupporter();
+        Assert.assertTrue(psup("Case=Abl", top1));
+        TopSupporter top2 = new TopSupporter();
+        Assert.assertTrue(psup("Number=Si", top2));
+        checkStatus("CaseNumber=AblSi", 1);
+        checkStatus("CaseNumber=DatSi", -1);
+        checkStatus("CaseNumber=AblPl", -1);
+        checkStatus("CaseNumber=DatPl", -1);
+        Assert.assertTrue(rsup(top2));
+        retractQueue.rededuceLoop(deduceQueue);
+        TopSupporter top3 = new TopSupporter();
+        Assert.assertTrue(psup("Number=Pl", top3));
+        checkStatus("CaseNumber=AblSi", -1);
+        checkStatus("CaseNumber=DatSi", -1);
+        checkStatus("CaseNumber=AblPl", 1);
+        checkStatus("CaseNumber=DatPl", -1);
+        Assert.assertTrue(rsup(top1));
+        retractQueue.rededuceLoop(deduceQueue);
+        TopSupporter top4 = new TopSupporter();
+        Assert.assertTrue(psup("Case=Dat", top4));
+        checkStatus("CaseNumber=AblSi", -1);
+        checkStatus("CaseNumber=DatSi", -1);
+        checkStatus("CaseNumber=AblPl", -1);
+        checkStatus("CaseNumber=DatPl", 1);
     }
 
 }

@@ -1,8 +1,13 @@
 package latin.nodes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Queue;
 
 public class AbstractRetractQueue implements RetractQueue {
+
+    private static Logger logger = LoggerFactory.getLogger(RetractQueue.class);
 
     private Queue<Supported> rqueue;
     private Queue<Deducer> dqueue;
@@ -73,7 +78,7 @@ public class AbstractRetractQueue implements RetractQueue {
             deducer.deduce(deduceQueue);
             if (deduceQueue.haveSupported()) {
                 rv = true;
-                //System.out.println("rededuced " + deduceQueue.peekSupported());
+                logger.info("Rededuced {}", deduceQueue.peekSupported());
                 deduceQueue.propagateLoop();
             }
         }
