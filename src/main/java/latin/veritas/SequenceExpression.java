@@ -5,8 +5,11 @@ import com.google.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class SequenceExpression implements PropExpression {
+
+    public static final List<String> operatorNames = Lists.newArrayList("&", "|");
 
     public static abstract class Operator {
         public abstract boolean isConjunction();
@@ -51,6 +54,18 @@ public class SequenceExpression implements PropExpression {
         return this;
     }
 
+    public static Operator getOperator(String opName) {
+        if (opName.equals("&")) {
+            return andOperator;
+        }
+        else if (opName.equals("|")) {
+            return orOperator;
+        }
+        else {
+            throw new IllegalArgumentException("Unknown sequence operator " + opName);
+        }
+    }
+
     @Override
     public boolean meval(MevalEnvironment mevalEnvironment) {
         return operator.mevalSequence(subExpressions, mevalEnvironment);
@@ -92,4 +107,31 @@ public class SequenceExpression implements PropExpression {
         }
     }
 
+    @Override
+    public void collectPaths(Set<String> pathStrings) {
+        for (PropExpression se : subExpressions) {
+            se.collectPaths(pathStrings);
+        }
+    }
+
+    @Override
+    public String prettyPrint(boolean top) {
+        StringBuilder builder = new StringBuilder();
+        if (!top) {
+            builder.append("(");
+        }
+        int n = subExpressions.size();
+        for (int i = 0; i < n; i++) {
+            if (i > 0) {
+                builder.append(" ");
+                builder.append(operator.getName());
+                builder.append(" ");
+            }
+            builder.append(subExpressions.get(i).prettyPrint(false));
+        }
+        if (!top) {
+            builder.append(")");
+        }
+        return builder.toString();
+    }
 }

@@ -25,7 +25,8 @@ public class ParsePropTest {
             Pair.of("p=q", "p=q"),
             Pair.of("(p & q & r) -> s","[->, [&, p, q, r], s]"),
             Pair.of("p & q | r | s&t", "[|, [&, p, q], r, [&, s, t]]"),
-            Pair.of("((p))","p")
+            Pair.of("((p))","p"),
+            Pair.of("!(p | q)", "[!, [|, p, q]]")
     );
 
     @Test

@@ -3,6 +3,7 @@ package latin.veritas;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class NotExpression implements PropExpression {
 
@@ -32,4 +33,21 @@ public class NotExpression implements PropExpression {
     public List<List<Psetting>> getCnf(boolean bv, Psetting.Handler handler) {
         return subExpression.getCnf(!bv, handler);
     }
+
+    @Override
+    public void collectPaths(Set<String> pathStrings) {
+        subExpression.collectPaths(pathStrings);
+    }
+
+    public String prettyPrint(boolean top) {
+        PropExpression pe = this;
+        StringBuilder sb = new StringBuilder();
+        while(pe instanceof NotExpression) {
+            sb.append("!");
+            pe = ((NotExpression)pe).subExpression;
+        }
+        sb.append(pe.prettyPrint(false));
+        return sb.toString();
+    }
+
 }

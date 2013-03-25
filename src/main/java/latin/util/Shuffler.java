@@ -1,10 +1,12 @@
 
 package latin.util;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -16,7 +18,13 @@ public class Shuffler {
     public static final Random random = new Random();
 
     public static int nextInt(int m) {
-        return random.nextInt(m);
+        Preconditions.checkArgument(m >= 0);
+        if (m <= 1) {
+            return 0;
+        }
+        else {
+            return random.nextInt(m);
+        }
     }
 
     public static <T> boolean adjoin (T newElement, Collection<T> collection) {
@@ -139,6 +147,11 @@ public class Shuffler {
 
     public static <T> List<T> rsel(List<T> fromList, int tosize) {
         return psel(fromList, choose(fromList.size(), tosize));
+    }
+
+    public static <T> List<T> shuffle(List<T> tlist) {
+        Collections.shuffle(tlist, random);
+        return tlist;
     }
 
 }

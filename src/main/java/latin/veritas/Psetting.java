@@ -22,9 +22,13 @@ public abstract class Psetting {
         this.value = value;
     }
 
+    public boolean meval(MevalEnvironment menv) {
+        return menv.evalSlot(pathString, choiceString) == value;
+    }
+
     public static class BooleanPsetting extends Psetting {
         public BooleanPsetting(String pathString, boolean value) {
-            super(pathString, "", value);
+            super(pathString, "T", value);
         }
         public String toString() {
             return value ? pathString : "!" + pathString;
@@ -62,7 +66,6 @@ public abstract class Psetting {
     public static List<Psetting> singletonList(Psetting setting) {
         return Lists.newArrayList(setting);
     }
-
 
     public static final Ordering<Psetting> PsettingOrdering = new Ordering<Psetting> () {
         @Override
@@ -277,4 +280,37 @@ public abstract class Psetting {
         });
     }
 
+    public static boolean mevalSequence(List<Psetting> psettings, MevalEnvironment menv, boolean amConjunction) {
+        for (Psetting psetting : psettings) {
+            if (psetting.meval(menv) != amConjunction) {
+                return !amConjunction;
+            }
+        }
+        return amConjunction;
+    }
+
+    public static boolean mevalDisjunction(List<Psetting> psettings, MevalEnvironment menv) {
+        return mevalSequence(psettings, menv, false);
+    }
+
+    public static boolean mevalConjunction(List<Psetting> psettings, MevalEnvironment menv) {
+        return mevalSequence(psettings, menv, true);
+    }
+
+    public static boolean mevalNormalForm(List<List<Psetting>> psettingsList, MevalEnvironment menv, boolean amCnf) {
+        for (List<Psetting> psettings : psettingsList) {
+            if (mevalSequence(psettings, menv, !amCnf) != amCnf) {
+                return !amCnf;
+            }
+        }
+        return amCnf;
+    }
+
+    public static boolean mevalCnf(List<List<Psetting>> psettingsList, MevalEnvironment menv) {
+        return mevalNormalForm(psettingsList, menv, true);
+    }
+
+    public static boolean mevalDnf(List<List<Psetting>> psettingsList, MevalEnvironment menv) {
+        return mevalNormalForm(psettingsList, menv, false);
+    }
 }

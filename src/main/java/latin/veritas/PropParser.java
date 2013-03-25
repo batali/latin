@@ -32,6 +32,10 @@ public class PropParser {
         }
     };
 
+    public static PropExpression makeNotExpression(PropExpression sub) {
+        return new CompoundExpression(CompoundExpression.notOperator, sub);
+    }
+
     public static PropExpression parseBounded(StringParser stringParser) {
         char c = stringParser.ignoreSpaces().charAt();
         if (c == '(') {
@@ -40,7 +44,7 @@ public class PropParser {
         }
         else if (c == '!') {
             stringParser.useChar(c);
-            return new NotExpression(parseBounded(stringParser));
+            return makeNotExpression(parseBounded(stringParser));
         }
         else if (slotStartChar.apply(c)) {
             return parseAtomic(stringParser);
@@ -68,7 +72,15 @@ public class PropParser {
         stringParser.ignoreSpaces();
         String choiceName = stringParser.getToken(valueChar);
         PropExpression valueExpression = new ValueExpression(pathSpec, choiceName);
-        return bv ? valueExpression : new NotExpression(valueExpression);
+        return bv ? valueExpression : makeNotExpression(valueExpression);
+    }
+
+    public static CompoundExpression makeAndExpression(List<PropExpression> subs) {
+        return new CompoundExpression(CompoundExpression.andOperator, subs);
+    }
+
+    public static CompoundExpression makeOrExpression(List<PropExpression> subs) {
+        return new CompoundExpression(CompoundExpression.orOperator, subs);
     }
 
     public static SequenceExpression makeAndExpression() {
@@ -79,7 +91,7 @@ public class PropParser {
         return new SequenceExpression(SequenceExpression.orOperator);
     }
 
-    public static PropExpression parseProp(StringParser stringParser, boolean parenp) {
+    public static PropExpression oparseProp(StringParser stringParser, boolean parenp) {
         PropExpression exp1 = parseBounded(stringParser);
         stringParser.ignoreSpaces();
         if (stringParser.atEnd(parenp)) {
@@ -129,8 +141,88 @@ public class PropParser {
         }
     }
 
+    public static CompoundExpression.Operator getBinaryOperator(StringParser stringParser) {
+        if (stringParser.usePrefix("->")) {
+            return CompoundExpression.ifOperator;
+        }
+        if (stringParser.usePrefix("==")) {
+            return CompoundExpression.iffOperator;
+        }
+        if (stringParser.usePrefix("^")) {
+            return CompoundExpression.XorOperator;
+        }
+        return null;
+    }
+
+    public static CompoundExpression.Operator getSequenceOperator(StringParser stringParser) {
+        if (stringParser.usePrefix("&")) {
+            return CompoundExpression.andOperator;
+        }
+        if (stringParser.usePrefix("|")) {
+            return CompoundExpression.orOperator;
+        }
+        return null;
+    }
+
+    public static PropExpression parseProp(StringParser stringParser, boolean parenp) {
+        PropExpression exp1 = parseBounded(stringParser);
+        stringParser.ignoreSpaces();
+        if (stringParser.atEnd(parenp)) {
+            return exp1;
+        }
+        CompoundExpression.Operator bop = getBinaryOperator(stringParser);
+        if (bop != null) {
+            PropExpression exp2 = parseBounded(stringParser);
+            stringParser.ignoreSpaces();
+            stringParser.requireEnd(parenp);
+            return new CompoundExpression(bop, exp1, exp2);
+        }
+        else {
+            List<PropExpression> orSubs = null;
+            List<PropExpression> andSubs = null;
+            do {
+                if (stringParser.usePrefix("&")) {
+                    if (andSubs == null) {
+                        andSubs= Lists.newArrayList();
+                    }
+                    andSubs.add(exp1);
+                }
+                else if (stringParser.usePrefix("|")) {
+                    if (andSubs != null) {
+                        andSubs.add(exp1);
+                        exp1 = makeAndExpression(andSubs);
+                    }
+                    if (orSubs == null) {
+                        orSubs = Lists.newArrayList();
+                    }
+                    orSubs.add(exp1);
+                    andSubs = null;
+                }
+                else {
+                    stringParser.signalError("bad operator");
+                }
+                exp1 = parseBounded(stringParser);
+                stringParser.ignoreSpaces();
+            }
+            while (!stringParser.atEnd(parenp));
+            if (andSubs != null) {
+                andSubs.add(exp1);
+                exp1 = makeAndExpression(andSubs);
+            }
+            if (orSubs != null) {
+                orSubs.add(exp1);
+                exp1 = makeOrExpression(orSubs);
+            }
+            return exp1;
+        }
+    }
+
     public static PropExpression parseProp(StringParser stringParser) {
         return parseProp(stringParser, false);
+    }
+
+    public static PropExpression parseProp(String s) {
+        return parseProp(new StringParser(s));
     }
 
     public static Psetting parseSetting(StringParser stringParser, Psetting.Handler handler) {

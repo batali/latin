@@ -1,10 +1,15 @@
 
 package latin.veritas;
 
+import com.google.common.collect.Lists;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class BinaryOperatorExpression implements PropExpression {
+
+    public static final List<String> operatorNames = Lists.newArrayList("->", "==", "^");
 
     public static abstract class Operator {
         public abstract String getName();
@@ -78,6 +83,28 @@ public class BinaryOperatorExpression implements PropExpression {
         return Arrays.toString(sl);
     }
 
+    public String prettyPrint(boolean top) {
+        StringBuilder sb = new StringBuilder();
+        if (!top) {
+            sb.append("(");
+        }
+        sb.append(lhs.prettyPrint(false));
+        sb.append(' ');
+        sb.append(operator.getName());
+        sb.append(' ');
+        sb.append(rhs.prettyPrint(false));
+        if (!top) {
+            sb.append(")");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public void collectPaths(Set<String> pathStrings) {
+        lhs.collectPaths(pathStrings);
+        rhs.collectPaths(pathStrings);
+    }
+
     @Override
     public boolean meval(MevalEnvironment mevalEnvironment) {
         return operator.mevalExps(lhs, rhs, mevalEnvironment);
@@ -86,6 +113,21 @@ public class BinaryOperatorExpression implements PropExpression {
     @Override
     public List<List<Psetting>> getCnf(boolean bv, Psetting.Handler handler) {
         return operator.getCnf(lhs, rhs, bv, handler);
+    }
+
+    public static Operator getOperator (String op) {
+        if (op.equals("->")) {
+            return ifOperator;
+        }
+        else if (op.equals("==")) {
+            return IffOperator;
+        }
+        else if (op.equals("^")) {
+            return XorOperator;
+        }
+        else {
+            throw new IllegalArgumentException("Unknown BinaryOperator " + op);
+        }
     }
 
     public static Operator getOperator(StringParser stringParser) {
