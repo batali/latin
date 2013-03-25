@@ -1,6 +1,7 @@
 
 package latin.nodes;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class AbstractDisjunctionRule implements BSRule {
@@ -55,50 +56,66 @@ public abstract class AbstractDisjunctionRule implements BSRule {
         return trueCount == cp.getLeft() && falseCount == cp.getRight();
     }
 
-    public boolean deduceCheck() {
+    public boolean disjunctionDeduceTest() {
         return trueCount == 0 && falseCount + 1 >= settingCount;
     }
 
-    public void deduce(DeduceQueue dq) throws ContradictionException {
-        if (deduceCheck()) {
+    @Override
+    public boolean deduce(DeduceQueue dq) throws ContradictionException {
+        if (disjunctionDeduceTest()) {
             for (int p = 0; p < settingCount; p++) {
                 BooleanSetting setting = getSetting(p);
                 if (setting.supportable()) {
-                    dq.setSupport(setting, this);
-                    return;
+                    return dq.setSupport(setting, this);
                 }
             }
-            throw new ContradictionException(toString() + ": No supportable", this);
+            throw new ContradictionException("No Supportable", this);
         }
-    }
-
-    public boolean canRededuce(BooleanSetting setting, boolean sv) {
-        return sv && deduceCheck();
+        return false;
     }
 
     public void recordSet(BooleanSetting setting, boolean sv, DeduceQueue dq) throws ContradictionException {
         addCount(sv, 1);
-        if (deduceCheck()) {
-            deduce(dq);
-        }
+        deduce(dq);
+    }
+
+    public boolean undermines(BooleanSetting setting, boolean sv) {
+        return !sv;
+    }
+
+    public boolean canRededuce(BooleanSetting setting, boolean sv) {
+        return sv && disjunctionDeduceTest();
     }
 
     @Override
     public void recordUnset(BooleanSetting setting, boolean sv, RetractQueue rq) {
+        boolean um = doesSupport() && undermines(setting, sv);
         addCount(sv, -1);
-        if (!sv) {
+        if (um) {
             retractSupported(rq);
         }
-        else if (deduceCheck()) {
+        else if (canRededuce(setting, sv)) {
             rq.addRededucer(this);
         }
     }
 
+    public int getSupporterStatus() {
+        return -1;
+    }
+
     @Override
     public SupportCollector collectSupport(SupportCollector supportCollector) {
+        int ss = getSupporterStatus();
         for (int p = 0; p < settingCount; p++) {
-            BooleanSetting setting = getSetting(p);
-            supportCollector.recordSupporter(setting.getOpposite());
+            BooleanSetting bst = getSetting(p);
+            int st = bst.getStatus();
+            Preconditions.checkState(st != 0);
+            if (st == ss) {
+                BooleanSetting sst = (st > 0) ? bst : bst.getOpposite();
+                Preconditions.checkState(sst.haveSupporter());
+                Preconditions.checkState(!sst.supportedBy(this));
+                supportCollector.recordSupporter(sst);
+            }
         }
         return supportCollector;
     }

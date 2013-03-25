@@ -207,7 +207,7 @@ public class TryPropagator {
             catch (ContradictionException ce) {
                 System.out.println("contra " + ce.getMessage() + " " + setting.toString());
                 SupportCollector sc = new SupportCollector();
-                sc.recordSupporter(ce.atRule);
+                sc.recordSupporter(ce);
                 System.out.println("tops " + sc.topSupporters().toString());
                 TopSupporter tops = retractor.selectTopSupporter(ce.atRule, setting);
                 retractContradiction();

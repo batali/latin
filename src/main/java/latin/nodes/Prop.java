@@ -10,7 +10,6 @@ public abstract class Prop {
 
     public final Setting trueSetting;
     public final Setting falseSetting;
-    private @Nullable Setting supportedSetting;
 
     public Setting getBooleanSetting(boolean bv) {
         return bv ? trueSetting : falseSetting;
@@ -33,28 +32,19 @@ public abstract class Prop {
         return 2;
     }
 
+    public BSRule getRule() {
+        return null;
+    }
+
     public abstract String getSettingString(boolean sv);
 
     public boolean whenSet(Setting setting) {
-        Preconditions.checkState(supportedSetting == null);
         Preconditions.checkState(setting.haveSupporter());
-        supportedSetting = setting;
         return true;
     }
 
     public boolean whenUnset(Setting setting) {
-        Preconditions.checkState(Objects.equal(supportedSetting, setting));
         Preconditions.checkState(!setting.haveSupporter());
-        supportedSetting = null;
-        return true;
-    }
-
-    public void whenSetAnnounced(Setting setting, DeduceQueue deduceQueue) throws ContradictionException {
-        Preconditions.checkState(Objects.equal(setting, supportedSetting));
-    }
-
-    public boolean whenUnsetAnnounced(Setting setting, RetractQueue retractQueue, Object stopAt) {
-        Preconditions.checkState(supportedSetting == null);
         return true;
     }
 
@@ -91,15 +81,23 @@ public abstract class Prop {
 
         @Override
         public void announceSet(DeduceQueue deduceQueue) throws ContradictionException {
-            whenSetAnnounced(this, deduceQueue);
+            BSRule rule = getRule();
+            if (rule != null) {
+                rule.recordSet(trueSetting, value, deduceQueue);
+            }
             super.announceSet(deduceQueue);
         }
 
         @Override
         public void announceUnset(RetractQueue retractQueue, Object stopAt) {
-            if (whenUnsetAnnounced(this, retractQueue, stopAt)) {
-                super.announceUnset(retractQueue, stopAt);
+            BSRule rule = getRule();
+            if (rule != null) {
+                rule.recordUnset(trueSetting, value, retractQueue);
+                if (Objects.equal(rule, stopAt)) {
+                    return;
+                }
             }
+            super.announceUnset(retractQueue, stopAt);
         }
 
     }
@@ -107,11 +105,10 @@ public abstract class Prop {
     public Prop() {
         this.trueSetting = new Setting(true);
         this.falseSetting = new Setting(false);
-        this.supportedSetting = null;
     }
 
-    public @Nullable Setting getSupportedSetting() {
-        return supportedSetting;
+    public @Nullable BooleanSetting getSupportedSetting() {
+        return trueSetting.getSupportedSetting();
     }
 
 }

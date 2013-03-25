@@ -24,6 +24,11 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         this.ruleMap = Maps.newTreeMap();
     }
 
+    public void clear() {
+        ruleMap.clear();
+        nodeMap.clear();
+    }
+
     public Collection<Node<?>> getNodes() {
         return nodeMap.values();
     }
@@ -53,6 +58,7 @@ public class NodeMap implements Psetting.GetSetting<BooleanSetting> {
         for (Node<?> node : nodeMap.values()) {
             BooleanSetting st = node.getSupportedSetting();
             if (st != null) {
+                Preconditions.checkState(st.haveSupporter());
                 settingList.add(st);
             }
         }

@@ -83,64 +83,6 @@ public class PropParser {
         return new CompoundExpression(CompoundExpression.orOperator, subs);
     }
 
-    public static SequenceExpression makeAndExpression() {
-        return new SequenceExpression(SequenceExpression.andOperator);
-    }
-
-    public static SequenceExpression makeOrExpression() {
-        return new SequenceExpression(SequenceExpression.orOperator);
-    }
-
-    public static PropExpression oparseProp(StringParser stringParser, boolean parenp) {
-        PropExpression exp1 = parseBounded(stringParser);
-        stringParser.ignoreSpaces();
-        if (stringParser.atEnd(parenp)) {
-            return exp1;
-        }
-        BinaryOperatorExpression.Operator bop = BinaryOperatorExpression.getOperator(stringParser);
-        if (bop != null) {
-            PropExpression exp2 = parseBounded(stringParser);
-            stringParser.ignoreSpaces();
-            stringParser.requireEnd(parenp);
-            return new BinaryOperatorExpression(bop, exp1, exp2);
-        }
-        else {
-            SequenceExpression orExp = null;
-            SequenceExpression andExp = null;
-            do {
-                if (stringParser.usePrefix("&")) {
-                    if (andExp == null) {
-                        andExp = makeAndExpression();
-                    }
-                    andExp.addSub(exp1);
-                }
-                else if (stringParser.usePrefix("|")) {
-                    if (andExp != null) {
-                        exp1 = andExp.addSub(exp1);
-                    }
-                    if (orExp == null) {
-                        orExp = makeOrExpression();
-                    }
-                    orExp.addSub(exp1);
-                    andExp = null;
-                }
-                else {
-                    stringParser.signalError("bad operator");
-                }
-                exp1 = parseBounded(stringParser);
-                stringParser.ignoreSpaces();
-            }
-            while (!stringParser.atEnd(parenp));
-            if (andExp != null) {
-                exp1 = andExp.addSub(exp1);
-            }
-            if (orExp != null) {
-                exp1 = orExp.addSub(exp1);
-            }
-            return exp1;
-        }
-    }
-
     public static CompoundExpression.Operator getBinaryOperator(StringParser stringParser) {
         if (stringParser.usePrefix("->")) {
             return CompoundExpression.ifOperator;
@@ -150,16 +92,6 @@ public class PropParser {
         }
         if (stringParser.usePrefix("^")) {
             return CompoundExpression.XorOperator;
-        }
-        return null;
-    }
-
-    public static CompoundExpression.Operator getSequenceOperator(StringParser stringParser) {
-        if (stringParser.usePrefix("&")) {
-            return CompoundExpression.andOperator;
-        }
-        if (stringParser.usePrefix("|")) {
-            return CompoundExpression.orOperator;
         }
         return null;
     }

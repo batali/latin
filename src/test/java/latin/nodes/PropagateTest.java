@@ -1,11 +1,13 @@
 
 package latin.nodes;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import latin.choices.Case;
-import latin.choices.Number;
 import latin.choices.CaseNumber;
+import latin.choices.Number;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +26,7 @@ public class PropagateTest {
     LinkedList<Supported> rqueue;
     LinkedList<Deducer> rdqueue;
     AbstractDeduceQueue deduceQueue;
-    RetractQueue retractQueue;
+    AbstractRetractQueue retractQueue;
 
     @Before
     public void setUp() {
@@ -34,6 +36,11 @@ public class PropagateTest {
         rdqueue = Lists.newLinkedList();
         deduceQueue = new AbstractDeduceQueue(dqueue);
         retractQueue = new AbstractRetractQueue(rqueue, rdqueue);
+    }
+
+    @After
+    public void tearDown() {
+        nodeMap.clear();
     }
 
     public void checkStatus(BooleanSetting bs, int ts) {
@@ -60,9 +67,12 @@ public class PropagateTest {
         return ts.retract(retractQueue) && retractQueue.retractLoop();
     }
 
+    public boolean rtsup(TopSupporter ts) throws ContradictionException {
+        return retractQueue.retractTop(ts, deduceQueue);
+    }
+
     @Test
     public void testPropagateBoolean() throws Exception {
-        logger.info("testPropagateBoolean");
         BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
         BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
         BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
@@ -74,7 +84,11 @@ public class PropagateTest {
         checkStatus(qs, 1);
         checkStatus(rs, 1);
         checkCounts();
-        Assert.assertTrue(rsup(tops) && !retractQueue.haveRededucer());
+        Node<?> pn = nodeMap.getNode("p");
+        Assert.assertNotNull(pn);
+        Assert.assertTrue(pn instanceof BooleanNode);
+        Assert.assertSame(ps, pn.getSupportedSetting());
+        Assert.assertTrue(rtsup(tops));
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         checkStatus(rs, 0);
@@ -85,7 +99,7 @@ public class PropagateTest {
         checkStatus(qs, -1);
         checkStatus(rs, -1);
         checkCounts();
-        Assert.assertTrue(rsup(topt) && !retractQueue.haveRededucer());
+        Assert.assertTrue(rtsup(topt));
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         checkStatus(rs, 0);
@@ -95,6 +109,11 @@ public class PropagateTest {
         checkStatus(ps, 0);
         checkStatus(qs, 1);
         checkStatus(rs, 1);
+        checkCounts();
+        Assert.assertTrue(rtsup(topq));
+        checkStatus(ps, 0);
+        checkStatus(qs, 0);
+        checkStatus(rs, 0);
         checkCounts();
     }
 
@@ -146,7 +165,7 @@ public class PropagateTest {
         checkStatus(fb, -1);
         checkStatus(fc, -1);
         checkCounts();
-        Assert.assertTrue(rsup(top1) && !retractQueue.haveRededucer());
+        Assert.assertTrue(rtsup(top1));
         checkStatus(fa, 0);
         checkStatus(fb, 0);
         checkStatus(fc, 0);
@@ -163,7 +182,7 @@ public class PropagateTest {
         checkStatus(fb, -1);
         checkStatus(fc, -1);
         checkCounts();
-        Assert.assertTrue(rsup(top2) && !retractQueue.haveRededucer());
+        Assert.assertTrue(rtsup(top2));
         checkStatus(fa, 0);
         checkStatus(fb, 0);
         checkStatus(fc, -1);
@@ -174,7 +193,7 @@ public class PropagateTest {
         checkStatus(fb, 1);
         checkStatus(fc, -1);
         checkCounts();
-        Assert.assertTrue(rsup(top3) && !retractQueue.haveRededucer());
+        Assert.assertTrue(rtsup(top3));
         checkStatus(fa, -1);
         checkStatus(fb, 0);
         checkStatus(fc, 0);
@@ -199,7 +218,11 @@ public class PropagateTest {
         checkStatus(ps, 0);
         checkStatus(qs, 0);
         Assert.assertTrue(nodeMap.checkCounts());
-        Assert.assertTrue(rsup(top1) && !retractQueue.haveRededucer());
+        Node<?> gn = nodeMap.getNode("g");
+        Assert.assertNotNull(gn);
+        Assert.assertTrue(gn instanceof BinaryChoiceNode);
+        Assert.assertSame(gi, gn.getSupportedSetting());
+        Assert.assertTrue(rtsup(top1));
         checkStatus(gi, 0);
         checkStatus(go, 0);
         checkStatus(ps, 0);
@@ -212,7 +235,7 @@ public class PropagateTest {
         checkStatus(ps, 1);
         checkStatus(qs, 0);
         Assert.assertTrue(nodeMap.checkCounts());
-        Assert.assertTrue(rsup(top2) && !retractQueue.haveRededucer());
+        Assert.assertTrue(rtsup(top2));
         TopSupporter top3 = new TopSupporter();
         Assert.assertTrue(psup(qs.getOpposite(), top3));
         checkStatus(gi, 1);
@@ -274,8 +297,7 @@ public class PropagateTest {
         checkStatus("CaseNumber=DatSi", -1);
         checkStatus("CaseNumber=AblPl", -1);
         checkStatus("CaseNumber=DatPl", -1);
-        Assert.assertTrue(rsup(top2));
-        retractQueue.rededuceLoop(deduceQueue);
+        Assert.assertTrue(rtsup(top2));
         checkCounts();
         TopSupporter top3 = new TopSupporter();
         Assert.assertTrue(psup("Number=Pl", top3));
@@ -283,8 +305,7 @@ public class PropagateTest {
         checkStatus("CaseNumber=DatSi", -1);
         checkStatus("CaseNumber=AblPl", 1);
         checkStatus("CaseNumber=DatPl", -1);
-        Assert.assertTrue(rsup(top1));
-        retractQueue.rededuceLoop(deduceQueue);
+        Assert.assertTrue(rtsup(top1));
         checkCounts();
         TopSupporter top4 = new TopSupporter();
         Assert.assertTrue(psup("Case=Dat", top4));
@@ -312,11 +333,24 @@ public class PropagateTest {
             logger.info("testSmallContradiction: {}", ce.getMessage());
             deduceQueue.retractContradiction(ce.atRule);
         }
-        rsup(top1);
+        Assert.assertFalse(top1.doesSupport());
         checkCounts();
+        checkStatus(ps, 0);
+        checkStatus(qs, 0);
         TopSupporter top2 = new TopSupporter();
-        Assert.assertTrue(psup("!p", top2));
+        Assert.assertTrue(psup(ps.getOpposite(), top2));
         checkCounts();
+        checkStatus(ps, -1);
+        checkStatus(qs, 0);
+        TopSupporter top3 = new TopSupporter();
+        Assert.assertTrue(psup(qs, top3));
+        checkCounts();
+        checkStatus(ps, -1);
+        checkStatus(qs, 1);
+        Assert.assertTrue(rtsup(top2));
+        checkCounts();
+        checkStatus(ps, -1);
+        checkStatus(qs, 1);
     }
 
     @Test
@@ -324,10 +358,12 @@ public class PropagateTest {
         nodeMap.makeBooleanNode("p");
         nodeMap.makeBooleanNode("q");
         BooleanSetting rs = nodeMap.makeBooleanNode("r").trueSetting;
+        BooleanSetting ss = nodeMap.makeBooleanNode("s").trueSetting;
         nodeMap.makeValueNode("f", "a", "b", "c");
         nodeMap.makeDrules("r1", "p -> f=a");
         nodeMap.makeDrules("r2", "q -> f=b");
         nodeMap.makeDrules("r3", "r -> (p & q)");
+        nodeMap.makeDrules("r4", "s -> (f!=a & f!=b)");
         Assert.assertTrue(rs.supportable());
         TopSupporter top1 = new TopSupporter();
         try {
@@ -338,20 +374,34 @@ public class PropagateTest {
             logger.info("testValueContradiction: {}", ce.getMessage());
             deduceQueue.retractContradiction(ce.atRule);
         }
-        rsup(top1);
+        Assert.assertTrue(rtsup(top1));
         checkCounts();
+        TopSupporter top2 = new TopSupporter();
+        Assert.assertTrue(psup("f!=c", top2));
+        Assert.assertTrue(ss.supportable());
+        TopSupporter top3 = new TopSupporter();
+        try {
+            psup(ss, top3);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            logger.info("testValueContradiction(s): {}", ce.getMessage());
+            deduceQueue.retractContradiction(ce.atRule);
+        }
+        logger.info("tvc");
+        nodeMap.printNodes();
     }
 
     @Test
     public void testBiggerContradiction() throws Exception {
-        nodeMap.makeBooleanNode("p");
-        nodeMap.makeBooleanNode("q");
+        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
+        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
         nodeMap.makeBooleanNode("r");
         nodeMap.makeBooleanNode("s");
-        nodeMap.makeBooleanNode("a");
+        BooleanSetting as = nodeMap.makeBooleanNode("a").trueSetting;
         nodeMap.makeBooleanNode("b");
-        nodeMap.makeBooleanNode("w");
-        nodeMap.makeBooleanNode("x");
+        BooleanSetting ws = nodeMap.makeBooleanNode("w").trueSetting;
+        BooleanSetting xs = nodeMap.makeBooleanNode("x").trueSetting;
         nodeMap.makeDrules("r1", "p | q | r | s");
         nodeMap.makeDrules("r2", "a -> (!p & !q)");
         nodeMap.makeDrules("r3", "b -> (!r & !s)");
@@ -360,6 +410,8 @@ public class PropagateTest {
         TopSupporter top1 = new TopSupporter();
         Assert.assertTrue(psup("w", top1));
         checkCounts();
+        checkStatus(ps, -1);
+        checkStatus(qs, -1);
         TopSupporter top2 = new TopSupporter();
         try {
             psup("x", top2);
@@ -369,17 +421,79 @@ public class PropagateTest {
             logger.info("testValueContradiction: {}", ce.getMessage());
             deduceQueue.retractContradiction(ce.atRule);
         }
-        rsup(top2);
+        Assert.assertTrue(rtsup(top2));
         checkCounts();
-        checkStatus("w", 1);
-        checkStatus("x", 0);
+        checkStatus(ws, 1);
+        checkStatus(xs, 0);
         TopSupporter top3 = new TopSupporter();
         Assert.assertTrue(psup("!x", top3));
+        checkCounts();
+        checkStatus(ps, -1);
+        checkStatus(qs, -1);
+        checkStatus(xs, -1);
+        checkStatus(ws, 1);
+        checkStatus(as, 1);
+    }
+
+    @Test
+    public void testContra1() throws Exception {
+        BooleanSetting as = nodeMap.makeBooleanNode("a").trueSetting;
+        BooleanSetting bs = nodeMap.makeBooleanNode("b").trueSetting;
+        BooleanSetting cs = nodeMap.makeBooleanNode("c").trueSetting;
+        BooleanSetting ps = nodeMap.makeBooleanNode("p").trueSetting;
+        BooleanSetting qs = nodeMap.makeBooleanNode("q").trueSetting;
+        BooleanSetting xs = nodeMap.makeBooleanNode("x").trueSetting;
+        nodeMap.makeDrules("a | b | c");
+        nodeMap.makeDrules("p -> !a");
+        nodeMap.makeDrules("q -> !b");
+        nodeMap.makeDrules("x -> p");
+        nodeMap.makeDrules("x -> q");
+        TopSupporter top1 = new TopSupporter();
+        Assert.assertTrue(psup("!c", top1));
+        TopSupporter top2 = new TopSupporter();
+        Set<TopSupporter> tset = Sets.newHashSet();
+        try {
+            psup(xs, top2);
+            Assert.fail();
+        }
+        catch(ContradictionException ce) {
+            logger.info("testContra1: {}", ce.getMessage());
+            SupportCollector sc = new SupportCollector();
+            sc.recordSupporter(ce);
+            Iterables.addAll(tset, sc.topSupporters());
+            deduceQueue.retractContradiction(ce.atRule);
+        }
+        Assert.assertTrue(rtsup(top2));
+        checkStatus(xs, 0);
+        checkStatus(cs, -1);
+        checkStatus(as, 0);
+        checkStatus(bs, 0);
+        checkStatus(ps, 0);
+        checkStatus(qs, 0);
+        checkCounts();
+        Assert.assertEquals(2, tset.size());
+        Assert.assertTrue(tset.contains(top1));
+        Assert.assertTrue(tset.contains(top2));
+        TopSupporter top3 = new TopSupporter();
+        Assert.assertTrue(psup(xs.getOpposite(), top3));
+        checkCounts();
+        TopSupporter top4 = new TopSupporter();
+        Assert.assertTrue(psup(ps, top4));
+        checkCounts();
+        Assert.assertTrue(rsup(top3));
+        Assert.assertTrue(retractQueue.haveRededucer());
+        retractQueue.rededuceLoop(deduceQueue);
+        checkStatus(as, -1);
+        checkStatus(bs, 1);
+        checkStatus(cs, -1);
+        checkStatus(xs, -1);
+        checkStatus(ps, 1);
+        checkStatus(qs, -1);
         checkCounts();
     }
 
     @Test
-    public void testWeirdValueContradiction() throws Exception {
+    public void testContra2() throws Exception {
         nodeMap.makeBooleanNode("p");
         nodeMap.makeBooleanNode("q");
         nodeMap.makeBooleanNode("r");
@@ -409,10 +523,12 @@ public class PropagateTest {
             Assert.fail();
         }
         catch(ContradictionException ce) {
-            logger.info("testWeirdValueContradiction: {}", ce.getMessage());
+            logger.info("testContra2: {}", ce.getMessage());
             deduceQueue.retractContradiction(ce.atRule);
         }
-        rsup(top3);
+        Assert.assertTrue(rtsup(top3));
         checkCounts();
     }
+
+
 }

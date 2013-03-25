@@ -25,6 +25,10 @@ public class SupportCollector {
         return this;
     }
 
+    public SupportCollector recordSupporter(ContradictionException ce) {
+        return recordSupporter(ce.atRule);
+    }
+
     public Iterable<TopSupporter> topSupporters() {
         return Iterables.filter(seen, TopSupporter.class);
     }

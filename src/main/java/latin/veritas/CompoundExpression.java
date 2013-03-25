@@ -109,6 +109,15 @@ public class CompoundExpression implements PropExpression {
         return operator.prettyPrint(subExpressions, top);
     }
 
+    @Override
+    public int weight() {
+        int tw = 0;
+        for (PropExpression sub : subExpressions) {
+            tw += sub.weight();
+        }
+        return tw;
+    }
+
     public static final Operator notOperator = new Operator("!") {
         @Override
         public int minSubCount() {

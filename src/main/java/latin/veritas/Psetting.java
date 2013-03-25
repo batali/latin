@@ -7,6 +7,7 @@ import com.google.common.collect.Ordering;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public abstract class Psetting {
 
@@ -24,6 +25,10 @@ public abstract class Psetting {
 
     public boolean meval(MevalEnvironment menv) {
         return menv.evalSlot(pathString, choiceString) == value;
+    }
+
+    public void collectPaths(Set<String> pathStrings) {
+        pathStrings.add(pathString);
     }
 
     public static class BooleanPsetting extends Psetting {
@@ -66,6 +71,18 @@ public abstract class Psetting {
     public static List<Psetting> singletonList(Psetting setting) {
         return Lists.newArrayList(setting);
     }
+
+    public static final List<Psetting> emptySettingList = Collections.emptyList();
+
+    public static final List<List<Psetting>> emptySettingsList = Collections.emptyList();
+
+
+    public static final Ordering<Psetting> PropOrdering = new Ordering<Psetting>() {
+        @Override
+        public int compare(Psetting ps1, Psetting ps2) {
+            return compareProps(ps1, ps2);
+        }
+    };
 
     public static final Ordering<Psetting> PsettingOrdering = new Ordering<Psetting> () {
         @Override
@@ -167,16 +184,16 @@ public abstract class Psetting {
         return sll;
     }
 
-    public static void adjoinSettingList(List<Psetting> nsl, List<List<Psetting>> tosll) {
+    public static boolean adjoinSettingList(List<Psetting> nsl, List<List<Psetting>> tosll) {
         if (nsl == null) {
-            return;
+            return false;
         }
         List<List<Psetting>> rll = null;
         int nsn = nsl.size();
         for (List<Psetting> osl : tosll) {
             if (osl.size() <= nsn) {
                 if (isSubset(osl, nsl)) {
-                    return;
+                    return false;
                 }
             }
             else if (isSubset(nsl, osl)) {
@@ -190,6 +207,7 @@ public abstract class Psetting {
             tosll.removeAll(rll);
         }
         tosll.add(nsl);
+        return true;
     }
 
     public static List<List<Psetting>> adjoinNormalForm(List<List<Psetting>> nsll, List<List<Psetting>> tosll) {
@@ -313,4 +331,17 @@ public abstract class Psetting {
     public static boolean mevalDnf(List<List<Psetting>> psettingsList, MevalEnvironment menv) {
         return mevalNormalForm(psettingsList, menv, false);
     }
+
+    public static void collectPsettingPaths(List<Psetting> psettingList, Set<String> pathStrings) {
+        for (Psetting psetting : psettingList) {
+            psetting.collectPaths(pathStrings);
+        }
+    }
+
+    public static void collectPsettingsPaths(List<List<Psetting>> psettingsList, Set<String> pathStrings) {
+        for (List<Psetting> psettings : psettingsList) {
+            collectPsettingPaths(psettings, pathStrings);
+        }
+    }
+
 }

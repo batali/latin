@@ -96,4 +96,12 @@ public class AbstractRetractQueue implements RetractQueue {
         }
         return rv;
     }
+
+    public boolean retractTop(TopSupporter tops, DeduceQueue deduceQueue) throws ContradictionException {
+        boolean rv = tops.retract(this) && retractLoop();
+        if (rv && haveRededucer()) {
+            rededuceLoop(deduceQueue);
+        }
+        return rv;
+    }
 }

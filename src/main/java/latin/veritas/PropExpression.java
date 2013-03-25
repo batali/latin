@@ -10,4 +10,5 @@ public interface PropExpression {
     public String asList();
     public List<List<Psetting>> getCnf(boolean bv, Psetting.Handler handler);
     public String prettyPrint(boolean top);
+    public int weight();
 }

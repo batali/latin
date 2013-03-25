@@ -33,4 +33,9 @@ public abstract class AtomicExpression implements PropExpression {
         return toString();
     }
 
+    @Override
+    public int weight() {
+        return 1;
+    }
+
 }

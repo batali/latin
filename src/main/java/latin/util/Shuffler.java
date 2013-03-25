@@ -27,6 +27,15 @@ public class Shuffler {
         }
     }
 
+    public static boolean nextBoolean(double p) {
+        Preconditions.checkArgument(0 <= p && p <= 1);
+        return random.nextDouble() < p;
+    }
+
+    public static boolean nextBoolean() {
+        return random.nextBoolean();
+    }
+
     public static <T> boolean adjoin (T newElement, Collection<T> collection) {
         if (collection.contains(newElement)) {
             return false;
@@ -150,7 +159,9 @@ public class Shuffler {
     }
 
     public static <T> List<T> shuffle(List<T> tlist) {
-        Collections.shuffle(tlist, random);
+        if (tlist.size() > 1) {
+            Collections.shuffle(tlist, random);
+        }
         return tlist;
     }
 
