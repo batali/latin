@@ -1,20 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<NounForms declension="second">
-  <forms>
-	<NomSi gender="mf">us</NomSi>
-	<NomSi gender="n">um</NomSi>
-	<GenSi>ī</GenSi>
-	<DatSi>ō</DatSi>
-	<AccSi>um</AccSi>
-	<AblSi>ō</AblSi>
-	<VocSi gender="mf">e</VocSi>
-	<VocSi gender="n">um</VocSi>
-	<NomPl gender="mf">ī</NomPl>
-	<NomPl gender="n">a</NomPl>
-	<GenPl>ōrum</GenPl>
-	<DatPl>īs</DatPl>
-	<AccPl gender="mf">ōs</AccPl>
-	<AccPl gender="n">a</AccPl>
-	<AblPl>īs</AblPl>
-  </forms>
-</NounForms>
+<declension name="second">
+  <rules name="shared">
+    <GenSi>ī</GenSi>
+    <DatSi>ō</DatSi>
+    <AblSi>ō</AblSi>
+    <GenPl>ōrum</GenPl>
+    <DatPl>īs</DatPl>
+ </rules>
+ <ruleset name="mf" extends="shared">
+   <AccSi>um</AccSi>
+   <NomPl>ī</NomPl>
+   <AccPl>ōs</AccPl>
+ </ruleset>
+ <ruleset name="n" extends="shared">
+   <NomPl>a</NomPl>
+ </ruleset>
+ <rules name="iu">
+  <GenSi alt="1">i:ī</GenSi>
+ </rules>
+ <ruleset name="us" extends="mf">
+   <NomSi>us</NomSi>
+   <VocSi>e</VocSi>
+ </ruleset>
+ <ruleset name="ius" extends="us,iu">
+   <VocSi>i:ī</VocSi>
+ </ruleset>
+ <ruleset name="um" extends="n">
+   <NomSi>um</NomSi>
+ </ruleset>
+ <ruleset name="ium" extends="um,iu">
+ </ruleset>
+</declension>

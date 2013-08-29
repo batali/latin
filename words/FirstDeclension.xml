@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<NounForms declension="first">
-  <forms>
-	<NomSi>a</NomSi>
-	<GenSi>ae</GenSi>
-	<DatSi>ae</DatSi>
-	<AccSi>am</AccSi>
-	<AblSi>ā</AblSi>
-	<LocSi>ae</LocSi>
-	<NomPl>ae</NomPl>
-	<GenPl>ārum</GenPl>
-	<DatPl>īs</DatPl>
-	<AccPl>ās</AccPl>
-  </forms>
-</NounForms>
+<declension name="first">
+ <ruleset name="mf">
+   <GenSi>ae</GenSi>
+   <DatSi>ae</DatSi>
+   <AccSi>am</AccSi>
+   <AblSi>ā</AblSi>
+   <LocSi>ae</LocSi>
+   <NomPl>ae</NomPl>
+   <GenPl>ārum</GenPl>
+   <DatPl>īs</DatPl>
+   <AccPl>ās</AccPl>
+ </ruleset>
+ <ruleset name="a" extends="mf">
+   <NomSi>a</NomSi>
+ </ruleset>
+</declension>

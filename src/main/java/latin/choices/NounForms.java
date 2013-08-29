@@ -10,6 +10,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+
 import latin.forms.DocElement;
 import latin.forms.FormMap;
 import latin.forms.FormRule;
@@ -20,6 +21,12 @@ import latin.forms.IFormBuilder;
 import latin.forms.Rulef;
 import latin.forms.Stemf;
 import latin.forms.Suffix;
+import latin.forms.Token;
+import latin.forms.TokenRule;
+import latin.forms.TokenRules;
+import latin.forms.Tokens;
+import latin.forms.ValuesMap;
+import latin.util.PathId;
 
 import java.util.Collection;
 import java.util.EnumMap;
@@ -28,6 +35,100 @@ import java.util.Map;
 import java.util.Set;
 
 public class NounForms {
+
+    public enum Declension {
+        first("a"),
+        second("ī"),
+        third("is"),
+        fourth("ūs"),
+        fifth("eī,ēī");
+
+        public final List<Token> gsiEndings;
+        final PathId.Element path;
+
+        Declension (String gst) {
+            this.gsiEndings = Tokens.parseTokens(gst);
+            this.path = new PathId.Root(this);
+        }
+
+        public RulesBuilder builder() {
+            return new RulesBuilder(this, path);
+        }
+
+        public RulesBuilder builder(String subname) {
+            return new RulesBuilder(this, path.makeChild(subname));
+        }
+
+    }
+
+    public static class Rules implements Tokens.Rules<CaseNumber> {
+        public final Declension declension;
+        public final String name;
+        final EnumMap<CaseNumber,Values<TokenRule>> ruleMap;
+        public Rules(Declension declension, String name, Map<CaseNumber,Values<TokenRule>> rm) {
+            this.declension = declension;
+            this.name = name;
+            this.ruleMap = new EnumMap<CaseNumber, Values<TokenRule>>(rm);
+        }
+        @Override
+        public TokenRule getTokenRule(CaseNumber key, Alts.Chooser chooser) {
+            Values<TokenRule> vl = ruleMap.get(key);
+            return Alts.chooseElement(vl, chooser);
+        }
+        public Values<TokenRule> getRules(CaseNumber key) {
+            return ruleMap.get(key);
+        }
+        public String toString() {
+            return name;
+        }
+        RulesBuilder extend(String subname) {
+            return declension.builder(subname).putAll(this);
+        }
+        Rules record() {
+            rulesMap.put(name, this);
+            return this;
+        }
+    }
+
+    public static Map<String, Rules> rulesMap = Maps.newHashMap();
+
+    public static Rules getRules(Object x) {
+        if (x instanceof Rules) {
+            return (Rules)x;
+        }
+        else {
+            Rules r = rulesMap.get(x.toString());
+            if (r == null) {
+                throw new IllegalArgumentException("Unknown Rules " + x.toString());
+            }
+            return r;
+        }
+    }
+
+    public static class RulesBuilder extends ValuesMap.Builder<CaseNumber,TokenRule> {
+        final Declension declension;
+        RulesBuilder(Declension declension, PathId.Element path) {
+            super(path, CaseNumber.class);
+            this.declension = declension;
+        }
+        public RulesBuilder rule(Object k, String rs) {
+            put(CaseNumber.getKey(k), TokenRules.parseRules(rs));
+            return this;
+        }
+        public RulesBuilder putAll(Map<CaseNumber,Values<TokenRule>> om) {
+            super.putAll(om);
+            return this;
+        }
+        public RulesBuilder putAll(Rules r) {
+            return putAll(r.ruleMap);
+        }
+        public Rules build() {
+            return new Rules(declension, getPath().toString(), getMap());
+        }
+        public Rules record() {
+            return build().record();
+        }
+    }
 
     public static class Erule implements Rulef {
         public final String name;
@@ -290,6 +391,162 @@ public class NounForms {
 
     }
 
+    static {
+        Rules firstShared = Declension.first
+            .builder()
+            .rule("AccSi", "am")
+            .rule("GenSi", "ae")
+            .rule("DatSi", "ae")
+            .rule("AblSi", "ā")
+            .rule("LocSi", "ae")
+            .rule("NomPl", "ae")
+            .rule("AccPl", "ās")
+            .rule("GenPl", "ārum")
+            .rule("DatPl", "īs")
+            .build();
+        firstShared.extend("mf").record();
+        firstShared.extend("n")
+            .rule("NomSi", "a")
+            .record();
+
+        Rules secondShared = Declension.second
+            .builder()
+            .rule("GenSi", "ī")
+            .rule("DatSi", "ō")
+            .rule("AblSi", "ō")
+            .rule("LocSi", "ī")
+            .rule("GenPl", "ōrum")
+            .rule("DatPl", "īs")
+            .build();
+
+        secondShared.extend("mf")
+            .rule("AccSi", "um")
+            .rule("NomPl", "ī")
+            .rule("AccPl", "ōs")
+            .record();
+
+        secondShared.extend("n")
+            .rule("NomPl", "a")
+            .record();
+
+        Rules secondIU = Declension.second
+            .builder("iu")
+            .rule("GenSi", "ī,<")
+            .build();
+
+        getRules("second.mf").extend("us")
+            .rule("NomSi", "us")
+            .rule("VocSi", "e")
+            .record();
+
+        getRules("second.us").extend("ius")
+            .putAll(secondIU)
+            .rule("VocSi", "<")
+            .record();
+
+        getRules("second.n").extend("um")
+            .rule("NomSi", "um")
+            .record();
+
+        getRules("second.um").extend("ium")
+            .putAll(secondIU)
+            .record();
+
+        Rules thirdShared = Declension.third
+            .builder()
+            .rule("GenSi", "is")
+            .rule("DatSi", "ī")
+            .rule("AblSi", "e")
+            .rule("GenPl", "um")
+            .rule("DatPl", "ibus")
+            .build();
+
+        thirdShared.extend("c.mf")
+            .rule("AccSi", "em")
+            .rule("NomPl", "ēs")
+            .rule("AccPl", "ēs")
+            .record();
+
+        thirdShared.extend("c.n")
+            .rule("NomPl", "a")
+            .record();
+
+        Rules thirdMixedI = Declension.third
+            .builder("mi")
+            .rule("GenPl", "ium")
+            .build();
+
+        getRules("third.c.mf").extend("mi.mf")
+            .putAll(thirdMixedI)
+            .record();
+
+        getRules("third.c.n").extend("mi.n")
+            .putAll(thirdMixedI)
+            .rule("NomPl", "ia")
+            .record();
+
+        Rules thirdPureI = Declension.third
+            .builder("pi")
+            .rule("AblSi", "ī")
+            .build();
+
+        getRules("third.mi.mf").extend("pi.mf")
+            .putAll(thirdPureI)
+            .rule("AccSi", "im")
+            .rule("AccPl", "ēs,īs")
+            .record();
+
+        getRules("third.mi.n").extend("pi.n")
+            .putAll(thirdPureI)
+            .record();
+
+        Rules fourthShared = Declension.fourth
+            .builder()
+            .rule("GenSi", "ūs")
+            .rule("DatSi", "ū")
+            .rule("AblSi", "ū")
+            .rule("GenPl", "uum")
+            .rule("DatPl", "ibus")
+            .build();
+
+        fourthShared.extend("mf")
+            .rule("DatSi", "uī")
+            .rule("AccSi", "um")
+            .rule("NomPl", "ūs")
+            .record();
+
+        fourthShared.extend("n")
+            .rule("NomPl", "ua")
+            .record();
+
+        getRules("fourth.mf").extend("us")
+            .rule("NomSi", "ū")
+            .record();
+
+        getRules("fourth.n").extend("u")
+            .rule("NomSi", "ū")
+            .record();
+
+        Rules fifthShared = Declension.fifth
+            .builder()
+            .rule("NomSi", "ēs")
+            .rule("AccSi", "em")
+            .rule("NomPl", "ēs")
+            .rule("AblSi", "ē")
+            .rule("GenPl", "ērum")
+            .rule("DatPl", "ēbus")
+            .build();
+
+        fifthShared.extend("c")
+            .rule("GenSi", "eī")
+            .rule("DatSi", "eī")
+            .record();
+
+        fifthShared.extend("v")
+            .rule("GenSi", "ēī")
+            .rule("DatSi", "ēī")
+            .record();
+    }
 
     static {
 

@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<NounForms declension="third">
-  <forms>
-	<GenSi>is</GenSi>
-	<DatSi>ī</DatSi>
-	<AccSi gender="mf" stem="c">em</AccSi>
-	<AccSi gender="mf" stem="i">im</AccSi>
-	<AblSi stem="c">e</AblSi>
-	<AblSi stem="i">ī</AblSi>
-	<NomPl gender="mf">ēs</NomPl>
-	<NomPl gender="n" stem="c">a</NomPl>
-	<NomPl gender="n" stem="i">ia</NomPl>
-	<GenPl stem="c">um</GenPl>
-	<GenPl stem="i">ium</GenPl>
-	<DatPl>ibus</DatPl>
-	<AccPl gender="mf" stem="c">ēs</AccPl>
-	<AccPl gender="mf" stem="i">ēs,īs</AccPl>
-	<AccPl gender="mf" stem="i">īs</AccPl>
-	<AccPl gender="n" stem="c">a</AccPl>
-	<AccPl gender="n" stem="i">ia</AccPl>
-	<AblPl>ibus</AblPl>
-  </forms>
-</NounForms>
+<declension name="third">
+  <rules name="shared">
+    <GenSi>is</GenSi>
+    <DatSi>ī</DatSi>
+    <AblSi>e</AblSi>
+    <GenPl>um</GenPl>
+    <DatPl>ibus</DatPl>
+  </rules>
+  <ruleset name="c.mf" extends="shared">
+    <AccSi>em</AccSi>
+    <NomPl>ēs</NomPl>
+    <AccPl>ēs</AccPl>
+  </ruleset>
+  <ruleset name="c.n" extends="shared">
+    <NomPl>a</NomPl>
+  </ruleset>
+  <rules name="mi">
+    <GenPl>ium</GenPl>
+  </rules>
+  <ruleset name="mi.mf" extends="c.mf,mi" />
+  <ruleset name="mi.n" extends="c.n,mi">
+    <NomPl>ia</NomPl>
+  </ruleset>
+  <rules name="pi">
+    <AblSi>ī</AblSi>
+  </rules>
+  <ruleset name="pi.n" extends="mi.n,pi" />
+  <ruleset name="pi.mf" extends="mi.mf,pi">
+    <AccPl alt="1">īs</AccPl>
+  </ruleset>
+</declension>

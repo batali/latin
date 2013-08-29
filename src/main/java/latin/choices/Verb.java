@@ -6,6 +6,9 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import latin.forms.English;
 import latin.forms.FormBuilder;
 import latin.forms.FormMap;
@@ -18,13 +21,11 @@ import latin.forms.Rulef;
 import latin.forms.Stemf;
 import latin.forms.StoredForms;
 import latin.forms.Suffix;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 public class Verb {
 
     public interface Traits {

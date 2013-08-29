@@ -10,10 +10,6 @@ public abstract class Alts {
     private Alts() {
     }
 
-    public static <T> T chooseElement(List<T> tlist, Chooser chooser) {
-        return chooseElement(tlist, tlist, chooser);
-    }
-
     public static <T> T chooseElement(List<T> tlist, Object id, Chooser chooser) {
         int s = (tlist == null) ? 0 : tlist.size();
         if (s == 0) {
@@ -21,6 +17,19 @@ public abstract class Alts {
         }
         else {
             return tlist.get((s == 1) ? 0 : chooser.getAltsIndex(id, s));
+        }
+    }
+
+    public static <T> T chooseElement(Values<T> values, Chooser chooser) {
+        int s = (values == null) ? 0 : values.size();
+        if (s == 0) {
+            return null;
+        }
+        else if (s == 1) {
+            return values.get(0);
+        }
+        else {
+            return values.get(chooser.getAltsIndex(values.getId(), s));
         }
     }
 

@@ -9,13 +9,16 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import latin.choices.Alts;
-import latin.choices.CollectAlts;
+
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nullable;
+import latin.choices.Alts;
+import latin.choices.CollectAlts;
+
 import java.util.Collections;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 public class Suffix {
 
@@ -115,6 +118,9 @@ public class Suffix {
     };
 
     public static String unaccentString(CharSequence charSequence) {
+        if (charSequence == null) {
+            return null;
+        }
         StringBuilder sb = new StringBuilder(charSequence);
         int s = sb.length();
         for (int i = 0; i < s; i++) {
@@ -128,6 +134,48 @@ public class Suffix {
         }
         return sb.toString();
     }
+
+    static int lastVowelPosition(Token t) {
+        int lp = t.length();
+        while (--lp >= 0 && !isVowel(t.charAt(lp)));
+        return lp;
+    }
+
+    public static Token unaccentLastVowel(Token t) {
+        int lp = lastVowelPosition(t);
+        if (lp >= 0) {
+            char lc = t.charAt(lp);
+            if (isAccented(lc)) {
+                return new ReplacedCharToken(t, lp, unaccented(lc));
+            }
+        }
+        return t;
+    }
+
+    public static Token accentLastVowel(Token t) {
+        int lp = lastVowelPosition(t);
+        if (lp >= 0) {
+            char lc = t.charAt(lp);
+            if (!isAccented(lc)) {
+                return new ReplacedCharToken(t, lp, accented(lc));
+            }
+        }
+        return t;
+    }
+
+    public static final Function<Token,Token> accenterFunction = new Function<Token, Token>() {
+        @Override
+        public Token apply(@Nullable Token token) {
+            return (token == null) ? null : accentLastVowel(token);
+        }
+    };
+
+    public static final Function<Token,Token> unaccenterFunction = new Function<Token, Token>() {
+        @Override
+        public Token apply(@Nullable Token token) {
+            return (token == null) ? null : unaccentLastVowel(token);
+        }
+    };
 
     public static Iterable<String> ssplitter(String str) {
         return Splitter.on(CharMatcher.BREAKING_WHITESPACE)

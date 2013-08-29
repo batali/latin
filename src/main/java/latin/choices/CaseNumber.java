@@ -37,6 +37,14 @@ public enum CaseNumber implements Case.Key, Number.Key {
         return numberKey;
     }
 
+    public CaseNumber toNumber(Number toNumberKey) {
+        return fromCaseNumber(caseKey, toNumberKey);
+    }
+
+    public CaseNumber toCase(Case toCaseKey) {
+        return fromCaseNumber(toCaseKey, numberKey);
+    }
+
     private static final Map<String,CaseNumber> fromStringMap = EkeyHelper.stringToEnumMap(CaseNumber.class);
 
     public static CaseNumber fromString(String ks) {
@@ -49,6 +57,18 @@ public enum CaseNumber implements Case.Key, Number.Key {
 
     public static CaseNumber fromCaseNumber(Case caseKey, Number numberKey) {
         return values()[caseKey.ordinal() + numberKey.ordinal() * Case.values().length];
+    }
+
+    public static CaseNumber getKey(Object x) {
+        if (x instanceof CaseNumber) {
+            return (CaseNumber) x;
+        }
+        else if (x instanceof CaseNumber.Key) {
+            return ((CaseNumber.Key)x).getCaseNumber();
+        }
+        else {
+            return fromString(x.toString());
+        }
     }
 
     public interface Key {
