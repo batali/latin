@@ -1,5 +1,5 @@
 package latin.choices;
 
 public interface Value<T> {
-    T get(Alts.Chooser chooser);
+    T choose(Alts.Chooser chooser);
 }

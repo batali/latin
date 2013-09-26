@@ -14,10 +14,40 @@ import latin.choices.Number;
 import java.util.EnumMap;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 public class English {
 
     private English() {
     }
+
+    public static final TokenRule addS = TokenRules.parseRule("s");
+    public static final TokenRule addES = TokenRules.parseRule("es");
+    public static final TokenRule addIES = TokenRules.parseRule("-ies");
+
+    public static TokenRule pluralTokenRule = new TokenRule() {
+        @Override
+        public String getSpec() {
+            return "plural";
+        }
+
+        @Override
+        public Token apply(@Nullable Token token) {
+            if (token == null) {
+                return token;
+            }
+            else if (sibilintMatcher.test(token)) {
+                return addES.apply(token);
+            }
+            else if (cyMatcher.test(token)) {
+                return addIES.apply(token);
+            }
+            else {
+                return addS.apply(token);
+            }
+        }
+    };
+
 
     public static final FormRule S = FormRule.makeFormRule("s");
     public static final FormRule ES = FormRule.makeFormRule("es");

@@ -12,6 +12,18 @@ import javax.annotation.Nullable;
 
 public class TokenRules {
 
+    public static class AddedStringRule extends StringToken implements TokenRule {
+        public AddedStringRule(String string) {
+            super(string);
+        }
+        public String getSpec() {
+            return string;
+        }
+        public Token apply(@Nullable Token token) {
+            return Tokens.pair(token, this);
+        }
+    }
+
     public static class SequenceTokenRule implements TokenRule {
         final ImmutableList<TokenRule> rules;
         public SequenceTokenRule(List<TokenRule> ruleList) {
@@ -83,25 +95,58 @@ public class TokenRules {
         }
     }
 
-    public static final TokenRule accenterRule = new TokenRule() {
-        @Override
-        public String getSpec() {
-            return "<";
+    static Token transformChar(Token t, int l, int p, char c) {
+        return Tokens.pair(t.subSequence(0, p),
+                           Tokens.pair(new StringToken(c),
+                                       t.subSequence(p+1, l)));
+    }
+
+    public static int lastVowelPosition(CharSequence cs, int l) {
+        for (int p = l-1; p>=0; p--) {
+            if (Suffix.isVowel(cs.charAt(p))) {
+                return p;
+            }
         }
-        @Override
-        public Token apply(@Nullable Token token) {
-            return (token == null) ? null : Suffix.accentLastVowel(token);
-        }
-    };
+        return -1;
+    }
 
     public static final TokenRule unaccenterRule = new TokenRule() {
         @Override
         public String getSpec() {
             return ">";
         }
-        @Override
         public Token apply(@Nullable Token token) {
-            return (token == null) ? null : Suffix.unaccentLastVowel(token);
+            if (token != null) {
+                int l = token.length();
+                int p = lastVowelPosition(token, l);
+                if (p >= 0) {
+                    char c = token.charAt(p);
+                    if (Suffix.isAccented(c)) {
+                        return transformChar(token, l, p, Suffix.unaccented(c));
+                    }
+                }
+            }
+            return token;
+        }
+    };
+
+    public static final TokenRule accenterRule = new TokenRule() {
+        @Override
+        public String getSpec() {
+            return "<";
+        }
+        public Token apply(@Nullable Token token) {
+            if (token != null) {
+                int l = token.length();
+                int p = lastVowelPosition(token, l);
+                if (p >= 0) {
+                    char c = token.charAt(p);
+                    if (!Suffix.isAccented(c)) {
+                        return transformChar(token, l, p, Suffix.accented(c));
+                    }
+                }
+            }
+            return token;
         }
     };
 
@@ -116,7 +161,7 @@ public class TokenRules {
                 return token;
             }
             else {
-                return new AddedStringToken(token, token.endChar(1).toString());
+                return new PairToken(token, new StringToken(token.endChar(1)));
             }
         }
     };
@@ -144,6 +189,7 @@ public class TokenRules {
             }
             else if (fc == '>') {
                 rules.add(unaccenterRule);
+                sp += 1;
             }
             else if (fc == '+') {
                 rules.add(duplicateLast);
@@ -164,7 +210,7 @@ public class TokenRules {
                 sp = np;
             }
             else {
-                rules.add(new StringToken(trs.substring(sp, ep)));
+                rules.add(new AddedStringRule(trs.substring(sp, ep)));
                 sp = ep;
             }
         }
@@ -203,4 +249,8 @@ public class TokenRules {
         return sb.toString();
     }
 
+
 }
+
+
+

@@ -58,29 +58,6 @@ public class Suffix {
         }
     }
 
-    public static Transformer accenter = new Transformer() {
-        @Override
-        public char transform(char c) {
-            return accented(c);
-        }
-    };
-
-    public static final Transformer lengthener = new Transformer() {
-        @Override
-        public char transform(char c) {
-            boolean lp = Character.isLowerCase(c);
-            char lc = lp ? c : Character.toLowerCase(c);
-            int p = lowerUnaccentedVowels.indexOf(lc);
-            if (p < 0) {
-                return c;
-            }
-            else {
-                char lac = lowerAccentedVowels.charAt(p);
-                return lp ? lac : Character.toUpperCase(lac);
-            }
-        }
-    };
-
     public static char unaccented(char c) {
         boolean lp = Character.isLowerCase(c);
         char lc = lp ? c : Character.toLowerCase(c);
@@ -93,29 +70,6 @@ public class Suffix {
             return lp ? lac : Character.toUpperCase(lac);
         }
     }
-
-    public static Transformer unaccenter = new Transformer() {
-        @Override
-        public char transform(char c) {
-            return unaccented(c);
-        }
-    };
-
-    public static final Transformer shortener = new Transformer() {
-        @Override
-        public char transform(char c) {
-            boolean lp = Character.isLowerCase(c);
-            char lc = lp ? c : Character.toLowerCase(c);
-            int p = lowerAccentedVowels.indexOf(lc);
-            if (p < 0) {
-                return c;
-            }
-            else {
-                char lac = lowerUnaccentedVowels.charAt(p);
-                return lp ? lac : Character.toUpperCase(lac);
-            }
-        }
-    };
 
     public static String unaccentString(CharSequence charSequence) {
         if (charSequence == null) {
@@ -134,48 +88,6 @@ public class Suffix {
         }
         return sb.toString();
     }
-
-    static int lastVowelPosition(Token t) {
-        int lp = t.length();
-        while (--lp >= 0 && !isVowel(t.charAt(lp)));
-        return lp;
-    }
-
-    public static Token unaccentLastVowel(Token t) {
-        int lp = lastVowelPosition(t);
-        if (lp >= 0) {
-            char lc = t.charAt(lp);
-            if (isAccented(lc)) {
-                return new ReplacedCharToken(t, lp, unaccented(lc));
-            }
-        }
-        return t;
-    }
-
-    public static Token accentLastVowel(Token t) {
-        int lp = lastVowelPosition(t);
-        if (lp >= 0) {
-            char lc = t.charAt(lp);
-            if (!isAccented(lc)) {
-                return new ReplacedCharToken(t, lp, accented(lc));
-            }
-        }
-        return t;
-    }
-
-    public static final Function<Token,Token> accenterFunction = new Function<Token, Token>() {
-        @Override
-        public Token apply(@Nullable Token token) {
-            return (token == null) ? null : accentLastVowel(token);
-        }
-    };
-
-    public static final Function<Token,Token> unaccenterFunction = new Function<Token, Token>() {
-        @Override
-        public Token apply(@Nullable Token token) {
-            return (token == null) ? null : unaccentLastVowel(token);
-        }
-    };
 
     public static Iterable<String> ssplitter(String str) {
         return Splitter.on(CharMatcher.BREAKING_WHITESPACE)
@@ -213,7 +125,7 @@ public class Suffix {
     }
 
     public static <T> List<T> csplit(String cstr, Function<? super String,T> tfunc) {
-        return Lists.newArrayList(csplitter(cstr, tfunc));
+        return ImmutableList.copyOf(csplitter(cstr, tfunc));
     }
 
     public static List<String> csplit(String cstr) {
@@ -239,6 +151,9 @@ public class Suffix {
     }
 
     public static boolean seqMatches(CharSequence cs, String ms, int sp) {
+        if (cs == null) {
+            return false;
+        }
         int mn = ms.length();
         int cn = cs.length();
         if (sp < 0 || sp + mn > cn) {

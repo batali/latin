@@ -22,7 +22,8 @@ public abstract class ValuesList<T> extends AbstractList<T> implements Values<T>
         return values.size();
     }
 
-    public T get(Alts.Chooser chooser) {
+    @Override
+    public T choose(Alts.Chooser chooser) {
         return Alts.chooseElement(this, chooser);
     }
 

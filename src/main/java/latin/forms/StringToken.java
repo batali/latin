@@ -3,22 +3,20 @@ package latin.forms;
 
 import com.google.common.base.Function;
 
+import java.io.IOException;
+
 import javax.annotation.Nullable;
 
 public class StringToken extends AbstractToken implements TokenRule {
 
-    final String string;
+    public final String string;
 
     public StringToken (String string) {
         this.string = string;
     }
 
-    @Override
-    public StringBuilder addToBuilder(StringBuilder stringBuilder, int sp, int ep) {
-        if (ep > sp) {
-            stringBuilder.append(string, sp, ep);
-        }
-        return stringBuilder;
+    public StringToken (char c) {
+        this(Character.toString(c));
     }
 
     @Override
@@ -32,8 +30,18 @@ public class StringToken extends AbstractToken implements TokenRule {
     }
 
     @Override
+    public void appendTo(Appendable appendable, int s, int e) {
+        try {
+            appendable.append(string, s, e);
+        }
+        catch(IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
+
+    @Override
     public Token apply(@Nullable Token token) {
-        return (token == null || token.isEmpty()) ? this : new AddedStringToken(token, string);
+        return (token == null || token.isEmpty()) ? this : new PairToken(token, this);
     }
 
     @Override

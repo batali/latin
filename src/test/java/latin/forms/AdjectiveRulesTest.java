@@ -1,16 +1,12 @@
 
 package latin.forms;
 
-import com.google.common.collect.Lists;
-import latin.choices.Adjective;
-import latin.choices.CaseNumber;
-import latin.choices.CollectAlts;
-import latin.choices.Gender;
-import org.junit.Test;
+import org.junit.Ignore;
 
-import java.util.List;
-
+@Ignore
 public class AdjectiveRulesTest {
+
+    /*
 
     public static List<Gender> glist = Gender.getIdList(3);
 
@@ -71,8 +67,8 @@ public class AdjectiveRulesTest {
         Adjective.FormEntry ae = new Adjective.FormEntry(
                 "agilis", "agil", "third", aelist);
         showAdjectiveForms(ae);
-
     }
+    */
 
 
 }

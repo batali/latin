@@ -1,6 +1,10 @@
 package latin.choices;
 
+import com.google.common.base.Function;
+
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 public enum CaseNumber implements Case.Key, Number.Key {
 
@@ -59,8 +63,11 @@ public enum CaseNumber implements Case.Key, Number.Key {
         return values()[caseKey.ordinal() + numberKey.ordinal() * Case.values().length];
     }
 
-    public static CaseNumber getKey(Object x) {
-        if (x instanceof CaseNumber) {
+    public static CaseNumber getKey(@Nullable Object x) {
+        if (x == null) {
+            return null;
+        }
+        else if (x instanceof CaseNumber) {
             return (CaseNumber) x;
         }
         else if (x instanceof CaseNumber.Key) {
@@ -74,6 +81,14 @@ public enum CaseNumber implements Case.Key, Number.Key {
     public interface Key {
         public CaseNumber getCaseNumber();
     }
+
+    public static final Function<Object,CaseNumber> toKey = new Function<Object, CaseNumber>() {
+        @Override
+        public CaseNumber apply(@Nullable Object o) {
+            return getKey(o);
+        }
+    };
+
 }
 
 

@@ -4,8 +4,10 @@ package latin.forms;
 public interface Token extends CharSequence {
     public boolean isEmpty();
     public Token subSequence(int s, int e);
-    public StringBuilder addToBuilder(StringBuilder stringBuilder, int sp, int ep);
-    public StringBuilder addToBuilder(StringBuilder stringBuilder);
-    public Character endChar(int fromEnd);
+    public Token butLast(int n);
+    public Token butFirst(int n);
+    public void appendTo(Appendable appendable);
+    public void appendTo(Appendable appendable, int s, int e);
+    public char endChar(int fromEnd);
     public int endOffset(int fromEnd);
 }

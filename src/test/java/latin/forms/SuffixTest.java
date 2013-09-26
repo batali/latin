@@ -1,13 +1,8 @@
 
 package latin.forms;
 
-import com.google.common.collect.Lists;
-import latin.choices.Alts;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class SuffixTest {
 
@@ -47,8 +42,14 @@ public class SuffixTest {
         }
     }
 
-    public void checkAccented(char tc, char fc) {
-        Assert.assertEquals(tc, Suffix.lengthener.transform(fc));
+    void checkAccented(char tc, char fc) {
+        Assert.assertEquals(tc, Suffix.accented(fc));
+        if (Suffix.isVowel(fc)) {
+            Assert.assertTrue(Suffix.isAccented(tc));
+        }
+        else {
+            Assert.assertEquals(tc, fc);
+        }
     }
 
     @Test
@@ -61,6 +62,12 @@ public class SuffixTest {
 
     public void checkUnaccented(char tc, char fc) {
         Assert.assertEquals(tc, Suffix.unaccented(fc));
+        if (Suffix.isVowel(fc)) {
+            Assert.assertFalse(Suffix.isAccented(tc));
+        }
+        else {
+            Assert.assertEquals(tc, fc);
+        }
     }
 
     @Test
@@ -74,47 +81,9 @@ public class SuffixTest {
 
     @Test
     public void testStartAndEnd() {
-        FormBuilder fb1 = new FormBuilder().add("alfabalf");
+        String fb1 = "alfabalf";
         Assert.assertTrue(Suffix.startMatches(fb1,"VC"));
         Assert.assertTrue(Suffix.endMatches(fb1, "V*C"));
-    }
-
-    public void checkFormBuilder(String msg, String ts, IFormBuilder formBuilder) {
-        Assert.assertEquals(msg, ts, formBuilder.getForm());
-    }
-
-    @Test
-    public void testFormBuilder() {
-        FormBuilder fb1 = new FormBuilder().add("boo");
-        fb1.removeLast(2);
-        checkFormBuilder("removeLast2", "b", fb1);
-    }
-
-    public void checkModString(String fs, String ms, String ts) {
-        FormBuilder fb = new FormBuilder();
-        fb.add(fs);
-        Rulef rulef = FormRule.parseRule("", "", ms);
-        rulef.apply(fb, Alts.firstAlt);
-        Assert.assertEquals(fs + ":" + ms, ts, fb.getForm());
-    }
-
-    @Test
-    public void testModString() {
-        checkModString("foo", "baramatic", "foobaramatic");
-        checkModString("ai", "<b", "aīb");
-        checkModString("aī", "<b", "aīb");
-        checkModString("aŪ", ">", "aU");
-        checkModString("au", ">", "au");
-        checkModString("pat", "+ed", "patted");
-        checkModString("fly", "-ew", "flew");
-        checkModString("x", "-", "");
-        try {
-            checkModString("ab", "=c", "abc");
-            Assert.fail();
-        }
-        catch(IllegalArgumentException iae) {
-            Assert.assertTrue(iae.getMessage().startsWith("bad mod string"));
-        }
     }
 
     @Test
@@ -129,14 +98,6 @@ public class SuffixTest {
     }
 
     @Test
-    public void testMakeFormf() {
-        Formf formf = Suffix.makeFormf("", "", " ab_c");
-        Assert.assertEquals("[ab c]", Suffix.getStrings(formf).toString());
-        Formf formg = Suffix.makeFormf("", "", " ab_____c");
-        Assert.assertEquals("[ab c]", Suffix.getStrings(formg).toString());
-    }
-
-    @Test
     public void testSsplit() {
         Assert.assertEquals("[a, b]", Suffix.ssplit("a b").toString());
         Assert.assertEquals("[a, b]", Suffix.ssplit("a  b  ").toString());
@@ -144,12 +105,6 @@ public class SuffixTest {
         Assert.assertTrue(Suffix.ssplit("").isEmpty());
         Assert.assertEquals("[a]", Suffix.ssplit("a ").toString());
         Assert.assertEquals("[a]", Suffix.ssplit(" a").toString());
-    }
-
-    @Test
-    public void testEsplit() {
-        List<Pair<String,String>> pairList = Lists.newArrayList(Suffix.esplitter("foo=3 bar=4,34 noog"));
-        Assert.assertEquals("[(foo,3), (bar,4,34), (noog,)]", pairList.toString());
     }
 
     @Test

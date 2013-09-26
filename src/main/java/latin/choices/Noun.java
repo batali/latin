@@ -1,162 +1,152 @@
 
 package latin.choices;
 
-import latin.forms.Formf;
-import latin.forms.Forms;
-import latin.forms.IForm;
-import latin.forms.Rulef;
-import latin.forms.Stemf;
-import latin.forms.StoredForms;
+import latin.forms.English;
 import latin.forms.Suffix;
 import latin.forms.Token;
 import latin.forms.TokenRule;
 import latin.forms.Tokens;
 import latin.util.PathId;
 
-import java.util.EnumMap;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 public class Noun {
 
-    public static StoredForms<CaseNumber> emptyForms = new StoredForms<CaseNumber> () {
+    public interface LatinEntry {
+        public Token getGstem(Alts.Chooser chooser);
+        public Token getForm(CaseNumber key, Alts.Chooser chooser);
+    }
+
+    public static StemFunction<LatinEntry> gstemFunction = new StemFunction<LatinEntry>() {
         @Override
-        public Formf getStored(CaseNumber key) {
-            return null;
+        public Token apply(LatinEntry e, Alts.Chooser chooser) {
+            return e.getGstem(chooser);
         }
     };
 
-    public interface Rules {
-        public Rulef getRule(CaseNumber caseNumber);
+    public interface EnglishEntry {
+        public Token getSingular(Alts.Chooser chooser);
+        public Token getPlural(Alts.Chooser chooser);
     }
 
-    public static EnumMap<CaseNumber, CaseNumber> renamed =
-            new EnumMap<CaseNumber, CaseNumber>(CaseNumber.class);
-
-    static {
-        renamed.put(CaseNumber.AccSi, CaseNumber.NomSi);
-        renamed.put(CaseNumber.VocSi, CaseNumber.NomSi);
-        renamed.put(CaseNumber.VocPl, CaseNumber.NomPl);
-        renamed.put(CaseNumber.LocSi, CaseNumber.AblSi);
-        renamed.put(CaseNumber.LocPl, CaseNumber.AblPl);
-        renamed.put(CaseNumber.AblPl, CaseNumber.DatPl);
-        renamed.put(CaseNumber.AccPl, CaseNumber.NomPl);
-    }
-
-    public static <ET> IForm getForm(CaseNumber key,
-                                     StoredForms<CaseNumber> storedForms,
-                                     Stemf<ET> stemf,
-                                     ET stemEntry,
-                                     Rules rules,
-                                     Alts.Chooser chooser) {
-        if (storedForms != null) {
-            Formf storedFormf = storedForms.getStored(key);
-            if (storedFormf != null) {
-                return storedFormf.apply(chooser);
-            }
+    public static abstract class AbstractLatinEntry implements LatinEntry {
+        public abstract KeyValues<CaseNumber,Token> getStored();
+        public abstract KeyValues<CaseNumber,TokenRule> getRules();
+        public Token getForm(CaseNumber key, Alts.Chooser chooser) {
+            return NounForms.getForm(key,
+                                     getStored(),
+                                     gstemFunction,
+                                     this,
+                                     getRules(),
+                                     chooser);
         }
-        Rulef ruleFormf = rules.getRule(key);
-        if (ruleFormf != null) {
-            return Forms.applyRule(ruleFormf, Forms.applyStemf(stemf, stemEntry, chooser), chooser);
-        }
-        CaseNumber rkey = renamed.get(key);
-        if (rkey != null) {
-            return getForm(rkey, storedForms, stemf, stemEntry, rules, chooser);
-        }
-        else {
-            return null;
+        public boolean hasStored(Object k) {
+            return getStored().getValue(CaseNumber.getKey(k)) != null;
         }
     }
 
-    public static <ET> Token getNounToken (Tokens.Stored<CaseNumber> stored,
-                                           ValueFunction<ET,Token> stemf,
-                                           ET e,
-                                           Tokens.Rules<CaseNumber> rules,
-                                           CaseNumber key,
-                                           Alts.Chooser chooser) {
-        Token t = stored.getStoredToken(key, chooser);
-        if (t != null) {
-            return t;
-        }
-        TokenRule r = rules.getTokenRule(key, chooser);
-        if (r != null) {
-            return r.apply(stemf.testApply(e, chooser));
-        }
-        CaseNumber rkey = renamed.get(key);
-        return (rkey != null)
-               ? getNounToken(stored, stemf, e, rules, rkey, chooser)
-               : null;
-    }
-
-    public static final ValueFunction<NE,Token> neStem = new ValueFunction<NE,Token>() {
-        @Override
-        public Token apply(NE e, Alts.Chooser chooser) {
-            return e.stem.get(chooser);
-        }
-        @Override
-        public boolean test(NE e) {
-            return true;
-        }
-        @Override
-        public Token testApply(NE e, Alts.Chooser chooser) {
-            return apply(e, chooser);
-        }
-    };
-
-
-
-    public static class NE {
-        PathId.Element path;
-        Tokens.Stored<CaseNumber> stored;
-        Value<Token> stem;
-        Tokens.Rules<CaseNumber> rules;
-        public NE(PathId.Element path,
-                  Tokens.Stored<CaseNumber> stored,
-                  Value<Token> stem,
-                  Tokens.Rules<CaseNumber> rules) {
-            this.path = path;
+    public static class LatinEntryImpl extends AbstractLatinEntry {
+        public String id;
+        public Values<Token> gstem;
+        public KeyValues<CaseNumber,Token> stored;
+        public KeyValues<CaseNumber,TokenRule> rules;
+        public LatinEntryImpl(String id,
+                              Values<Token> gstem,
+                              KeyValues<CaseNumber,Token> stored,
+                              KeyValues<CaseNumber,TokenRule> rules) {
+            this.id = id;
+            this.gstem = gstem;
             this.stored = stored;
-            this.stem = stem;
             this.rules = rules;
         }
-        public NE(Tokens.StoredTokensBuilder<CaseNumber> stb,
-                  List<Token> gstems,
-                  Tokens.Rules<CaseNumber> rules) {
-            this(stb.getPath(),
-                 stb.build(),
-                 stb.makeValuesList("gstem", gstems),
-                 rules);
+
+        @Override
+        public KeyValues<CaseNumber, Token> getStored() {
+            return stored;
         }
-        public Token getForm(CaseNumber key, Alts.Chooser chooser) {
-            return getNounToken(stored, neStem, this, rules, key, chooser);
+
+        @Override
+        public KeyValues<CaseNumber, TokenRule> getRules() {
+            return rules;
         }
-        public String getId() {
-            return path.toString();
-        }
-        public String getSpec() {
-            return path.toString() + ":" + rules.toString();
+        @Override
+        public Token getGstem(Alts.Chooser chooser) {
+            return gstem.choose(chooser);
         }
     }
 
-    public static Tokens.StoredTokensBuilder<CaseNumber> storedTokensBuilder(Object nst) {
-        PathId.Element path = new PathId.Root(Suffix.unaccentString(nst.toString()));
-        return Tokens.storedTokensBuilder(path, CaseNumber.class);
+    public static LatinEntryImpl makeEntry(String nsi, String gst, String rn) {
+        List<Token> nsiTokens = Tokens.parseTokens(nsi);
+        String id = Suffix.unaccentString(nsiTokens.get(0));
+        PathId.Element path = PathId.makeRoot(id);
+        NounRules rules = NounRules.getRules(rn);
+        Values<Token> gstem = new IdValuesList<Token>(path.makeChild("gstem"), Tokens.parseTokens(gst));
+        if (rules.hasNomSi()) {
+            return new LatinEntryImpl(id, gstem, NounForms.emptyStored, rules);
+        }
+        else {
+            NounForms.StoredBuilder sb = new NounForms.StoredBuilder(path);
+            sb.putValues("NomSi", nsiTokens);
+            return new LatinEntryImpl(id, gstem, sb.build(), rules);
+        }
     }
 
-    public static NE makeEntry(String gs, String rn) {
-        List<Token> gstl = Tokens.parseTokens(gs);
-        NounForms.Rules rl = NounForms.getRules(rn);
-        TokenRule r = rl.getTokenRule(CaseNumber.NomSi, Alts.firstAlt);
-        Token nsit = r.apply(gstl.get(0));
-        Tokens.StoredTokensBuilder<CaseNumber> stb = storedTokensBuilder(nsit);
-        return new NE(stb, gstl, rl);
+    // id
+    // latin: rules, declension, features
+    // english: rules, features
+    // NomSi
+    // EngSi
+    // EngPl
+    // gstem
+    // GenSi
+
+    public class RegularEnglishEntry implements EnglishEntry {
+        final Values<Token> singular;
+        public RegularEnglishEntry(Values<Token> singular) {
+            this.singular = singular;
+        }
+        @Override
+        public Token getSingular(Alts.Chooser chooser) {
+            return singular.choose(chooser);
+        }
+        @Override
+        public Token getPlural(Alts.Chooser chooser) {
+            return English.pluralTokenRule.apply(getSingular(chooser));
+        }
     }
 
-    public static NE makeEntry(String nsi, String gs, String rn) {
-        List<Token> gstl = Tokens.parseTokens(gs);
-        NounForms.Rules rl = NounForms.getRules(rn);
-        Tokens.StoredTokensBuilder<CaseNumber> stb = storedTokensBuilder(nsi);
-        stb.stored("NomSi", nsi);
-        return new NE(stb, gstl, rl);
+    public class IrregularEnglishEntry implements EnglishEntry {
+        final Values<Token> singular;
+        final Values<Token> plural;
+        public IrregularEnglishEntry(Values<Token> singular,
+                                     Values<Token> plural) {
+            this.singular = singular;
+            this.plural = plural;
+        }
+        @Override
+        public Token getSingular(Alts.Chooser chooser) {
+            return singular.choose(chooser);
+        }
+        @Override
+        public Token getPlural(Alts.Chooser chooser) {
+            return plural.choose(chooser);
+        }
+    }
+
+    public EnglishEntry makeEnglishEntry(String si, @Nullable String pl) {
+        List<Token> sitl = Tokens.parseTokens(si);
+        String id = sitl.get(0).toString();
+        PathId.Element path = PathId.makeRoot(id);
+        if (pl == null) {
+            return new RegularEnglishEntry(new IdValuesList<Token>(path.makeChild("EngSi"), sitl));
+        }
+        else {
+            List<Token> pltl = Tokens.parseTokens(pl);
+            return new IrregularEnglishEntry(new IdValuesList<Token>(path.makeChild("EngSi"), sitl),
+                                             new IdValuesList<Token>(path.makeChild("EngPl"), pltl));
+        }
     }
 
 }

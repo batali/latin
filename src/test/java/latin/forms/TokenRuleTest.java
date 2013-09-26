@@ -4,6 +4,8 @@ package latin.forms;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 public class TokenRuleTest {
 
@@ -13,9 +15,19 @@ public class TokenRuleTest {
     }
 
     @Test
+    public void testParseRule() {
+        assertSame(TokenRules.noopRule, TokenRules.parseRule(":"));
+        assertSame(TokenRules.removeLastRule, TokenRules.parseRule("-"));
+        assertSame(TokenRules.removeLastRule, TokenRules.parseRule("f:"));
+        assertSame(TokenRules.accenterRule, TokenRules.parseRule("<"));
+        assertSame(TokenRules.unaccenterRule, TokenRules.parseRule(">"));
+        assertSame(TokenRules.duplicateLast, TokenRules.parseRule("+"));
+        assertTrue(TokenRules.parseRule(":a") instanceof TokenRules.AddedStringRule);
+    }
+
+    @Test
     public void testSingleRules() throws Exception {
         checkRuleResult("cat", TokenRules.noopRule, "cat");
-        checkRuleResult("hats", new StringToken("s"), "hat");
         checkRuleResult("animal", TokenRules.unaccenterRule, "animāl");
         checkRuleResult("amō", TokenRules.accenterRule, "amo");
         checkRuleResult("he", TokenRules.removeLastRule, "hep");
@@ -23,7 +35,8 @@ public class TokenRuleTest {
     }
 
     @Test
-    public void testParseRules() throws Exception {
+    public void testParsedRules() throws Exception {
+        checkRuleResult("hats", TokenRules.parseRule("s"), "hat");
         checkRuleResult("foe", TokenRules.parseRule("-e"), "foo");
         checkRuleResult("fie", TokenRules.parseRule("oo:ie"), "foo");
         checkRuleResult("aba", TokenRules.parseRule(":ba"), "a");
