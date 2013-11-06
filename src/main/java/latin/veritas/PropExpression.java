@@ -9,6 +9,7 @@ public interface PropExpression {
     void collectPaths(Set<String> pathStrings);
     public String asList();
     public List<List<Psetting>> getCnf(boolean bv, Psetting.Handler handler);
+    public List<List<SettingSpec>> getCnf(boolean bv);
     public String prettyPrint(boolean top);
     public int weight();
 }

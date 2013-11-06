@@ -42,6 +42,7 @@ public class CompoundExpression implements PropExpression {
 
         public abstract boolean mevalSequence(List<PropExpression> subs, MevalEnvironment menv);
         public abstract List<List<Psetting>> getCnf(List<PropExpression> subs, boolean bv, Psetting.Handler handler);
+        public abstract List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv);
 
         public String prettyPrint(List<PropExpression> subs, boolean top) {
             StringBuilder builder = new StringBuilder();
@@ -104,6 +105,10 @@ public class CompoundExpression implements PropExpression {
         return operator.getCnf(subExpressions, bv, handler);
     }
 
+    public List<List<SettingSpec>> getCnf(boolean bv) {
+        return operator.getCnf(subExpressions, bv);
+    }
+
     @Override
     public String prettyPrint(boolean top) {
         return operator.prettyPrint(subExpressions, top);
@@ -136,6 +141,10 @@ public class CompoundExpression implements PropExpression {
             return subs.get(0).getCnf(!bv, handler);
         }
         @Override
+        public List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv) {
+            return subs.get(0).getCnf(!bv);
+        }
+        @Override
         public String prettyPrint(List<PropExpression> subs, boolean top) {
             return "!" + subs.get(0).prettyPrint(false);
         }
@@ -160,6 +169,15 @@ public class CompoundExpression implements PropExpression {
         }
     }
 
+    public static List<List<SettingSpec>> subsCnf(List<PropExpression> subs,
+                                                  boolean isConjunction, boolean bv) {
+        if (isConjunction == bv) {
+            return NormalForm.conjoinSequence(subs, bv);
+        }
+        else {
+            return NormalForm.disjoinSequence(subs, 0, subs.size(), bv);
+        }
+    }
     public static final Operator andOperator = new Operator("&") {
         @Override
         public boolean mevalSequence(List<PropExpression> subs, MevalEnvironment menv) {
@@ -168,6 +186,10 @@ public class CompoundExpression implements PropExpression {
         @Override
         public List<List<Psetting>> getCnf(List<PropExpression> subs, boolean bv, Psetting.Handler handler) {
             return subsCnf(subs, true, bv, handler);
+        }
+        @Override
+        public List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv) {
+            return subsCnf(subs, true, bv);
         }
     };
 
@@ -180,6 +202,10 @@ public class CompoundExpression implements PropExpression {
         public List<List<Psetting>> getCnf(List<PropExpression> subs, boolean bv, Psetting.Handler handler) {
             return subsCnf(subs, false, bv, handler);
         }
+        @Override
+        public List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv) {
+            return subsCnf(subs, false, bv);
+        }
     };
 
     public static List<List<Psetting>> getIfCnf(PropExpression lhs, PropExpression rhs, boolean bv, Psetting.Handler handler) {
@@ -188,6 +214,15 @@ public class CompoundExpression implements PropExpression {
         }
         else {
             return Psetting.combineNormalForms(lhs.getCnf(true, handler), rhs.getCnf(false, handler));
+        }
+    }
+
+    public static List<List<SettingSpec>> getIfCnf(PropExpression lhs, PropExpression rhs, boolean bv) {
+        if (bv) {
+            return NormalForm.mergeNormalForms(lhs.getCnf(false), rhs.getCnf(true));
+        }
+        else {
+            return NormalForm.combineNormalForms(lhs.getCnf(true), rhs.getCnf(false));
         }
     }
 
@@ -204,6 +239,19 @@ public class CompoundExpression implements PropExpression {
         }
     }
 
+    public static List<List<SettingSpec>> getIffCnf(PropExpression lhs, PropExpression rhs, boolean bv) {
+        if (bv) {
+            return NormalForm.combineNormalForms(
+                getIfCnf(lhs, rhs, true),
+                getIfCnf(rhs, lhs, true));
+        }
+        else {
+            return NormalForm.mergeNormalForms(
+                getIfCnf(lhs, rhs, false),
+                getIfCnf(rhs, lhs, false));
+        }
+    }
+
     public static final Operator ifOperator = new Operator("->") {
         @Override
         public int maxSubCount() {
@@ -216,6 +264,10 @@ public class CompoundExpression implements PropExpression {
         @Override
         public List<List<Psetting>> getCnf(List<PropExpression> subs, boolean bv, Psetting.Handler handler) {
             return getIfCnf(subs.get(0), subs.get(1), bv, handler);
+        }
+        @Override
+        public List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv) {
+            return getIfCnf(subs.get(0), subs.get(1), bv);
         }
     };
 
@@ -232,6 +284,10 @@ public class CompoundExpression implements PropExpression {
         public List<List<Psetting>> getCnf(List<PropExpression> subs, boolean bv, Psetting.Handler handler) {
             return getIffCnf(subs.get(0), subs.get(1), bv, handler);
         }
+        @Override
+        public List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv) {
+            return getIffCnf(subs.get(0), subs.get(1), bv);
+        }
     };
 
     public static final Operator XorOperator = new Operator("^") {
@@ -246,6 +302,10 @@ public class CompoundExpression implements PropExpression {
         @Override
         public List<List<Psetting>> getCnf(List<PropExpression> subs, boolean bv, Psetting.Handler handler) {
             return getIffCnf(subs.get(0), subs.get(1), !bv, handler);
+        }
+        @Override
+        public List<List<SettingSpec>> getCnf(List<PropExpression> subs, boolean bv) {
+            return getIffCnf(subs.get(0), subs.get(1), !bv);
         }
     };
 

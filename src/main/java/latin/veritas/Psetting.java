@@ -57,6 +57,9 @@ public abstract class Psetting {
     }
 
     public static int compareProps(Psetting ps1, Psetting ps2) {
+        if (ps1 == ps2) {
+            return 0;
+        }
         int d = ps1.pathString.compareTo(ps2.pathString);
         if (d == 0) {
             d = ps1.choiceString.compareTo(ps2.choiceString);
@@ -87,6 +90,9 @@ public abstract class Psetting {
     public static final Ordering<Psetting> PsettingOrdering = new Ordering<Psetting> () {
         @Override
         public int compare(Psetting ps1, Psetting ps2) {
+            if (ps1 == ps2) {
+                return 0;
+            }
             int d = compareProps(ps1, ps2);
             if (d == 0) {
                 d = ps1.valueIndex() - ps2.valueIndex();

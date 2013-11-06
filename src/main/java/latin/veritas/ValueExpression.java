@@ -10,16 +10,19 @@ public class ValueExpression extends AtomicExpression {
         this.choiceName = choiceName;
     }
 
-    @Override
-    public boolean meval(MevalEnvironment menv) {
-        return menv.evalSlot(pathString, choiceName);
+    public String getSettingString(boolean pol) {
+        String op = pol ? "=" : "!=";
+        return pathString + op + choiceName;
     }
 
-    public String toString() {
-        return pathString + "=" + choiceName;
+    @Override
+    public String getValueString() {
+        return choiceName;
     }
 
     public <T> T getSetting(boolean sv, Psetting.GetSetting<T>handler) {
         return handler.getValueSetting(pathString, choiceName, sv);
     }
+
+
 }

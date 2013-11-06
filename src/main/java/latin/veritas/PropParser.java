@@ -4,10 +4,11 @@ package latin.veritas;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
 
 public class PropParser {
 
@@ -179,10 +180,46 @@ public class PropParser {
         return handler.getValueSetting(pathSpec, choiceName, sv);
     }
 
+    public static SettingSpec parseSetting(StringParser stringParser) {
+        if (stringParser.ignoreSpaces().atEnd(false)) {
+            return null;
+        }
+        boolean sv = !stringParser.usePrefix("!");
+        if (!stringParser.apply(slotStartChar)) {
+            stringParser.signalError("bad start of setting");
+        }
+        String pathSpec = stringParser.getToken(slotPartCharacter);
+        if (stringParser.atEnd(false) || stringParser.apply(StringParser.isSpacePredicate)) {
+            return new BooleanExpression(pathSpec).getSetting(sv);
+        }
+        if (stringParser.usePrefix("!=")) {
+            sv = !sv;
+        }
+        else if (!stringParser.usePrefix("=")) {
+            stringParser.signalError("bad start to setting");
+        }
+        String choiceName = stringParser.getToken(valueChar);
+        return new ValueExpression(pathSpec, choiceName).getSetting(sv);
+    }
+
+
     public static List<Psetting> parseSettingList(StringParser stringParser, Psetting.Handler handler) {
         List<Psetting> sl = Lists.newArrayList();
         while(true) {
             Psetting setting = parseSetting(stringParser, handler);
+            if (setting == null) {
+                return sl;
+            }
+            else {
+                sl.add(setting);
+            }
+        }
+    }
+
+    public static List<SettingSpec> parseSettingList(StringParser stringParser) {
+        List<SettingSpec> sl = Lists.newArrayList();
+        while(true) {
+            SettingSpec setting = parseSetting(stringParser);
             if (setting == null) {
                 return sl;
             }
