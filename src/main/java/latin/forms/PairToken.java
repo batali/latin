@@ -11,10 +11,12 @@ public class PairToken extends AbstractToken {
         this.tail = tail;
     }
 
+    @Override
     public int length() {
         return head.length() + tail.length();
     }
 
+    @Override
     public char charAt(int p) {
         int hl = head.length();
         if (p < hl) {
@@ -25,6 +27,8 @@ public class PairToken extends AbstractToken {
         }
     }
 
+
+    @Override
     Token subToken(int start, int end) {
         int hl = head.length();
         if (end <= hl) {
@@ -38,6 +42,7 @@ public class PairToken extends AbstractToken {
         }
     }
 
+    @Override
     public void appendTo(Appendable appendable, int s, int e) {
         int hl = head.length();
         if (s < hl) {

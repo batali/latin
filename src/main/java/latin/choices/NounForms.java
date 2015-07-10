@@ -24,6 +24,22 @@ public class NounForms {
         renamed.put(CaseNumber.AccPl, CaseNumber.NomPl);
     }
 
+    public static CaseNumber getRenamed(CaseNumber key) {
+        switch (key.getCase()) {
+            case Acc:
+            case Voc:
+                return key.toCase(Case.Nom);
+            case Loc:
+                return key.toCase(Case.Abl);
+            case Abl:
+                if (key.getNumber().isPlural()) {
+                    return key.toCase(Case.Dat);
+                }
+            default:
+                return null;
+        }
+    }
+
     static Token applyRule(TokenRule rule, Token stem) {
         if (rule == null || stem == null) {
             return null;

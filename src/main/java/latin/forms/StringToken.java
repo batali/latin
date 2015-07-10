@@ -5,6 +5,7 @@ import com.google.common.base.Function;
 
 import java.io.IOException;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class StringToken extends AbstractToken implements TokenRule {
@@ -37,6 +38,12 @@ public class StringToken extends AbstractToken implements TokenRule {
         catch(IOException ioe) {
             throw new RuntimeException(ioe);
         }
+    }
+
+    @Override
+    @Nonnull
+    public String toString() {
+        return string;
     }
 
     @Override

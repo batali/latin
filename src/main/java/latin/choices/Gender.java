@@ -14,10 +14,6 @@ public enum Gender {
         public boolean isMasculine() {
             return true;
         }
-        @Override
-        public int selectIndex(int s) {
-            return 0;
-        }
     },
     f {
         @Override
@@ -37,7 +33,7 @@ public enum Gender {
 
         @Override
         public int selectIndex(int s) {
-            return (s > 1) ? s-1 : 0;
+            return s-1;
         }
     },
     mf {
@@ -45,11 +41,21 @@ public enum Gender {
         public boolean notNeuter() {
             return true;
         }
+        @Override
+        public int selectIndex(int s) {
+            Preconditions.checkArgument(s < 3);
+            return 0;
+        }
     },
     c {
         @Override
         public boolean notNeuter() {
             return true;
+        }
+        @Override
+        public int selectIndex(int s) {
+            Preconditions.checkArgument(s < 3);
+            return 0;
         }
     },
     mfn {
@@ -84,7 +90,7 @@ public enum Gender {
     }
 
     public int selectIndex(int s) {
-        return -1;
+        return 0;
     }
 
     public <T> T select(List<T> tlist) {
