@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<noun gender="n" rules="Third.pi.n">
+<noun gender="n" rules="Third.n.i" gstem="animāl" NomSi="animal">
+  <form key="VocSi">barfer</form>
 <forms>
   <gstem>animāl</gstem>
   <NomSi>animal</NomSi>

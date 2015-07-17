@@ -1,6 +1,7 @@
 package latin.forms;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.UnmodifiableIterator;
 
 import latin.choices.Alts;
@@ -105,6 +106,11 @@ public class ModRule extends AltsList<Mod> implements Rule {
         @Override
         public String choose(latin.choices.Chooser chooser) {
             return getRule().choose(chooser).apply(stem.choose(chooser));
+        }
+
+        @Override
+        public String toString() {
+            return Iterables.toString(this);
         }
     }
 

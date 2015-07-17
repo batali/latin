@@ -47,17 +47,24 @@ public class ModTest {
         checkMod(Mod.unaccentLast, "bar", "bar");
     }
 
-    @Test
-    public void testParsedMod() {
-        Mod m1 = Mod.parseMod("a");
-        checkMod(m1, "eep", "eepa");
-        Mod m2 = Mod.parseMod("<b");
-        checkMod(m2, "boa", "boāb");
-        Mod m3 = Mod.parseMod(">c");
-        checkMod(m3, "evē", "evec");
-        Mod m4 = Mod.parseMod("-er");
-        checkMod(m4, "patr", "pater");
+    Mod checkParseMod(String ms) {
+        Mod m = Mod.parseMod(ms);
+        Assert.assertEquals(ms, m.getSpec());
+        return m;
     }
 
+    @Test
+    public void testParsedMod() {
+        Mod m1 = checkParseMod("a");
+        checkMod(m1, "eep", "eepa");
+        Mod m2 = checkParseMod("<b");
+        checkMod(m2, "boa", "boāb");
+        Mod m3 = checkParseMod(">c");
+        checkMod(m3, "evē", "evec");
+        Mod m4 = checkParseMod("-er");
+        checkMod(m4, "patr", "pater");
+        Mod m5 = checkParseMod("---a");
+        checkMod(m5, "alfa", "aa");
+    }
 
 }

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <noun gender="m" rules="Second.er">
+  <form key="NomSi">ager</form>
+  <form key="gstem">agr</form>
 <forms>
   <gstem>agr</gstem>
   <NomSi>ager</NomSi>

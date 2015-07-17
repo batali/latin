@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<noun gender="f" rules="First.a">
+<noun gender="f" rules="First.a" gstem="aqu">
   <forms>
-    <gstem>aqu</gstem>
     <NomSi>aqua</NomSi>
     <GenSi>aquae</GenSi>
     <DatSi>aquae</DatSi>

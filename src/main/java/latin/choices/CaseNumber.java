@@ -49,14 +49,18 @@ public enum CaseNumber implements Case.Key, Number.Key {
         return fromCaseNumber(toCaseKey, numberKey);
     }
 
-    private static final Map<String,CaseNumber> fromStringMap = EkeyHelper.stringToEnumMap(CaseNumber.class);
+    private static final Map<String, CaseNumber> fromStringMap = EkeyHelper.stringToEnumMap(CaseNumber.class);
+
+    public static CaseNumber fromString(String ks, boolean errorp) {
+        CaseNumber key = fromStringMap.get(ks);
+        if (key == null && errorp) {
+            throw new IllegalArgumentException("Unknown CaseNumber key " + ks);
+        }
+        return key;
+    }
 
     public static CaseNumber fromString(String ks) {
-        CaseNumber key = fromStringMap.get(ks);
-        if (key != null) {
-            return key;
-        }
-        throw new IllegalArgumentException("Unknown CaseNumber key " + ks);
+        return fromString(ks, true);
     }
 
     public static CaseNumber fromCaseNumber(Case caseKey, Number numberKey) {

@@ -29,4 +29,9 @@ public class StringForm extends AltsList<String> implements Form {
         return builder.build();
     }
 
+    @Override
+    public String toString() {
+        return values.toString();
+    }
+
 }

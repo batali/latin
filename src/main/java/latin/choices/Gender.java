@@ -20,20 +20,11 @@ public enum Gender {
         public boolean isFeminine() {
             return true;
         }
-        @Override
-        public int selectIndex(int s) {
-            return (s < 3) ? 0 : 1;
-        }
     },
     n {
         @Override
         public boolean isNeuter() {
             return true;
-        }
-
-        @Override
-        public int selectIndex(int s) {
-            return s-1;
         }
     },
     mf {
@@ -41,21 +32,11 @@ public enum Gender {
         public boolean notNeuter() {
             return true;
         }
-        @Override
-        public int selectIndex(int s) {
-            Preconditions.checkArgument(s < 3);
-            return 0;
-        }
     },
     c {
         @Override
         public boolean notNeuter() {
             return true;
-        }
-        @Override
-        public int selectIndex(int s) {
-            Preconditions.checkArgument(s < 3);
-            return 0;
         }
     },
     mfn {
@@ -81,28 +62,34 @@ public enum Gender {
         return false;
     }
 
-    public boolean notNeuter() {
-        return isMasculine() || isFeminine();
-    }
-
     public boolean isNeuter() {
         return false;
     }
 
+    public boolean notNeuter() {
+        return !isNeuter();
+    }
+
     public int selectIndex(int s) {
-        return 0;
+        Preconditions.checkArgument(s > 0 && s <=3);
+        if (s == 1) {
+            return 0;
+        }
+        if (isNeuter()) {
+            return s - 1;
+        }
+        if (s == 2 || isMasculine()) {
+            return 0;
+        }
+        Preconditions.checkState(isFeminine());
+        return 1;
     }
 
     public <T> T select(List<T> tlist) {
-        if (tlist == null) {
+        if (tlist == null || tlist.isEmpty()) {
             return null;
-        }
-        int s = tlist.size();
-        if (s == 0) {
-            return null;
-        }
-        else {
-            return tlist.get(selectIndex(s));
+        } else {
+            return tlist.get(selectIndex(tlist.size()));
         }
     }
 

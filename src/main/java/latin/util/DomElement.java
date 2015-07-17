@@ -1,7 +1,8 @@
+package latin.util;
 
-package latin.forms;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableMap;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -18,30 +19,47 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.util.AbstractList;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-public class DocElement {
+public abstract class DomElement {
 
-    private Element docElement;
-
-    public DocElement(Element docElement) {
-        this.docElement = docElement;
-        docElement.normalize();
+    public static File getResourceFile(Class c, String subpath) {
+        return new File(c.getResource("/").getPath(), subpath);
     }
 
-    public Element getElement() {
-        return docElement;
+    public static Element fromDocument(Document document) {
+        Element e = document.getDocumentElement();
+        e.normalize();
+        return e;
     }
 
-    public DocElement(Document doc) {
-        this(doc.getDocumentElement());
+    public static Element fromInputSource(InputSource sc)
+        throws SAXException, ParserConfigurationException, IOException {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        return fromDocument(dBuilder.parse(sc));
     }
 
-    public String getNodeName() {
-        return docElement.getNodeName();
+    public static Element fromInputStream(InputStream st)
+        throws SAXException, ParserConfigurationException, IOException {
+        return fromInputSource(new InputSource(st));
+    }
+
+    public static Element fromString(String s)
+        throws SAXException, ParserConfigurationException, IOException {
+        StringReader sr = new StringReader(s);
+        return fromInputSource(new InputSource(sr));
+    }
+
+    public static Element fromFile(File xmlFile)
+        throws SAXException, ParserConfigurationException, IOException {
+        try (FileInputStream fis = new FileInputStream(xmlFile)) {
+            return fromInputStream(fis);
+        }
     }
 
     public static class ElementAttributes extends AbstractList<Node> {
@@ -122,36 +140,12 @@ public class DocElement {
         return new ElementAttributes(e.getAttributes());
     }
 
-    public static DocElement fromInputSource(InputSource sc)
-            throws SAXException, ParserConfigurationException, IOException {
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        return new DocElement(dBuilder.parse(sc));
-    }
-
-    public static DocElement fromInputStream(InputStream st)
-            throws SAXException, ParserConfigurationException, IOException {
-        return fromInputSource(new InputSource(st));
-    }
-
-    public static DocElement fromString(String s)
-            throws SAXException, ParserConfigurationException, IOException {
-        StringReader sr = new StringReader(s);
-        return fromInputSource(new InputSource(sr));
-    }
-
-    public static DocElement fromFile(File xmlFile)
-            throws SAXException, ParserConfigurationException, IOException {
-        FileInputStream fis = new FileInputStream(xmlFile);
-//        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-//        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-//        return new DocElement(dBuilder.parse(xmlFile));
-        try {
-            return fromInputStream(fis);
+    public static Map<String,String> attributesMap(Element e) {
+        ImmutableMap.Builder<String,String> b = ImmutableMap.builder();
+        for (Node n : elementAttributes(e)) {
+            b.put(n.getNodeName(), n.getNodeValue());
         }
-        finally {
-            fis.close();
-        }
+        return b.build();
     }
 
 }
