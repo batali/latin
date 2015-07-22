@@ -1,38 +1,58 @@
 package latin.util;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
-import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
 
+import junit.framework.Assert;
+
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 //try (InputStream inputStream = this.getClass().getResourceAsStream("/" + "DomElementTest.xml")) {
 
 public class DomElementTest {
-    private static Logger logger = LoggerFactory.getLogger(DomElementTest.class);
+    //private static Logger logger = LoggerFactory.getLogger(DomElementTest.class);
     @Test
     public void testFileLoad() throws Exception {
-        Element e = DomElement.fromFile(DomElement.getResourceFile(DomElementTest.class, "DomElementTest.xml"));
-        ImmutableMap<String,String> targetAttributes = ImmutableMap.<String,String>builder()
-                                                                   .put("gender", "m")
-                                                                   .put("gstem", "agr")
-                                                                   .build();
-        Assert.assertEquals(targetAttributes, DomElement.attributesMap(e));
-        ImmutableMap<String,String> targetForms = ImmutableMap.<String,String>builder()
-                                                              .put("NomSi", "ager")
-                                                              .put("AccSi", "agrum")
-                                                              .build();
+        DomElement e = DomElement.fromFile(DomElement.getResourceFile(DomElementTest.class, "DomElementTest.xml"));
+        Assert.assertEquals("noun", e.getTagName());
+        Assert.assertEquals("m", e.getAttribute("gender"));
+        Assert.assertEquals(Arrays.asList("gender", "gstem"), e.attributeNames());
+        Map<String,String> targetForms = Maps.newHashMap();
+        targetForms.put("NomSi", "ager");
+        targetForms.put("AccSi", "agrum");
         Map<String,String> foundForms = Maps.newHashMap();
-        for (Element f : DomElement.childTagElements(e, "form")) {
-            foundForms.put(f.getAttribute("key"), f.getTextContent());
+        for (DomElement c : e.children("form")) {
+            foundForms.put(c.getAttribute("key"), c.getTextContent());
         }
         Assert.assertEquals(targetForms, foundForms);
+        Set<String> targetTags = Sets.newHashSet("form", "sub");
+        Set<String> foundTags = Sets.newHashSet();
+        for (DomElement d : e.children()) {
+            foundTags.add(d.getTagName());
+        }
+        Assert.assertEquals(targetTags, foundTags);
     }
+
+    @Test
+    public void testFromString() throws Exception {
+        String s = "<noun gender=\"m\" gstem=\"agr\" />";
+        DomElement e = DomElement.fromString(s);
+        Assert.assertEquals("noun", e.getTagName());
+        Assert.assertEquals("m", e.getAttribute("gender"));
+        Assert.assertEquals(Arrays.asList("gender", "gstem"), e.attributeNames());
+    }
+
+    @Test (expected = DomElement.ParseException.class)
+    public void testParseException() throws Exception {
+        String s = "<noun gender=\"m\" gstem=\"agr\"></verb>";
+        DomElement.fromString(s);
+        Assert.fail();
+    }
+
 }
 
 

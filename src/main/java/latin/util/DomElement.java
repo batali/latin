@@ -2,7 +2,6 @@ package latin.util;
 
 
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.ImmutableMap;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,91 +18,115 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.util.AbstractList;
 import java.util.Iterator;
-import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-public abstract class DomElement {
+public class DomElement {
+
+    Element element;
+
+    public static class ParseException extends Exception {
+        public ParseException(SAXException se) {
+            super(se);
+        }
+    }
 
     public static File getResourceFile(Class c, String subpath) {
         return new File(c.getResource("/").getPath(), subpath);
     }
 
-    public static Element fromDocument(Document document) {
+    DomElement (Element element) {
+        this.element = element;
+    }
+
+    public static DomElement fromDocument(Document document) {
         Element e = document.getDocumentElement();
         e.normalize();
-        return e;
+        return new DomElement(e);
     }
 
-    public static Element fromInputSource(InputSource sc)
-        throws SAXException, ParserConfigurationException, IOException {
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        return fromDocument(dBuilder.parse(sc));
+    static DocumentBuilder getDocumentBuilder() {
+        try {
+            return DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        }
+        catch(ParserConfigurationException pce) {
+            throw new RuntimeException(pce);
+        }
     }
 
-    public static Element fromInputStream(InputStream st)
-        throws SAXException, ParserConfigurationException, IOException {
-        return fromInputSource(new InputSource(st));
+    public static DomElement fromInputSource(InputSource sc) throws IOException, ParseException {
+        try {
+            return fromDocument(getDocumentBuilder().parse(sc));
+        }
+        catch (SAXException se) {
+            throw new ParseException(se);
+        }
     }
 
-    public static Element fromString(String s)
-        throws SAXException, ParserConfigurationException, IOException {
+    public static DomElement fromInputStream(InputStream st) throws IOException, ParseException {
+            return fromInputSource(new InputSource(st));
+    }
+
+    public static DomElement fromString(String s) throws IOException, ParseException {
         StringReader sr = new StringReader(s);
         return fromInputSource(new InputSource(sr));
     }
 
-    public static Element fromFile(File xmlFile)
-        throws SAXException, ParserConfigurationException, IOException {
+    public static DomElement fromFile(File xmlFile) throws IOException, ParseException {
         try (FileInputStream fis = new FileInputStream(xmlFile)) {
             return fromInputStream(fis);
         }
     }
 
-    public static class ElementAttributes extends AbstractList<Node> {
+    public String getTagName() {
+        return element.getTagName();
+    }
+
+    public String getAttribute(String attributeName) {
+        return element.getAttribute(attributeName);
+    }
+
+    public String getTextContent() {
+        return element.getTextContent();
+    }
+
+    static class ElementAttributeNames extends AbstractList<String> {
         private NamedNodeMap namedNodeMap;
-        public ElementAttributes(NamedNodeMap namedNodeMap) {
+        public ElementAttributeNames(NamedNodeMap namedNodeMap) {
             this.namedNodeMap = namedNodeMap;
         }
         @Override
-        public Node get(int index) {
-            return namedNodeMap.item(index);
-        }
+        public int size() { return namedNodeMap.getLength(); }
         @Override
-        public int size() {
-            return namedNodeMap.getLength();
-        }
+        public String get(int index) { return namedNodeMap.item(index).getNodeName(); }
     }
 
-    public static class ChildElements implements Iterable<Element> {
+    public ElementAttributeNames attributeNames() {
+        return new ElementAttributeNames(element.getAttributes());
+    }
+
+    static class ChildElements implements Iterable<DomElement> {
         NodeList nodeList;
 
         public ChildElements(NodeList nodeList) {
             this.nodeList = nodeList;
         }
 
-        protected boolean elementTest (Element element) {
-            return true;
-        }
-
-        public class ELementsIterator extends AbstractIterator<Element> {
+        public class ElementsIterator extends AbstractIterator<DomElement> {
             int position;
 
-            public ELementsIterator() {
+            public ElementsIterator() {
                 this.position = 0;
             }
 
             @Override
-            protected Element computeNext() {
+            protected DomElement computeNext() {
                 while (position < nodeList.getLength()) {
                     Node node = nodeList.item(position++);
                     if (node.getNodeType() == Node.ELEMENT_NODE) {
-                        Element element = (Element) node;
-                        if (elementTest(element)) {
-                            return element;
-                        }
+                        return new DomElement((Element) node);
                     }
                 }
                 return endOfData();
@@ -111,41 +134,17 @@ public abstract class DomElement {
         }
 
         @Override
-        public Iterator<Element> iterator() {
-            return new ELementsIterator();
+        public Iterator<DomElement> iterator() {
+            return new ElementsIterator();
         }
     }
 
-    public static class ChildTagElements extends ChildElements {
-        String tag;
-        public ChildTagElements (NodeList nodeList, String tag) {
-            super(nodeList);
-            this.tag = tag;
-        }
-        @Override
-        protected boolean elementTest(Element element) {
-            return element.getTagName() == tag;
-        }
+    public ChildElements children() {
+        return new ChildElements(element.getChildNodes());
     }
 
-    public static ChildElements childElements(Element base) {
-        return new ChildElements(base.getChildNodes());
-    }
-
-    public static ChildTagElements childTagElements (Element base, String tag) {
-        return new ChildTagElements(base.getChildNodes(), tag);
-    }
-
-    public static ElementAttributes elementAttributes(Element e) {
-        return new ElementAttributes(e.getAttributes());
-    }
-
-    public static Map<String,String> attributesMap(Element e) {
-        ImmutableMap.Builder<String,String> b = ImmutableMap.builder();
-        for (Node n : elementAttributes(e)) {
-            b.put(n.getNodeName(), n.getNodeValue());
-        }
-        return b.build();
+    public ChildElements children(String tagName) {
+        return new ChildElements(element.getElementsByTagName(tagName));
     }
 
 }
