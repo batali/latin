@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import latin.choices.Chooser;
+import latin.util.PathId;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -50,20 +51,30 @@ public class FormTest {
 
     @Before
     public void setup() {
-        s1 = new StringForm("s1", "ant");
-        s2 = new StringForm("s2", "dog,cat");
-        r1 = new ModRule("r1", "eater");
-        r2 = new ModRule("r2", "-,s");
+        PathId root = PathId.makeRoot("root");
+        s1 = new StringForm(root.makeChild("s1"), "ant");
+        s2 = new StringForm(root.makeChild("s2"), "dog,cat");
+        r1 = new ModRule(root.makeChild("r1"), "eater");
+        r2 = new ModRule(root.makeChild("r2"), "-,s");
     }
 
     void checkForm(String msg, Form f, String... targetStrings) {
         Assert.assertTrue(msg, Iterables.elementsEqual(f, Arrays.asList(targetStrings)));
     }
 
+    static final Chooser ultChooser = new Chooser() {
+        @Override
+        public Integer get(Object key) {
+            return -1;
+        }
+    };
+
+
     String chooseLast(Form form) {
-        LastChooser lastChooser = new LastChooser();
-        form.recordAlts(lastChooser);
-        return form.choose(lastChooser);
+//        LastChooser lastChooser = new LastChooser();
+//        form.recordAlts(lastChooser);
+//        return form.choose(lastChooser);
+        return form.choose(ultChooser);
     }
 
     @Test

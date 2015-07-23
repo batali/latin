@@ -70,6 +70,8 @@ public enum Gender {
         return !isNeuter();
     }
 
+    public String gkeyString() { return isNeuter() ? "n" : "mf"; }
+
     public int selectIndex(int s) {
         Preconditions.checkArgument(s > 0 && s <=3);
         if (s == 1) {
@@ -116,5 +118,14 @@ public enum Gender {
 
     public interface Key {
         public Gender getGender();
+    }
+
+    public static Gender getKey(Object o) {
+        if (o instanceof Gender) {
+            return ((Gender) o);
+        }
+        else {
+            return fromString(o.toString());
+        }
     }
 }

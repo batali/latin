@@ -92,8 +92,8 @@ public class Verb {
         public boolean test(IEntry t) {
             return t.getStem(stemName) != null;
         }
-        public IFormBuilder apply(IEntry entry, Alts.Chooser chooser) {
-            return Forms.applyFormf(entry.getStem(stemName), chooser);
+        public IFormBuilder apply(IEntry entry, Alts.AltChooser altChooser) {
+            return Forms.applyFormf(entry.getStem(stemName), altChooser);
         }
     }
 
@@ -110,11 +110,12 @@ public class Verb {
             return haveAstemAndConj(t);
         }
         public abstract Rulef getMod(Conjugation conjugation);
-        public IFormBuilder apply(IEntry entry, Alts.Chooser chooser) {
+        public IFormBuilder apply(IEntry entry, Alts.AltChooser altChooser) {
             Formf astemf = entry.getAstem();
             Conjugation conjugation = entry.getConjugation();
             if (astemf != null && conjugation != null) {
-                return Forms.applyRule(getMod(conjugation), Forms.applyFormf(astemf, chooser), chooser);
+                return Forms.applyRule(getMod(conjugation), Forms.applyFormf(astemf, altChooser),
+                                       altChooser);
             }
             else return null;
         }
@@ -141,13 +142,13 @@ public class Verb {
         public boolean test(IEntry e) {
             return prev.test(e);
         }
-        public IFormBuilder apply(IEntry e, Alts.Chooser chooser) {
-            return Forms.applyRule(modRule, prev.apply(e, chooser), chooser);
+        public IFormBuilder apply(IEntry e, Alts.AltChooser altChooser) {
+            return Forms.applyRule(modRule, prev.apply(e, altChooser), altChooser);
         }
     }
 
     public static interface InfinitiveSystem extends System {
-        public IForm getForm(IEntry entry, Alts.Chooser chooser);
+        public IForm getForm(IEntry entry, Alts.AltChooser altChooser);
     }
 
     public static class InfinitiveFormSystem extends FormSystem implements InfinitiveSystem {
@@ -159,8 +160,8 @@ public class Verb {
         public boolean test(IEntry entry) {
             return stemf.test(entry);
         }
-        public IForm getForm(IEntry entry, Alts.Chooser chooser) {
-            return stemf.apply(entry, chooser);
+        public IForm getForm(IEntry entry, Alts.AltChooser altChooser) {
+            return stemf.apply(entry, altChooser);
         }
     }
 
@@ -194,8 +195,8 @@ public class Verb {
             this.formf = Suffix.makeFormf(formSystem.getName(), formName, sl);
             this.formSystem = formSystem;
         }
-        public IFormBuilder applyFormf(Alts.Chooser chooser) {
-            return Forms.applyFormf(formf, chooser);
+        public IFormBuilder applyFormf(Alts.AltChooser altChooser) {
+            return Forms.applyFormf(formf, altChooser);
         }
         public String getName() {
             return formSystem.getName();
@@ -206,19 +207,19 @@ public class Verb {
         public StoredInfinitiveSystem(InfinitiveFormSystem fs, List<String> sl) {
             super(fs, "form", sl);
         }
-        public IForm getForm(IEntry entry, Alts.Chooser chooser) {
-            return applyFormf(chooser);
+        public IForm getForm(IEntry entry, Alts.AltChooser altChooser) {
+            return applyFormf(altChooser);
         }
     }
 
     public interface PersonNumberSystem extends System {
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser);
         public Mood getMood();
         public VerbChoices getVerbChoices();
     }
 
     public interface ImperfectEndings {
-        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.AltChooser altChooser);
     }
 
     public static abstract class PersonNumberForms extends FormSystem implements PersonNumberSystem {
@@ -293,7 +294,7 @@ public class Verb {
                                                  Voice voice,
                                                  Pair<Rulef,Rulef> fpSiPair,
                                                  IFormBuilder formBuilder,
-                                                 Alts.Chooser chooser) {
+                                                 Alts.AltChooser altChooser) {
         if (formBuilder == null || conjugation == null) {
             return null;
         }
@@ -304,18 +305,19 @@ public class Verb {
         }
         Rulef ipmod = conjugation.ipmod(personNumber, voice);
         if (ipmod != null) {
-            formBuilder = Forms.applyRule(ipmod, formBuilder, chooser);
+            formBuilder = Forms.applyRule(ipmod, formBuilder, altChooser);
         }
-        return Forms.applyRule(erule, formBuilder, chooser);
+        return Forms.applyRule(erule, formBuilder, altChooser);
     }
 
-    public static IFormBuilder indPresentForm(IEntry entry, PersonNumber personNumber, Voice voice, Alts.Chooser chooser) {
+    public static IFormBuilder indPresentForm(IEntry entry, PersonNumber personNumber, Voice voice, Alts.AltChooser altChooser) {
         Formf astemf = entry.getAstem();
         if (astemf != null) {
             Conjugation conjugation = entry.getConjugation();
             if (conjugation != null) {
-                IFormBuilder formBuilder = Forms.applyFormf(astemf, chooser);
-                return conjugationEnding(conjugation, personNumber, voice, piFpSiPair, formBuilder, chooser);
+                IFormBuilder formBuilder = Forms.applyFormf(astemf, altChooser);
+                return conjugationEnding(conjugation, personNumber, voice, piFpSiPair, formBuilder,
+                                         altChooser);
             }
         }
         return null;
@@ -328,8 +330,8 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return indPresentForm(entry, personNumber, verbChoices.voice, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return indPresentForm(entry, personNumber, verbChoices.voice, altChooser);
         }
     };
 
@@ -339,8 +341,8 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return indPresentForm(entry, personNumber, verbChoices.voice, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return indPresentForm(entry, personNumber, verbChoices.voice, altChooser);
         }
     };
 
@@ -348,8 +350,9 @@ public class Verb {
 
     public static ImperfectEndings indFutEndings1 = new ImperfectEndings() {
         @Override
-        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return conjugationEnding(Conjugation.thirdc, personNumber, voice, piFpSiPair, formBuilder, chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.AltChooser altChooser) {
+            return conjugationEnding(Conjugation.thirdc, personNumber, voice, piFpSiPair, formBuilder,
+                                     altChooser);
         }
     };
 
@@ -357,12 +360,13 @@ public class Verb {
 
     public static ImperfectEndings indFutEndings2 = new ImperfectEndings() {
         @Override
-        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return conjugationEnding(Conjugation.first, personNumber, voice, IndFut2FpSiPair, formBuilder, chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.AltChooser altChooser) {
+            return conjugationEnding(Conjugation.first, personNumber, voice, IndFut2FpSiPair, formBuilder,
+                                     altChooser);
         }
     };
 
-    public static IFormBuilder indFutureForm(IEntry entry, PersonNumber personNumber, Voice voice, Alts.Chooser chooser) {
+    public static IFormBuilder indFutureForm(IEntry entry, PersonNumber personNumber, Voice voice, Alts.AltChooser altChooser) {
         if (entry.getAstem() == null) {
             return null;
         }
@@ -371,12 +375,12 @@ public class Verb {
             return null;
         }
         if (conjugation.hasi()) {
-            IFormBuilder formBuilder = Forms.applyStemf(StrongStem, entry, chooser);
-            return indFutEndings2.applyEnding(personNumber, voice, formBuilder, chooser);
+            IFormBuilder formBuilder = Forms.applyStemf(StrongStem, entry, altChooser);
+            return indFutEndings2.applyEnding(personNumber, voice, formBuilder, altChooser);
         }
         else {
-            IFormBuilder formBuilder = Forms.applyStemf(indFutStemf1, entry, chooser);
-            return indFutEndings1.applyEnding(personNumber, voice, formBuilder, chooser);
+            IFormBuilder formBuilder = Forms.applyStemf(indFutStemf1, entry, altChooser);
+            return indFutEndings1.applyEnding(personNumber, voice, formBuilder, altChooser);
         }
     }
 
@@ -386,8 +390,8 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return indFutureForm(entry, personNumber, verbChoices.voice, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return indFutureForm(entry, personNumber, verbChoices.voice, altChooser);
         }
     };
 
@@ -397,15 +401,16 @@ public class Verb {
             return haveAstemAndConj(entry);
         }
         @Override
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return indFutureForm(entry, personNumber, verbChoices.voice, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return indFutureForm(entry, personNumber, verbChoices.voice, altChooser);
         }
     };
 
     public static ImperfectEndings regEndings = new ImperfectEndings() {
         @Override
-        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return conjugationEnding(Conjugation.second, personNumber, voice, regFpSiPair, formBuilder, chooser);
+        public IFormBuilder applyEnding(PersonNumber personNumber, Voice voice, IFormBuilder formBuilder, Alts.AltChooser altChooser) {
+            return conjugationEnding(Conjugation.second, personNumber, voice, regFpSiPair, formBuilder,
+                                     altChooser);
         }
     };
 
@@ -418,15 +423,15 @@ public class Verb {
         public boolean test (IEntry t) {
             return stemf.test(t);
         }
-        public IForm applyEnding(IFormBuilder formBuilder, PersonNumber personNumber, Alts.Chooser chooser) {
+        public IForm applyEnding(IFormBuilder formBuilder, PersonNumber personNumber,
+                                 Alts.AltChooser altChooser) {
             return regEndings.applyEnding(
                     personNumber,
                     verbChoices.voice,
-                    formBuilder,
-                    chooser);
+                    formBuilder, altChooser);
         }
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return applyEnding(Forms.applyStemf(stemf, entry, chooser), personNumber, chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return applyEnding(Forms.applyStemf(stemf, entry, altChooser), personNumber, altChooser);
         }
     }
 
@@ -450,9 +455,9 @@ public class Verb {
             return e.getSystem(ActInf) != null;
         }
         @Override
-        public IFormBuilder apply(IEntry e, Alts.Chooser chooser) {
+        public IFormBuilder apply(IEntry e, Alts.AltChooser altChooser) {
             InfinitiveSystem sys = (InfinitiveSystem) e.getSystem(ActInf);
-            return (sys != null) ? new FormBuilder(sys.getForm(e, chooser)) : null;
+            return (sys != null) ? new FormBuilder(sys.getForm(e, altChooser)) : null;
         }
     };
 
@@ -463,8 +468,8 @@ public class Verb {
 
     public static final RegularPersonNumberForms IndPerAct = new RegularPersonNumberForms("IndPerAct", Pstem) {
         @Override
-        public IForm applyEnding(IFormBuilder formBuilder, PersonNumber personNumber, Alts.Chooser chooser) {
-            return Forms.applyRule(perfEndingsMap.get(personNumber), formBuilder, chooser);
+        public IForm applyEnding(IFormBuilder formBuilder, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return Forms.applyRule(perfEndingsMap.get(personNumber), formBuilder, altChooser);
         }
     };
 
@@ -480,8 +485,9 @@ public class Verb {
     public static final RegularPersonNumberForms IndFupAct =
             new RegularPersonNumberForms("IndFupAct", new ModStemf(Pstem, "IndFup.stem", "eri")) {
                 @Override
-                public IFormBuilder applyEnding(IFormBuilder iFormBuilder, PersonNumber personNumber, Alts.Chooser chooser) {
-                    return conjugationEnding(Conjugation.first, personNumber, Voice.Act, piFpSiPair, iFormBuilder, chooser);
+                public IFormBuilder applyEnding(IFormBuilder iFormBuilder, PersonNumber personNumber, Alts.AltChooser altChooser) {
+                    return conjugationEnding(Conjugation.first, personNumber, Voice.Act, piFpSiPair, iFormBuilder,
+                                             altChooser);
                 }
             };
 
@@ -704,8 +710,8 @@ public class Verb {
             super(personNumberForms);
             this.stored = stored;
         }
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
-            return Forms.applyFormf(stored.getStored(personNumber), chooser);
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
+            return Forms.applyFormf(stored.getStored(personNumber), altChooser);
         }
 
     }
@@ -718,9 +724,9 @@ public class Verb {
             this.stem = Suffix.makeFormf(formSystem.getName(), "stem", sl);
         }
         @Override
-        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.Chooser chooser) {
+        public IForm getForm(IEntry entry, PersonNumber personNumber, Alts.AltChooser altChooser) {
             RegularPersonNumberForms regs = (RegularPersonNumberForms) formSystem;
-            return regs.applyEnding(Forms.applyFormf(stem, chooser), personNumber, chooser);
+            return regs.applyEnding(Forms.applyFormf(stem, altChooser), personNumber, altChooser);
         }
     }
 }

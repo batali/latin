@@ -5,11 +5,13 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+
 import latin.choices.Alts;
 
-import javax.annotation.Nullable;
 import java.util.AbstractList;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 public abstract class FormRule implements Rulef {
 
@@ -33,7 +35,7 @@ public abstract class FormRule implements Rulef {
         public StringFormRule(String form) {
             this.form = form;
         }
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             formBuilder.add(form);
             return true;
         }
@@ -49,7 +51,7 @@ public abstract class FormRule implements Rulef {
 
     public static FormRule noopRule = new FormRule() {
         @Override
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             return true;
         }
         @Override
@@ -64,7 +66,7 @@ public abstract class FormRule implements Rulef {
 
     public static FormRule falseFormf = new FormRule() {
         @Override
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             return false;
         }
         @Override
@@ -75,7 +77,7 @@ public abstract class FormRule implements Rulef {
 
     public static final FormRule shortenLast = new FormRule() {
         @Override
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             int s = formBuilder.length();
             if (s == 0) {
                 return false;
@@ -94,7 +96,7 @@ public abstract class FormRule implements Rulef {
 
     public static final FormRule lengthenLast = new FormRule() {
         @Override
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             int s = formBuilder.length();
             if (s == 0) {
                 return false;
@@ -112,7 +114,7 @@ public abstract class FormRule implements Rulef {
 
     public static final FormRule duplicateLast = new FormRule() {
         @Override
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             if (formBuilder.isEmpty()) {
                 return false;
             }
@@ -135,7 +137,7 @@ public abstract class FormRule implements Rulef {
             Preconditions.checkArgument(removed > 0);
         }
         @Override
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             int s = formBuilder.length();
             if (s < removed) {
                 return false;
@@ -168,9 +170,9 @@ public abstract class FormRule implements Rulef {
             this(ImmutableList.copyOf(rules));
         }
 
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
             for (Rulef rulef : sequence) {
-                if (!rulef.apply(formBuilder, chooser)) {
+                if (!rulef.apply(formBuilder, altChooser)) {
                     return false;
                 }
             }
@@ -291,8 +293,8 @@ public abstract class FormRule implements Rulef {
             return alts.get(p);
         }
 
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
-            return Alts.chooseElement(this, id, chooser).apply(formBuilder, chooser);
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
+            return Alts.chooseElement(this, id, altChooser).apply(formBuilder, altChooser);
         }
 
         public String toString() {

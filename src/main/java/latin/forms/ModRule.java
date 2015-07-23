@@ -4,20 +4,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.UnmodifiableIterator;
 
-import latin.choices.Alts;
 import latin.choices.AltsList;
+import latin.util.PathId;
 import latin.util.Splitters;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class ModRule extends AltsList<Mod> implements Rule {
 
-    public ModRule(Object id, ImmutableList<Mod> mods) {
+    public ModRule(PathId id, ImmutableList<Mod> mods) {
         super(id, mods);
     }
 
-    public ModRule(Object id, String cs) {
+    public ModRule(PathId id, String cs) {
         this(id, split(cs));
     }
 
@@ -95,12 +94,6 @@ public class ModRule extends AltsList<Mod> implements Rule {
         public void recordAlts(BiConsumer<Object, Integer> bic) {
             stem.recordAlts(bic);
             getRule().recordAlts(bic);
-        }
-
-        @Override
-        public void recordAlts(Consumer<Alts<?>> aic) {
-            stem.recordAlts(aic);
-            getRule().recordAlts(aic);
         }
 
         @Override

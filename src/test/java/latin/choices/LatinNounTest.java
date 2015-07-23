@@ -2,9 +2,15 @@ package latin.choices;
 
 import org.junit.Test;
 
+import junit.framework.Assert;
 import latin.forms.Form;
+import latin.forms.StringForm;
+import latin.util.DomElement;
+import latin.util.PathId;
+import latin.util.Splitters;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class LatinNounTest {
 
@@ -30,20 +36,27 @@ public class LatinNounTest {
         showRulesMap(Declension.Third.rulesMap);
     }
 
-    void showForms(LatinNoun.NounEntry e) {
+    void showForms(LatinNoun.Entry e) {
         for (CaseNumber cn : CaseNumber.values()) {
             Form f = e.getForm(cn);
             System.out.println(cn.toString() + " : " + f.toString());
         }
     }
 
+    LatinNoun.EntryBuilder builder(String id) {
+        return LatinNoun.builder(PathId.makeRoot(id));
+    }
+
     @Test
     public void testNounEntry() {
-        LatinNoun.NounEntry e1 = new LatinNoun.NounEntry("e1");
-        e1.setGender("f");
-        e1.setRules("First.a");
-        e1.setGstem("femin");
+        LatinNoun.Entry e1 = builder("e1")
+            .setGender("f")
+            .setRules("First.a")
+            .setGstem("femin")
+            .build();
         showForms(e1);
+
+        /*
         LatinNoun.NounEntry e2 = new LatinNoun.NounEntry("e2");
         e2.setGender("m");
         e2.setRules("Second.us");
@@ -54,8 +67,62 @@ public class LatinNounTest {
         e3.setRules("Second.ius");
         e3.setGstem("fili");
         showForms(e3);
+        */
     }
 
+    void checkForm(String ts, Form f) {
+        Assert.assertEquals(StringForm.split(ts), f.asList());
+    }
+
+    void checkEntryForms(LatinNoun.Entry e, String... formStrings) {
+        BiConsumer<String, String> checker = new BiConsumer<String, String>() {
+            @Override
+            public void accept(String s, String s2) {
+                CaseNumber key = CaseNumber.fromString(s);
+                checkForm(s2,  e.getForm(key));
+            }
+        };
+        for (String fs : formStrings) {
+            Splitters.esplit(fs, checker);
+        }
+    }
+
+    @Test
+    public void testFromDom() throws Exception {
+        DomElement domElement = DomElement.fromFile(DomElement.getResourceFile(LatinNounTest.class, "LatinNounTest.xml"));
+        LatinNoun.Entry e = LatinNoun.fromDomElement("f", domElement);
+        checkEntryForms(e, "NomSi=aqua", "DatSi=poop");
+    }
+
+    void checkClassified(String cs, String rn, String... formStrings) {
+        LatinNoun.NounEntry e = builder(cs).classify(cs).build();
+        LatinNoun.Rules rules = LatinNoun.getRules(rn);
+        Assert.assertEquals(rules, e.getRules());
+        checkEntryForms(e, formStrings);
+    }
+
+    @Test
+    public void testClassify() throws Exception {
+        checkClassified("aqua,aquae,f", "First.a",
+                        "NomSi=aqua", "DatSi=aquae");
+        checkClassified("animal,animālis,n,i", "Third.n.i",
+                        "NomPl=animālia", "AccSi=animal");
+        checkClassified("bellum,bellī,n", "Second.um",
+                        "AccSi=bellum");
+        checkClassified("dominus,dominī,m", "Second.us",
+                        "VocSi=domine");
+        checkClassified("fīlius,fīliī,m", "Second.ius",
+                        "GenSi=fīliī,fīlī", "VocSi=fīlī");
+        checkClassified("diēs,diēī,m", "Fifth.v",
+                        "DatSi=diēī");
+        checkClassified("ager,agrī,m", "Second.r",
+                        "AccSi=agrum");
+        checkClassified("puer,puerī,m", "Second.er",
+                        "AccSi=puerum");
+
+    }
+
+    /*
     @Test
     public void testThirdEntry() {
         LatinNoun.NounEntry e1 = new LatinNoun.NounEntry("e1");
@@ -65,5 +132,6 @@ public class LatinNounTest {
         e1.setGstem("reg");
         showForms(e1);
     }
+    */
 
 }

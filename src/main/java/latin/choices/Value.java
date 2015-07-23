@@ -1,5 +1,7 @@
 package latin.choices;
 
-public interface Value<T> {
-    T choose(Alts.Chooser chooser);
+import latin.util.ImmutableIterable;
+
+public interface Value<T> extends ImmutableIterable<T>, RecordAlts {
+    T choose (Chooser chooser);
 }

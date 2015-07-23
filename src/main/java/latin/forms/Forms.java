@@ -20,20 +20,20 @@ public class Forms {
     private Forms () {
     }
 
-    public static <ET> IFormBuilder applyStemf (Stemf<ET> stemf, ET e, Alts.Chooser chooser) {
+    public static <ET> IFormBuilder applyStemf (Stemf<ET> stemf, ET e, Alts.AltChooser altChooser) {
         if (stemf == null) {
             return null;
         }
         else {
-            return stemf.apply(e, chooser);
+            return stemf.apply(e, altChooser);
         }
     }
 
-    public static IFormBuilder applyRule(Rulef rulef, IFormBuilder formBuilder, Alts.Chooser chooser) {
+    public static IFormBuilder applyRule(Rulef rulef, IFormBuilder formBuilder, Alts.AltChooser altChooser) {
         if (formBuilder == null || rulef == null) {
             return null;
         }
-        if (rulef.apply(formBuilder, chooser)) {
+        if (rulef.apply(formBuilder, altChooser)) {
             return formBuilder;
         }
         else {
@@ -41,12 +41,12 @@ public class Forms {
         }
     }
 
-    public static IFormBuilder applyFormf(Formf formf, Alts.Chooser chooser) {
+    public static IFormBuilder applyFormf(Formf formf, Alts.AltChooser altChooser) {
         if (formf == null) {
             return null;
         }
         else {
-            return formf.apply(chooser);
+            return formf.apply(altChooser);
         }
     }
 

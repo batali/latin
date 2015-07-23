@@ -92,7 +92,7 @@ public class DomElement {
         return element.getTextContent();
     }
 
-    static class ElementAttributeNames extends AbstractList<String> {
+    public static class ElementAttributeNames extends AbstractList<String> {
         private NamedNodeMap namedNodeMap;
         public ElementAttributeNames(NamedNodeMap namedNodeMap) {
             this.namedNodeMap = namedNodeMap;
@@ -107,7 +107,7 @@ public class DomElement {
         return new ElementAttributeNames(element.getAttributes());
     }
 
-    static class ChildElements implements Iterable<DomElement> {
+    public static class ChildElements implements Iterable<DomElement> {
         NodeList nodeList;
 
         public ChildElements(NodeList nodeList) {

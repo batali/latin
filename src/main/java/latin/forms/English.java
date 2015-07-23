@@ -138,16 +138,16 @@ public class English {
             Preconditions.checkArgument(!formfList.isEmpty());
             this.formfList = formfList;
         }
-        public IForm getForm(Number number, Alts.Chooser chooser) {
+        public IForm getForm(Number number, Alts.AltChooser altChooser) {
             if (number.isSingular()) {
-                return Forms.applyFormf(formfList.get(0), chooser);
+                return Forms.applyFormf(formfList.get(0), altChooser);
             }
             else if (formfList.size() >= 2) {
-                return Forms.applyFormf(formfList.get(1), chooser);
+                return Forms.applyFormf(formfList.get(1), altChooser);
             }
             else {
-                IFormBuilder formBuilder = Forms.applyFormf(formfList.get(0), chooser);
-                return Forms.applyRule(pluralRule(formBuilder), formBuilder, chooser);
+                IFormBuilder formBuilder = Forms.applyFormf(formfList.get(0), altChooser);
+                return Forms.applyRule(pluralRule(formBuilder), formBuilder, altChooser);
             }
         }
     }
@@ -163,9 +163,9 @@ public class English {
             this.rules = rules;
         }
 
-        public IFormBuilder applyRule(NounKey key, Alts.Chooser chooser) {
+        public IFormBuilder applyRule(NounKey key, Alts.AltChooser altChooser) {
             Formf si = stored.get(NounKey.Sing);
-            IFormBuilder formBuilder = Forms.applyFormf(si, chooser);
+            IFormBuilder formBuilder = Forms.applyFormf(si, altChooser);
             if (formBuilder == null){
                 return null;
             }
@@ -180,19 +180,19 @@ public class English {
                         break;
                 }
             }
-            return Forms.applyRule(rule, formBuilder, chooser);
+            return Forms.applyRule(rule, formBuilder, altChooser);
         }
 
-        public IFormBuilder getForm(NounKey key, Alts.Chooser chooser) {
+        public IFormBuilder getForm(NounKey key, Alts.AltChooser altChooser) {
             Formf sf = stored.get(key);
             if (sf != null) {
-                return sf.apply(chooser);
+                return sf.apply(altChooser);
             }
             else if (key.equals(NounKey.Sing)) {
                 return null;
             }
             else {
-                return applyRule(key, chooser);
+                return applyRule(key, altChooser);
             }
         }
 
@@ -238,11 +238,11 @@ public class English {
     }
 
     public interface TensedForms {
-        public IForm getTensedForm(PersonNumber personNumber, Time time, Alts.Chooser chooser);
+        public IForm getTensedForm(PersonNumber personNumber, Time time, Alts.AltChooser altChooser);
     }
 
     public static interface TensedEntry extends TensedForms {
-        public IForm getKeyForm(VerbKey verbKey, Alts.Chooser chooser);
+        public IForm getKeyForm(VerbKey verbKey, Alts.AltChooser altChooser);
     }
 
     public static class VerbForms implements TensedEntry {
@@ -252,9 +252,9 @@ public class English {
             this.stored = stored;
         }
 
-        public IFormBuilder applyRule(VerbKey key, Alts.Chooser chooser) {
+        public IFormBuilder applyRule(VerbKey key, Alts.AltChooser altChooser) {
             Formf base = stored.get(VerbKey.Base);
-            IFormBuilder formBuilder = Forms.applyFormf(base, chooser);
+            IFormBuilder formBuilder = Forms.applyFormf(base, altChooser);
             if (formBuilder == null) {
                 return null;
             }
@@ -272,20 +272,20 @@ public class English {
                 default:
                     break;
             }
-            return Forms.applyRule(rule, formBuilder, chooser);
+            return Forms.applyRule(rule, formBuilder, altChooser);
         }
 
         @Override
-        public IFormBuilder getKeyForm(VerbKey key, Alts.Chooser chooser) {
+        public IFormBuilder getKeyForm(VerbKey key, Alts.AltChooser altChooser) {
             Formf formf = stored.get(key);
             if (formf != null) {
-                return formf.apply(chooser);
+                return formf.apply(altChooser);
             }
             else if (key.equals(VerbKey.Part)) {
-                return getKeyForm(VerbKey.Past, chooser);
+                return getKeyForm(VerbKey.Past, altChooser);
             }
             else {
-                return applyRule(key, chooser);
+                return applyRule(key, altChooser);
             }
         }
 
@@ -310,16 +310,16 @@ public class English {
         }
 
         @Override
-        public IForm getTensedForm(PersonNumber personNumber, Time time, Alts.Chooser chooser) {
+        public IForm getTensedForm(PersonNumber personNumber, Time time, Alts.AltChooser altChooser) {
             if (time.isPast()) {
-                return getKeyForm(VerbKey.Past, chooser);
+                return getKeyForm(VerbKey.Past, altChooser);
             }
             else if (time.isPresent()) {
                 if (personNumber.equals(PersonNumber.TpSi)) {
-                    return getKeyForm(VerbKey.TpSi, chooser);
+                    return getKeyForm(VerbKey.TpSi, altChooser);
                 }
                 else {
-                    return getKeyForm(VerbKey.Base, chooser);
+                    return getKeyForm(VerbKey.Base, altChooser);
                 }
             }
             else {
@@ -397,9 +397,9 @@ public class English {
         }
 
         @Override
-        public IFormBuilder getTensedForm(PersonNumber personNumber, Time time, Alts.Chooser chooser) {
+        public IFormBuilder getTensedForm(PersonNumber personNumber, Time time, Alts.AltChooser altChooser) {
             Formf formf = getTensedFormf(personNumber, time);
-            return Forms.applyFormf(formf, chooser);
+            return Forms.applyFormf(formf, altChooser);
         }
 
         public Formf getKeyFormf(VerbKey key) {
@@ -418,8 +418,8 @@ public class English {
         }
 
         @Override
-        public IFormBuilder getKeyForm(VerbKey key, Alts.Chooser chooser) {
-            return getKeyFormf(key).apply(chooser);
+        public IFormBuilder getKeyForm(VerbKey key, Alts.AltChooser altChooser) {
+            return getKeyFormf(key).apply(altChooser);
         }
     };
 
@@ -429,36 +429,36 @@ public class English {
 
     public static ListPhrase getVerbGroup(TensedEntry baseVerb,
                                           PersonNumber personNumber, Time time, Aspect aspect, Voice voice,
-                                          Alts.Chooser chooser) {
+                                          Alts.AltChooser altChooser) {
         VerbKey nextKey = null;
         ListPhrase iForms = new ListPhrase();
         if (time.isFuture()) {
-            iForms.add(Will.apply(chooser));
+            iForms.add(Will.apply(altChooser));
             nextKey = VerbKey.Base;
         }
         if (aspect.isComplete()) {
             if (nextKey == null) {
-                iForms.add(haveForms.getTensedForm(personNumber, time, chooser));
+                iForms.add(haveForms.getTensedForm(personNumber, time, altChooser));
             }
             else {
-                iForms.add(haveForms.getKeyForm(nextKey, chooser));
+                iForms.add(haveForms.getKeyForm(nextKey, altChooser));
             }
             nextKey = VerbKey.Part;
         }
         if (voice.isPassive()) {
             if (nextKey == null) {
-                iForms.add(beForms.getTensedForm(personNumber, time, chooser));
+                iForms.add(beForms.getTensedForm(personNumber, time, altChooser));
             }
             else {
-                iForms.add(beForms.getKeyForm(nextKey, chooser));
+                iForms.add(beForms.getKeyForm(nextKey, altChooser));
             }
             nextKey = VerbKey.Part;
         }
         if (nextKey == null) {
-            iForms.add(baseVerb.getTensedForm(personNumber, time, chooser));
+            iForms.add(baseVerb.getTensedForm(personNumber, time, altChooser));
         }
         else {
-            iForms.add(baseVerb.getKeyForm(nextKey, chooser));
+            iForms.add(baseVerb.getKeyForm(nextKey, altChooser));
         }
         return iForms;
     }
@@ -466,8 +466,10 @@ public class English {
     public static ListPhrase getVerbGroup(TensedEntry baseVerb,
                                           VerbChoices verbChoices,
                                           PersonNumber personNumber,
-                                          Alts.Chooser chooser) {
-        return getVerbGroup(baseVerb, personNumber, verbChoices.time, verbChoices.aspect, verbChoices.voice, chooser);
+                                          Alts.AltChooser altChooser) {
+        return getVerbGroup(baseVerb, personNumber, verbChoices.time, verbChoices.aspect, verbChoices.voice,
+
+                            altChooser);
     }
 
     public static final Forms.StringIForm A = new Forms.StringIForm("a") {

@@ -10,10 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import latin.choices.Alts;
-import latin.choices.CollectAlts;
 
 import java.util.Collections;
 import java.util.List;
@@ -251,8 +248,8 @@ public class Suffix {
             this.alts = ImmutableList.copyOf(checkFormStrings(strings));
         }
 
-        public boolean apply(IFormBuilder formBuilder, Alts.Chooser chooser) {
-            String s = Alts.chooseElement(alts, this, chooser);
+        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
+            String s = Alts.chooseElement(alts, this, altChooser);
             if (s != null) {
                 formBuilder.add(s);
                 return true;
@@ -262,8 +259,8 @@ public class Suffix {
             }
         }
 
-        public IFormBuilder apply(Alts.Chooser chooser) {
-            String s = Alts.chooseElement(alts, this, chooser);
+        public IFormBuilder apply(Alts.AltChooser altChooser) {
+            String s = Alts.chooseElement(alts, this, altChooser);
             if (s != null) {
                 FormBuilder formBuilder = new FormBuilder();
                 formBuilder.add(s);
@@ -296,35 +293,8 @@ public class Suffix {
         return makeFormf(prefix, key, Suffix.csplit(fs));
     }
 
-    public static List<String> getStrings(Formf formf) {
-        List<String> strings = Lists.newArrayList();
-        CollectAlts collector = new CollectAlts();
-        do {
-            Forms.addForm(formf.apply(collector), strings);
-        }
-        while (collector.incrementPositions());
-        return strings;
-    }
 
-    public static Pair<String,String> esplitItem(String s) {
-        int p = s.indexOf('=');
-        if (p >= 0) {
-            return Pair.of(s.substring(0, p), s.substring(p+1, s.length()));
-        }
-        else {
-            return Pair.of(s,"");
-        }
-    }
 
-    public static final Function<String,Pair<String,String>> toEsplitItem = new Function<String, Pair<String, String>>() {
-        @Override
-        public Pair<String, String> apply(@Nullable String s) {
-            Preconditions.checkNotNull(s);
-            return esplitItem(s);
-        }
-    };
 
-    public static Iterable<Pair<String,String>> esplitter(String s) {
-        return Iterables.transform(ssplitter(s), toEsplitItem);
-    }
+
 }

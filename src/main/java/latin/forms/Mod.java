@@ -47,6 +47,11 @@ public abstract class Mod implements java.util.function.Function<String,String>,
         }
     }
 
+    public static String butLastString(String s, int n){
+        return s.substring(0, s.length() - n);
+
+    }
+
     public static class ButLast extends Mod {
 
         public final int n;
@@ -62,7 +67,7 @@ public abstract class Mod implements java.util.function.Function<String,String>,
 
         @Override
         public String apply(String s) {
-            return s.substring(0, s.length() - n);
+            return butLastString(s, n);
         }
     }
 

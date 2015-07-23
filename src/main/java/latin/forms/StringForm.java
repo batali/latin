@@ -4,15 +4,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.UnmodifiableIterator;
 
 import latin.choices.AltsList;
+import latin.util.PathId;
 import latin.util.Splitters;
 
 public class StringForm extends AltsList<String> implements Form {
 
-    public StringForm(Object id, ImmutableList<String> values) {
+    public StringForm(PathId id, ImmutableList<String> values) {
         super(id, values);
     }
 
-    public StringForm(Object id, String cs) {
+    public StringForm(PathId id, String cs) {
         this(id, split(cs));
     }
 
@@ -24,7 +25,7 @@ public class StringForm extends AltsList<String> implements Form {
     public static ImmutableList<String> split(String cs) {
         ImmutableList.Builder<String> builder = ImmutableList.builder();
         for (String fs : Splitters.csplitter(cs)) {
-            builder.add(fs);
+            builder.add(Suffix.makeFormString(fs));
         }
         return builder.build();
     }
