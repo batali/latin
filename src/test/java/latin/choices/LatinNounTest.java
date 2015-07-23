@@ -122,6 +122,15 @@ public class LatinNounTest {
 
     }
 
+    @Test
+    public void testAdj() throws Exception {
+        Form stem = new StringForm(PathId.makeRoot("ff"), "long");
+        Adjective.Entry e = new Adjective.CmpEntry(stem);
+        checkForm("longior", e.getForm(CaseNumber.NomSi, Gender.m));
+        checkForm("longiōrī", e.getForm(CaseNumber.DatSi, Gender.f));
+        checkForm("longius", e.getForm(CaseNumber.AccSi, Gender.n));
+    }
+
     /*
     @Test
     public void testThirdEntry() {

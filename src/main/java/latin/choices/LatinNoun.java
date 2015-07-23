@@ -16,6 +16,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 class LatinNoun {
 
@@ -41,26 +43,16 @@ class LatinNoun {
     }
 
     interface Entry {
-        Form getForm(CaseNumber caseNumber);
+        Form getForm(CaseNumber cn);
     }
 
-    interface FormEntry extends Entry {
-
-        Form getIrregularForm(CaseNumber caseNumber, Gender gender);
-
-        Form getGstem();
-
-        Rule getGstemRule(CaseNumber caseNumber, Gender gender);
-    }
-
-    public static class NounEntry implements Entry {
+    public static class NounEntry implements LatinNounForms.GstemFormFunction, Entry {
 
         PathId id;
         Rules rules;
         Form gstem;
         Gender gender;
         Map<CaseNumber, Form> stored;
-
         public NounEntry(PathId id,
                          Rules rules,
                          Form gstem,
@@ -79,21 +71,21 @@ class LatinNoun {
         public Form getStored(CaseNumber caseNumber) {
             return stored.get(caseNumber);
         }
+        @Override
+        public Form getIrregularForm(CaseNumber cn, Gender g) {
+            return stored.get(cn);
+        }
+        @Override
+        public Form getGstem() {
+            return gstem;
+        }
+        @Override
+        public Rule getGstemRule(CaseNumber cn, Gender g) {
+            return rules.get(cn);
+        }
 
         public Form getForm(CaseNumber caseNumber) {
-            Form sf = stored.get(caseNumber);
-            if (sf != null) {
-                return sf;
-            }
-            Rule r = rules.get(caseNumber);
-            if (r != null) {
-                return r.apply(gstem);
-            }
-            CaseNumber rcn = getRenamed(caseNumber, gender);
-            if (rcn != null) {
-                return getForm(rcn);
-            }
-            return null;
+            return LatinNounForms.getForm(this, caseNumber, gender);
         }
     }
 
@@ -276,19 +268,6 @@ class LatinNoun {
         return new EntryBuilder(pathId);
     }
 
-    static Rules classifyRules(String nsi, String gsi, Gender gender, String features) {
-        if (gsi.endsWith("ae")) {
-            String gst = Mod.butLastString(gsi, 2);
-            if (nsi.equals(gst + "a")) {
-                return Declension.First.getRules("a");
-            }
-            else {
-                return Declension.First.getRules("mf");
-            }
-        }
-        return null;
-    }
-
     public static NounEntry fromDomElement(Object pid, DomElement domElement) {
         EntryBuilder b = builder(pid);
         for(String ks : domElement.attributeNames()) {
@@ -301,22 +280,40 @@ class LatinNoun {
         return b.build();
     }
 
-    public static Form getForm(FormEntry e, CaseNumber cn, Gender g) {
-        Form i = e.getIrregularForm(cn, g);
+    public static BiFunction<CaseNumber,Gender,Form> emptyForms =
+        new BiFunction<CaseNumber, Gender, Form>() {
+            @Override
+            public Form apply(CaseNumber caseNumber, Gender gender) {
+                return null;
+        }
+    };
+
+    public static BiFunction<CaseNumber,Gender,Rule> emptyRules =
+        new BiFunction<CaseNumber, Gender, Rule>() {
+            @Override
+            public Rule apply(CaseNumber caseNumber, Gender gender) {
+                return null;
+            }
+        };
+    public static Form getNounForm(BiFunction<CaseNumber,Gender,Form> irregularForms,
+                                   Supplier<Form> gstemSupplier,
+                                   BiFunction<CaseNumber,Gender,Rule> gstemRules,
+                                   CaseNumber cn,
+                                   Gender g) {
+        Form i = irregularForms.apply(cn, g);
         if (i != null) {
             return i;
         }
-        Rule r = e.getGstemRule(cn, g);
+        Rule r = gstemRules.apply(cn, g);
         if (r != null) {
-            return r.apply(e.getGstem());
+            return r.apply(gstemSupplier.get());
         }
         CaseNumber rcn = getRenamed(cn, g);
         if (rcn != null) {
-            return getForm(e, rcn, g);
+            return getNounForm(irregularForms, gstemSupplier, gstemRules, rcn, g);
         }
         return null;
     }
-
 
     public static class MapRules extends EnumMap<CaseNumber, Rule> implements Rules {
 

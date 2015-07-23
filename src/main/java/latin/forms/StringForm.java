@@ -35,4 +35,8 @@ public class StringForm extends AltsList<String> implements Form {
         return values.toString();
     }
 
+    public Form getForm() {
+        return this;
+    }
+
 }
