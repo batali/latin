@@ -124,5 +124,12 @@ public class ModRule extends AltsList<Mod> implements Rule {
         return values.toString() + " (" + getId() + ")";
     }
 
+    public static final ModRule noop = new ModRule(PathId.makeRoot(":"),
+                                                    ImmutableList.of(Mod.noop));
+    public static final ModRule unaccentLast = new ModRule(PathId.makeRoot(">"),
+                                                       ImmutableList.of(Mod.unaccentLast));
+    public static final ModRule accentLast = new ModRule(PathId.makeRoot("<"),
+                                                         ImmutableList.of(Mod.accentLast));
+
 
 }

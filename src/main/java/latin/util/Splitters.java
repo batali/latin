@@ -44,6 +44,12 @@ public class Splitters {
         consumer.accept(es.substring(0, p), es.substring(p+1));
     }
 
+    public static void essplit(String ss, BiConsumer<String,String> consumer) {
+        for (String es : ssplitter(ss)) {
+            esplit(es, consumer);
+        }
+    }
+
     public static <K, V> void ecsplit(String ss,
                                       Function<String, K> toKey,
                                       Function<String, V> toVal,

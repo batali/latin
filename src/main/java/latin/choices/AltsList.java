@@ -34,6 +34,11 @@ public class AltsList<T> implements Alts<T>, PathId.Identified {
     public PathId getPathId() { return id; }
 
     @Override
+    public T choose(Chooser chooser) {
+        return chooser.choose(values, id);
+    }
+
+    @Override
     public String toString() {
         return values.toString();
     }

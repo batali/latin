@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 
 import latin.forms.Form;
 import latin.forms.Mod;
-import latin.forms.ModRule;
 import latin.forms.Rule;
 import latin.forms.StringForm;
 import latin.util.DomElement;
@@ -17,29 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 class LatinNoun {
 
-    static CaseNumber getRenamed(CaseNumber key, Gender gender) {
-        if (key.equals(CaseNumber.AblPl)) {
-            return CaseNumber.DatPl;
-        }
-        if (key.caseKey.isVocative()) {
-            return key.toCase(Case.Nom);
-        }
-        if (key.caseKey.isLocative()) {
-            return key.toCase(Case.Abl);
-        }
-        if (gender.isNeuter()) {
-            if (key.caseKey.isAccusative()) {
-                return key.toCase(Case.Nom);
-            }
-        }
-        return null;
-    }
 
-    interface Rules extends Map<CaseNumber,Rule>, PathId.Identified {
+    interface Rules extends KeyRules<CaseNumber> {
     }
 
     interface Entry {
@@ -295,43 +276,10 @@ class LatinNoun {
                 return null;
             }
         };
-    public static Form getNounForm(BiFunction<CaseNumber,Gender,Form> irregularForms,
-                                   Supplier<Form> gstemSupplier,
-                                   BiFunction<CaseNumber,Gender,Rule> gstemRules,
-                                   CaseNumber cn,
-                                   Gender g) {
-        Form i = irregularForms.apply(cn, g);
-        if (i != null) {
-            return i;
-        }
-        Rule r = gstemRules.apply(cn, g);
-        if (r != null) {
-            return r.apply(gstemSupplier.get());
-        }
-        CaseNumber rcn = getRenamed(cn, g);
-        if (rcn != null) {
-            return getNounForm(irregularForms, gstemSupplier, gstemRules, rcn, g);
-        }
-        return null;
-    }
 
-    public static class MapRules extends EnumMap<CaseNumber, Rule> implements Rules {
-
-        final PathId pathId;
-
+    public static class MapRules extends KeyRulesMap<CaseNumber> implements Rules {
         public MapRules(PathId pathId) {
-            super(CaseNumber.class);
-            this.pathId = pathId;
-        }
-
-        @Override
-        public PathId getPathId() {
-            return pathId;
-        }
-
-        void addRule(String ks, String vs) {
-            CaseNumber key = CaseNumber.fromString(ks);
-            put(key, new ModRule(pathId.makeChild(key), vs));
+            super(CaseNumber.class, pathId);
         }
     }
 
