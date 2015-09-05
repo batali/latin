@@ -49,7 +49,6 @@ public abstract class Mod implements java.util.function.Function<String,String>,
 
     public static String butLastString(String s, int n){
         return s.substring(0, s.length() - n);
-
     }
 
     public static class ButLast extends Mod {
@@ -111,6 +110,17 @@ public abstract class Mod implements java.util.function.Function<String,String>,
         }
     };
 
+    public static Mod duplicateLast = new Mod() {
+        @Override
+        public String apply(String s) {
+            int n = s.length();
+            return s + s.charAt(n-1);
+        }
+
+        @Override
+        public String getSpec() { return "+"; }
+    };
+
     public static class ModSeq extends Mod {
 
         public final ImmutableList<Mod> mods;
@@ -158,6 +168,9 @@ public abstract class Mod implements java.util.function.Function<String,String>,
                 p += n;
             } else if (c == ':') {
                 mods.add(noop);
+                p += 1;
+            } else if (c == '+') {
+                mods.add(duplicateLast);
                 p += 1;
             } else {
                 mods.add(new Ending(ms.substring(p)));

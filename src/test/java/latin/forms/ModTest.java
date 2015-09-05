@@ -65,6 +65,8 @@ public class ModTest {
         checkMod(m4, "patr", "pater");
         Mod m5 = checkParseMod("---a");
         checkMod(m5, "alfa", "aa");
+        Mod m6 = checkParseMod("+ed");
+        checkMod(m6, "pop", "popped");
     }
 
 }
