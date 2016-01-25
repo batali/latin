@@ -78,6 +78,21 @@ public enum Case {
         return EkeyHelper.ekeyFromString(Case.class, ks);
     }
 
+    public static Case getKey(Object o) {
+        if (o == null) {
+            return null;
+        }
+        else if (o instanceof Case) {
+            return (Case)o;
+        }
+        else if (o instanceof Case.Key) {
+            return ((Case.Key)o).getCase();
+        }
+        else {
+            return fromString(o.toString());
+        }
+    }
+
     public static interface Key {
         Case getCase();
     }

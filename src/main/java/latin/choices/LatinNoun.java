@@ -66,9 +66,25 @@ class LatinNoun {
         }
 
         public Form getForm(CaseNumber caseNumber) {
-            return LatinNounForms.getForm(this, caseNumber, gender);
+            return entryMethods.getForm(this, caseNumber, gender);
         }
     }
+
+    static LatinNounForms.Methods<NounEntry> entryMethods = new LatinNounForms.Methods<NounEntry>() {
+        @Override
+        public Form getIrregularForm(NounEntry nounEntry, CaseNumber cn, Gender g) {
+            return nounEntry.getStored(cn);
+        }
+        @Override
+        public Form getGstem(NounEntry nounEntry) {
+            return nounEntry.getGstem();
+        }
+        @Override
+        public Rule getGstemRule(NounEntry nounEntry, CaseNumber cn, Gender g) {
+            return nounEntry.getGstemRule(cn, g);
+        }
+    };
+
 
     public static Rules getRules(String dn, String sn){
         return Declension.valueOf(dn).getRules(sn);

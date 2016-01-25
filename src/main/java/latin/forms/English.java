@@ -3,51 +3,24 @@ package latin.forms;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+
 import latin.choices.Alts;
 import latin.choices.Aspect;
+import latin.choices.Number;
 import latin.choices.PersonNumber;
 import latin.choices.Time;
 import latin.choices.VerbChoices;
 import latin.choices.Voice;
-import latin.choices.Number;
+import latin.util.PathId;
 
 import java.util.EnumMap;
 import java.util.List;
-
-import javax.annotation.Nullable;
+import java.util.function.Function;
 
 public class English {
 
     private English() {
     }
-
-    public static final TokenRule addS = TokenRules.parseRule("s");
-    public static final TokenRule addES = TokenRules.parseRule("es");
-    public static final TokenRule addIES = TokenRules.parseRule("-ies");
-
-    public static TokenRule pluralTokenRule = new TokenRule() {
-        @Override
-        public String getSpec() {
-            return "plural";
-        }
-
-        @Override
-        public Token apply(@Nullable Token token) {
-            if (token == null) {
-                return token;
-            }
-            else if (sibilintMatcher.test(token)) {
-                return addES.apply(token);
-            }
-            else if (cyMatcher.test(token)) {
-                return addIES.apply(token);
-            }
-            else {
-                return addS.apply(token);
-            }
-        }
-    };
-
 
     public static final FormRule S = FormRule.makeFormRule("s");
     public static final FormRule ES = FormRule.makeFormRule("es");
@@ -77,6 +50,28 @@ public class English {
 
     public static final Suffix.EndMatcher eMatcher = Suffix.endMatcher("Ce");
 
+    public static final PathId rootId = PathId.makeRoot("English");
+
+    public static final Mod esMod = Mod.parseMod("es");
+    public static final Mod iesMod = Mod.parseMod("-ies");
+    public static final Mod sMod = Mod.parseMod("s");
+
+    public static Form addS (Form stem) {
+        return new Mod.Applied(stem, new Function<String, String>() {
+            @Override
+            public String apply(String stem) {
+                if (sibilintMatcher.test(stem)) {
+                    return esMod.apply(stem);
+                }
+                if (cyMatcher.test(stem)) {
+                    return iesMod.apply(stem);
+                } else {
+                    return sMod.apply(stem);
+                }
+            }
+        });
+    }
+
     public static FormRule pluralRule (CharSequence base) {
         if (sibilintMatcher.test(base)) {
             return ES;
@@ -91,6 +86,31 @@ public class English {
 
     public static FormRule tpSiRule (CharSequence base) {
        return pluralRule(base);
+    }
+
+    public static final Mod edMod = Mod.parseMod("ed");
+    public static final Mod dMod = Mod.parseMod("d");
+    public static final Mod iedMod = Mod.parseMod("-ied");
+    public static final Mod pedMod = Mod.parseMod("+ed");
+
+    public static Form addD (Form stem) {
+        return new Mod.Applied(stem, new Function<String, String>() {
+            @Override
+            public String apply(String stem) {
+                if (cyMatcher.test(stem)) {
+                    return iedMod.apply(stem);
+                }
+                if (dupMatcher.test(stem)) {
+                    return pedMod.apply(stem);
+                }
+                if (eMatcher.test(stem)) {
+                    return dMod.apply(stem);
+                }
+                else {
+                    return edMod.apply(stem);
+                }
+            }
+        });
     }
 
     public static FormRule pastRule (CharSequence base) {

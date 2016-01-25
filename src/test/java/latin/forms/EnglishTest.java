@@ -4,13 +4,16 @@ package latin.forms;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+
+import org.junit.Test;
+
 import junit.framework.Assert;
 import latin.choices.Alts;
 import latin.choices.Aspect;
 import latin.choices.PersonNumber;
 import latin.choices.Time;
 import latin.choices.Voice;
-import org.junit.Test;
+import latin.util.PathId;
 
 import java.util.List;
 
@@ -32,6 +35,40 @@ public class EnglishTest {
         testNounForms("try", "try tries try's");
         testNounForms("man men", "man men man's");
         testNounForms("house", "house houses house's");
+    }
+
+    void checkPluralize(String ns, String ts) {
+        PathId root = PathId.makeRoot("c");
+        Form stem = new StringForm(root.makeChild("s"), ns);
+        Form target = new StringForm(root.makeChild("t"), ts);
+        Form pl = English.addS(stem);
+        Assert.assertEquals(target.asList(), pl.asList());
+    }
+
+    static Form makeForm(String fs) {
+        return new StringForm(PathId.makeRoot(fs), fs);
+    }
+
+    @Test
+    public void testPluralize() throws Exception {
+        checkPluralize("dog", "dogs");
+        checkPluralize("try", "tries");
+        checkPluralize("pass", "passes");
+    }
+
+    void checkD (String ss, String ts) {
+        Form stem = makeForm(ss);
+        Form target = makeForm(ts);
+        Form dform = English.addD(stem);
+        Assert.assertEquals(target.asList(), dform.asList());
+    }
+
+    @Test
+    public void testD() {
+        checkD("row", "rowed");
+        checkD("hop", "hopped");
+        checkD("chase", "chased");
+        checkD("dry", "dries");
     }
 
     public void testVerbForms(String bs, String ts) throws Exception {

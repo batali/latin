@@ -77,6 +77,11 @@ public enum CaseNumber implements Case.Key, Number.Key {
         else if (x instanceof CaseNumber.Key) {
             return ((CaseNumber.Key)x).getCaseNumber();
         }
+        else if ((x instanceof Case.Key) && (x instanceof Number.Key)) {
+            Case ck = ((Case.Key)x).getCase();
+            Number nk = ((Number.Key)x).getNumber();
+            return fromCaseNumber(ck, nk);
+        }
         else {
             return fromString(x.toString());
         }
