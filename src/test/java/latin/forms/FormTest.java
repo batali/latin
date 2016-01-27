@@ -1,7 +1,6 @@
 package latin.forms;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,22 +9,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import latin.choices.Chooser;
-import latin.util.PathId;
 
 import java.util.Arrays;
-import java.util.Map;
-import java.util.function.BiConsumer;
 
 
 public class FormTest {
 
     private static Logger logger = LoggerFactory.getLogger(FormTest.class);
 
-    Form s1;
-    Form s2;
+    StringForm s1;
+    StringForm s2;
 
-    Rule r1;
-    Rule r2;
+    ModRule r1;
+    ModRule r2;
 
     static Chooser firstChooser = new Chooser() {
         @Override
@@ -34,47 +30,31 @@ public class FormTest {
         }
     };
 
-    static class LastChooser implements Chooser, BiConsumer<Object,Integer> {
-        Map<Object,Integer> sizeMap;
-        public LastChooser() {
-            this.sizeMap = Maps.newHashMap();
-        }
-        public void accept(Object id, Integer size) {
-            if (size > 1) {
-                sizeMap.put(id, size - 1);
-            }
-        }
-        public Integer get(Object id) {
-            return sizeMap.get(id);
-        }
-    }
-
-    @Before
-    public void setup() {
-        PathId root = PathId.makeRoot("root");
-        s1 = new StringForm(root.makeChild("s1"), "ant");
-        s2 = new StringForm(root.makeChild("s2"), "dog,cat");
-        r1 = new ModRule(root.makeChild("r1"), "eater");
-        r2 = new ModRule(root.makeChild("r2"), "-,s");
-    }
-
-    void checkForm(String msg, Form f, String... targetStrings) {
-        Assert.assertTrue(msg, Iterables.elementsEqual(f, Arrays.asList(targetStrings)));
-    }
-
-    static final Chooser ultChooser = new Chooser() {
+    static Chooser lastChooser = new Chooser() {
         @Override
         public Integer get(Object key) {
             return -1;
         }
     };
 
+    static StringForm makeStringForm(String cs) {
+        return new StringForm(cs,cs);
+    }
 
-    String chooseLast(Form form) {
-//        LastChooser lastChooser = new LastChooser();
-//        form.recordAlts(lastChooser);
-//        return form.choose(lastChooser);
-        return form.choose(ultChooser);
+    static ModRule makeRule(String cs) {
+        return new ModRule(cs,cs);
+    }
+
+    @Before
+    public void setup() {
+        s1 = makeStringForm("ant");
+        s2 = makeStringForm("dog,cat");
+        r1 = makeRule("eater");
+        r2 = makeRule("-,s");
+    }
+
+    void checkForm(String msg, Form f, String... targetStrings) {
+        Assert.assertTrue(msg, Iterables.elementsEqual(f, Arrays.asList(targetStrings)));
     }
 
     @Test
@@ -91,11 +71,8 @@ public class FormTest {
         Assert.assertEquals("dogeater", r1s2.choose(firstChooser));
         Assert.assertEquals("an", r2s1.choose(firstChooser));
         Assert.assertEquals("do", r2s2.choose(firstChooser));
-        Assert.assertEquals("cateater", chooseLast(r1s2));
-        Assert.assertEquals("cats", chooseLast(r2s2));
-
+        Assert.assertEquals("cateater", r1s2.choose(lastChooser));
+        Assert.assertEquals("cats", r2s2.choose(lastChooser));
     }
-
-
 
 }

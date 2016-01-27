@@ -3,14 +3,8 @@ package latin.forms;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.UnmodifiableIterator;
 
-import latin.choices.Chooser;
-
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class Mod implements java.util.function.Function<String,String>,
@@ -189,47 +183,6 @@ public abstract class Mod implements java.util.function.Function<String,String>,
             return mods.get(0);
         } else {
             return new ModSeq(mods);
-        }
-    }
-
-    public static class AppliedIterator extends UnmodifiableIterator<String> {
-        final Iterator<String> sit;
-        final Function<String,String> mod;
-        public AppliedIterator (Iterator<String> sit, Function<String,String> mod) {
-            this.sit = sit;
-            this.mod = mod;
-        }
-        @Override
-        public boolean hasNext() {
-            return sit.hasNext();
-        }
-        @Override
-        public String next() {
-            return mod.apply(sit.next());
-        }
-    }
-
-    public static class Applied implements Form {
-        final Form stem;
-        final Function<String,String> mod;
-        public Applied(Form stem, Function<String,String> mod) {
-            this.stem = stem;
-            this.mod = mod;
-        }
-
-        @Override
-        public String choose(Chooser chooser) {
-            return mod.apply(stem.choose(chooser));
-        }
-
-        @Override
-        public UnmodifiableIterator<String> iterator() {
-            return new AppliedIterator(stem.iterator(), mod);
-        }
-
-        @Override
-        public void recordAlts(BiConsumer<Object, Integer> bic) {
-            stem.recordAlts(bic);
         }
     }
 

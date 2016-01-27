@@ -1,9 +1,9 @@
 package latin.choices;
 
-import latin.forms.Rule;
+import latin.forms.ModRule;
 import latin.util.PathId;
 
 import java.util.Map;
 
-public interface KeyRules<K> extends Map<K,Rule>, PathId.Identified {
+public interface KeyRules<K> extends Map<K,ModRule>, PathId.Identified {
 }

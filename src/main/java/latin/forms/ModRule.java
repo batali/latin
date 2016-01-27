@@ -1,23 +1,27 @@
 package latin.forms;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.UnmodifiableIterator;
 
 import latin.choices.AltsList;
-import latin.util.PathId;
 import latin.util.Splitters;
 
 import java.util.function.BiConsumer;
 
-public class ModRule extends AltsList<Mod> implements Rule {
+public class ModRule extends AltsList<Mod> {
 
-    public ModRule(PathId id, ImmutableList<Mod> mods) {
+    public ModRule(Object id, ImmutableList<Mod> mods) {
         super(id, mods);
     }
 
-    public ModRule(PathId id, String cs) {
+    public ModRule(Object id, String cs) {
         this(id, split(cs));
+    }
+
+    public static ImmutableList<Mod> split(String cs) {
+        return Splitters.csplitter(cs).transform(Mod::parseMod).toList();
     }
 
     public ModRule getRule() {
@@ -107,29 +111,22 @@ public class ModRule extends AltsList<Mod> implements Rule {
         }
     }
 
-    @Override
     public Applied apply(Form stem) {
         return new Applied(stem);
     }
 
-    public static ImmutableList<Mod> split(String cs) {
-        ImmutableList.Builder<Mod> builder = ImmutableList.builder();
-        for (String ms : Splitters.csplitter(cs)) {
-            builder.add(Mod.parseMod(ms));
-        }
-        return builder.build();
+    public String getSpec() {
+        return Joiner.on(",").join(values);
     }
 
     public String toString() {
-        return values.toString() + " (" + getId() + ")";
+        return "[" + getSpec() + "](" + getId() + ")";
     }
 
-    public static final ModRule noop = new ModRule(PathId.makeRoot(":"),
-                                                    ImmutableList.of(Mod.noop));
-    public static final ModRule unaccentLast = new ModRule(PathId.makeRoot(">"),
-                                                       ImmutableList.of(Mod.unaccentLast));
-    public static final ModRule accentLast = new ModRule(PathId.makeRoot("<"),
-                                                         ImmutableList.of(Mod.accentLast));
+    public static final ModRule noop = new ModRule(":", ImmutableList.of(Mod.noop));
 
+    public static final ModRule unaccentLast = new ModRule(">", ImmutableList.of(Mod.unaccentLast));
+
+    public static final ModRule accentLast = new ModRule("<", ImmutableList.of(Mod.accentLast));
 
 }

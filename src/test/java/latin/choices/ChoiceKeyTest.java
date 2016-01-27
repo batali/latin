@@ -40,6 +40,7 @@ public class ChoiceKeyTest {
         Assert.assertEquals(PersonNumber.SpPl, pn2);
     }
 
+    /*
     @Test
     public void testVerbChoices() throws Exception {
         VerbChoices a1 = VerbChoices.fromVals(false, 1, true);
@@ -51,6 +52,7 @@ public class ChoiceKeyTest {
         VerbChoices a4 = a2.setActive(true);
         Assert.assertEquals(VerbChoices.PluAct, a4);
     }
+    */
 
 }
 

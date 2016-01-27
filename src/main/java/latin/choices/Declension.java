@@ -1,16 +1,14 @@
 package latin.choices;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
-import latin.forms.Token;
-import latin.forms.Tokens;
 import latin.util.PathId;
+import latin.util.Splitters;
 
-import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Nullable;
+import java.util.function.BiConsumer;
 
 public enum Declension {
 
@@ -20,29 +18,14 @@ public enum Declension {
     Fourth("ūs"),
     Fifth("eī,ēī");
 
-    public final List<Token> gsiEndings;
     final PathId path;
-    Map<String, LatinNoun.Rules> rulesMap;
+    final ImmutableList<String> gsiEndings;
+    Map<String, KeyRules<CaseNumber>> rulesMap;
 
     Declension(String gst) {
-        this.gsiEndings = Tokens.parseTokens(gst);
+        this.gsiEndings = Splitters.csplit(gst);
         this.path = PathId.makeRoot(this);
         this.rulesMap = Maps.newHashMap();
-    }
-
-    public LatinNoun.Rules getRules(String subname) {
-        LatinNoun.Rules rules = rulesMap.get(subname);
-        Preconditions.checkNotNull(rules);
-        return rules;
-    }
-
-    void rules(String sn, @Nullable String uses, String... addStrings) {
-        LatinNoun.MapRules mapRules = new LatinNoun.MapRules(path.makeChild(sn));
-        mapRules.use(uses, this::getRules);
-        for (String adds : addStrings) {
-            mapRules.add(adds, CaseNumber::fromString);
-        }
-        rulesMap.put(sn, mapRules);
     }
 
     public static Declension getDeclension(Object d) {
@@ -54,42 +37,96 @@ public enum Declension {
         }
     }
 
+    public KeyRules<CaseNumber> getRules(String subname, boolean errorp) {
+        KeyRules<CaseNumber> keyRules = rulesMap.get(subname);
+        if (errorp) {
+            Preconditions.checkNotNull(keyRules, "Unknown rules " + toString());
+        }
+        return keyRules;
+    }
+
+    void rules(String subname, String... strings) {
+        final PathId rulesId = path.makeChild(subname);
+        final KeyRulesMap<CaseNumber> keyRulesMap = new KeyRulesMap<>(CaseNumber.class, rulesId);
+        BiConsumer<String, String> consumer = new BiConsumer<String, String>() {
+            @Override
+            public void accept(String ks, String vs) {
+                if (ks.equals("use")) {
+                    for (String sn : Splitters.csplitter(vs)) {
+                        KeyRules<CaseNumber> keyRules = rulesMap.get(sn);
+                        keyRulesMap.putAll(keyRules);
+                    }
+                } else {
+                    CaseNumber key = CaseNumber.fromString(ks);
+                    keyRulesMap.addRule(key, vs);
+                }
+            }
+        };
+        for (String string : strings) {
+            Splitters.essplit(string, consumer);
+        }
+        rulesMap.put(subname, keyRulesMap);
+    }
+
     static {
-        First.rules("mf", null,
+        First.rules("mf",
                     "AccSi=am GenSi=ae DatSi=ae AblSi=ā LocSi=ae",
                     "NomPl=ae AccPl=ās GenPl=ārum DatPl=īs");
-        First.rules("a", "mf", "NomSi=a");
+        First.rules("a", "use=mf",
+                    "NomSi=a");
 
-        Second.rules("sh", null, "GenSi=ī DatSi=ō AblSi=ō LocSi=ī GenPl=ōrum DatPl=īs");
-        Second.rules("mf", "sh",  "AccSi=um NomPl=ī AccPl=ōs");
-        Second.rules("n", "sh", "NomPl=a");
-        Second.rules("us", "mf", "NomSi=us VocSi=e");
-        Second.rules("um", "n", "NomSi=um");
-        Second.rules("iu", null, "GenSi=ī,<");
-        Second.rules("ius", "us iu", "VocSi=<");
-        Second.rules("ium", "um iu");
-        Second.rules("r", "mf", "NomSi=-er");
-        Second.rules("er", "mf", "NomSi=:");
+        Second.rules("sh",
+                     "GenSi=ī DatSi=ō AblSi=ō LocSi=ī GenPl=ōrum DatPl=īs");
+        Second.rules("mf", "use=sh",
+                     "AccSi=um NomPl=ī AccPl=ōs");
+        Second.rules("n", "use=sh",
+                     "NomPl=a");
+        Second.rules("us", "use=mf",
+                     "NomSi=us VocSi=e");
+        Second.rules("um", "use=n",
+                     "NomSi=um");
+        Second.rules("iu",
+                     "GenSi=ī,<");
+        Second.rules("ius", "use=us,iu",
+                     "VocSi=<");
+        Second.rules("ium", "use=um,iu");
+        Second.rules("r", "use=mf",
+                     "NomSi=-er");
+        Second.rules("er", "use=mf",
+                     "NomSi=:");
 
-        Third.rules("sh", null, "GenSi=is DatSi=ī AblSi=e GenPl=um DatPl=ibus");
-        Third.rules("mf", "sh", "AccSi=em NomPl=ēs AccPl=ēs");
-        Third.rules("n", "sh", "NomPl=a");
-        Third.rules("ium", null, "GenPl=ium");
-        Third.rules("i", null, "AblSi=ī");
-        Third.rules("ie", null, "AblSi=ī,e");
-        Third.rules("n.i", "sh ium i", "NomPl=ia");
-        Third.rules("mf.mi", "mf ium");
-        Third.rules("mf.pi", "mf.mi i");
+        Third.rules("sh",
+                    "GenSi=is DatSi=ī AblSi=e GenPl=um DatPl=ibus");
+        Third.rules("mf", "use=sh",
+                    "AccSi=em NomPl=ēs AccPl=ēs");
+        Third.rules("n", "use=sh",
+                    "NomPl=a");
+        Third.rules("ium",
+                    "GenPl=ium");
+        Third.rules("i",
+                    "AblSi=ī");
+        Third.rules("ie",
+                    "AblSi=ī,e");
+        Third.rules("n.i", "use=sh,ium,i",
+                    "NomPl=ia");
+        Third.rules("mf.mi", "use=mf,ium");
+        Third.rules("mf.pi", "use=mf.mi,i");
 
-        Fourth.rules("sh", null, "GenSi=ūs AblSi=ū GenPl=uum DatPl=ibus");
-        Fourth.rules("mf", "sh", "DatSi=uī,ū AccSi=um NomPl=ūs AccPl=ūs");
-        Fourth.rules("n", "sh", "DatSi=ū NomPl=ua");
-        Fourth.rules("us", "mf", "NomSi=us");
-        Fourth.rules("u", "n", "NomSi=ū");
+        Fourth.rules("sh", "GenSi=ūs AblSi=ū GenPl=uum DatPl=ibus");
+        Fourth.rules("mf", "use=sh",
+                     "DatSi=uī,ū AccSi=um NomPl=ūs AccPl=ūs");
+        Fourth.rules("n", "use=sh",
+                     "DatSi=ū NomPl=ua");
+        Fourth.rules("us", "use=mf",
+                     "NomSi=us");
+        Fourth.rules("u", "use=n",
+                     "NomSi=ū");
 
-        Fifth.rules("sh", null, "NomSi=ēs AccSi=em AblSi=ē GenPl=ērum DatPl=ēbus");
-        Fifth.rules("c", "sh", "GenSi=eī DatSi=eī");
-        Fifth.rules("v", "sh", "GenSi=ēī DatSi=ēī");
+        Fifth.rules("sh", "NomSi=ēs AccSi=em AblSi=ē GenPl=ērum DatPl=ēbus");
+        Fifth.rules("c", "use=sh",
+                    "GenSi=eī DatSi=eī");
+        Fifth.rules("v", "use=sh",
+                    "GenSi=ēī DatSi=ēī");
 
     }
 }

@@ -2,20 +2,11 @@
 package latin.forms;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
-import latin.choices.Alts;
+import latin.util.Splitters;
 
-import java.util.Collections;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 public class Suffix {
 
@@ -24,10 +15,6 @@ public class Suffix {
 
     public static final String lowerUnaccentedVowels = "aeiou";
     public static final String lowerAccentedVowels = "āēīōū";
-
-    public interface Transformer {
-        public char transform(char c);
-    }
 
     public static boolean isVowel(char c) {
         char lc = Character.toLowerCase(c);
@@ -86,48 +73,6 @@ public class Suffix {
         return sb.toString();
     }
 
-    public static Iterable<String> ssplitter(String str) {
-        return Splitter.on(CharMatcher.BREAKING_WHITESPACE)
-                .omitEmptyStrings()
-                .split(str);
-    }
-
-    public static List<String> ssplit(String str) {
-        return Lists.newArrayList(ssplitter(str));
-    }
-
-    public static String makeFormString(String fstr) {
-        return CharMatcher.is('_').collapseFrom(fstr.trim(), ' ');
-        //return fstr.trim().replace('_', ' ');
-    }
-
-    public static final Function<String,String> toSameString = Functions.identity();
-
-    public static final Function<String,String> toFormString = new Function<String, String>() {
-        @Override
-        public String apply(@Nullable String s) {
-            Preconditions.checkNotNull(s);
-            return makeFormString(s);
-        }
-    };
-
-    public static <T> Iterable<T> csplitter(String str, Function<? super String,T> tfunc) {
-        str = str.trim();
-        if (str.isEmpty()) {
-            return Collections.emptyList();
-        }
-        else {
-            return Iterables.transform(Splitter.on(',').trimResults().split(str), tfunc);
-        }
-    }
-
-    public static <T> List<T> csplit(String cstr, Function<? super String,T> tfunc) {
-        return ImmutableList.copyOf(csplitter(cstr, tfunc));
-    }
-
-    public static List<String> csplit(String cstr) {
-        return csplit(cstr, toFormString);
-    }
 
     public static boolean charMatch(char cc, char mc) {
         if (Character.toLowerCase(cc) == mc) {
@@ -202,7 +147,7 @@ public class Suffix {
     }
 
     public static EndMatcher endMatcher (String mss) {
-        return new EndMatcher(ImmutableList.copyOf(csplitter(mss, toSameString)));
+        return new EndMatcher(Splitters.csplit(mss));
     }
 
     public static String removeEnding(String s, String e) {
@@ -237,64 +182,5 @@ public class Suffix {
         }
         return strings;
     }
-
-    static class AltsForm implements Formf {
-
-        public final Object spec;
-        public final ImmutableList<String> alts;
-
-        public AltsForm(Object spec, List<String> strings) {
-            this.spec = spec;
-            this.alts = ImmutableList.copyOf(checkFormStrings(strings));
-        }
-
-        public boolean apply(IFormBuilder formBuilder, Alts.AltChooser altChooser) {
-            String s = Alts.chooseElement(alts, this, altChooser);
-            if (s != null) {
-                formBuilder.add(s);
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-
-        public IFormBuilder apply(Alts.AltChooser altChooser) {
-            String s = Alts.chooseElement(alts, this, altChooser);
-            if (s != null) {
-                FormBuilder formBuilder = new FormBuilder();
-                formBuilder.add(s);
-                return formBuilder;
-            }
-            else {
-                return null;
-            }
-        }
-
-        public String toString() {
-            return spec.toString() + ":" + alts.toString();
-        }
-
-    }
-
-    public static Formf makeFormf(Object id, List<String> strings) {
-        return new AltsForm(id, strings);
-    }
-
-    public static Formf makeFormf(String prefix, Object key, List<String> strings) {
-        return makeFormf(prefix + "." + key.toString(), strings);
-    }
-
-    public static Formf makeFormf(Object id, String fs) {
-        return makeFormf(id, Suffix.csplit(fs));
-    }
-
-    public static Formf makeFormf(String prefix, Object key, String fs) {
-        return makeFormf(prefix, key, Suffix.csplit(fs));
-    }
-
-
-
-
 
 }

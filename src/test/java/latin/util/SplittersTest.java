@@ -25,9 +25,9 @@ public class SplittersTest {
 
     @Test
     public void testCsplitter () {
-        assertListsEqual(stringList("a"), Splitters.csplitter("a"));
-        assertListsEqual(stringList("a", "b", "c"), Splitters.csplitter("a,b ,c"));
-        assertListsEqual(stringList(), Splitters.csplitter(" "));
+        assertListsEqual(stringList("a"), Splitters.csplit("a"));
+        assertListsEqual(stringList("a", "b", "c"), Splitters.csplit("a,b ,c"));
+        assertListsEqual(stringList(), Splitters.csplit(" "));
     }
 
     static void checkEsplit(String es, final String tks, final String tvs) {
@@ -49,11 +49,11 @@ public class SplittersTest {
 
     @Test
     public void testSplitter() {
-        assertListsEqual("single", stringList("a"), Splitters.ssplitter("a"));
-        assertListsEqual("trim end", stringList("a"), Splitters.ssplitter("a "));
-        assertListsEqual("empty", stringList(), Splitters.ssplitter(""));
-        assertListsEqual("multi", stringList("a", "b"), Splitters.ssplitter("a b"));
-        assertListsEqual("multi trim", stringList("a", "b"), Splitters.ssplitter(" a  b "));
+        assertListsEqual("single", stringList("a"), Splitters.ssplit("a"));
+        assertListsEqual("trim end", stringList("a"), Splitters.ssplit("a "));
+        assertListsEqual("empty", stringList(), Splitters.ssplit(""));
+        assertListsEqual("multi", stringList("a", "b"), Splitters.ssplit("a b"));
+        assertListsEqual("multi trim", stringList("a", "b"), Splitters.ssplit(" a  b "));
     }
 
 }

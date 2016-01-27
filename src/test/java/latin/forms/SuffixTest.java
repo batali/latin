@@ -87,27 +87,6 @@ public class SuffixTest {
     }
 
     @Test
-    public void testCsplit() {
-        Assert.assertEquals("[a]", Suffix.csplit("a").toString());
-        Assert.assertEquals("[ant, cow]", Suffix.csplit("ant,cow").toString());
-        Assert.assertEquals("[]", Suffix.csplit("").toString());
-        Assert.assertTrue(Suffix.csplit("  ").isEmpty());
-        Assert.assertTrue(Suffix.csplit("").isEmpty());
-        Assert.assertEquals("[, b]", Suffix.csplit(",b").toString());
-        Assert.assertEquals("[foo bar]", Suffix.csplit("foo_bar").toString());
-    }
-
-    @Test
-    public void testSsplit() {
-        Assert.assertEquals("[a, b]", Suffix.ssplit("a b").toString());
-        Assert.assertEquals("[a, b]", Suffix.ssplit("a  b  ").toString());
-        Assert.assertTrue(Suffix.ssplit("  ").isEmpty());
-        Assert.assertTrue(Suffix.ssplit("").isEmpty());
-        Assert.assertEquals("[a]", Suffix.ssplit("a ").toString());
-        Assert.assertEquals("[a]", Suffix.ssplit(" a").toString());
-    }
-
-    @Test
     public void testUnaccentString() {
         Assert.assertEquals("aba", Suffix.unaccentString("abā"));
         Assert.assertEquals("a_ba", Suffix.unaccentString("a bā"));

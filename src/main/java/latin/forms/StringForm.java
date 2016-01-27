@@ -1,19 +1,19 @@
 package latin.forms;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.UnmodifiableIterator;
 
 import latin.choices.AltsList;
-import latin.util.PathId;
 import latin.util.Splitters;
 
-public class StringForm extends AltsList<String> implements Form {
+public class StringForm<I> extends AltsList<String> implements Form {
 
-    public StringForm(PathId id, ImmutableList<String> values) {
+    public StringForm(Object id, ImmutableList<String> values) {
         super(id, values);
     }
 
-    public StringForm(PathId id, String cs) {
+    public StringForm(Object id, String cs) {
         this(id, split(cs));
     }
 
@@ -22,21 +22,12 @@ public class StringForm extends AltsList<String> implements Form {
         return values.iterator();
     }
 
+    public static String makeFormString(String fstr) {
+        return CharMatcher.is('_').collapseFrom(fstr.trim(), ' ');
+    }
+
     public static ImmutableList<String> split(String cs) {
-        ImmutableList.Builder<String> builder = ImmutableList.builder();
-        for (String fs : Splitters.csplitter(cs)) {
-            builder.add(Suffix.makeFormString(fs));
-        }
-        return builder.build();
-    }
-
-    @Override
-    public String toString() {
-        return values.toString();
-    }
-
-    public Form getForm() {
-        return this;
+        return Splitters.csplitter(cs).transform(StringForm::makeFormString).toList();
     }
 
 }
