@@ -4,9 +4,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
+import latin.forms.ModRule;
+import latin.forms.Suffix;
 import latin.util.PathId;
 import latin.util.Splitters;
 
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -18,13 +21,29 @@ public enum Declension {
     Fourth("ūs"),
     Fifth("eī,ēī");
 
-    final PathId path;
+    static class Rules extends EnumMap<CaseNumber, ModRule> {
+        public final PathId pathId;
+        public Rules(Declension declension, String subname) {
+            super(CaseNumber.class);
+            this.pathId = PathId.makePath(declension, subname);
+        }
+        public Declension getDeclension() {
+            return (Declension) pathId.getParent().name;
+        }
+        public String getSubname() {
+            return pathId.name.toString();
+        }
+        void addRule(String ks, String vs) {
+            CaseNumber key = CaseNumber.fromString(ks);
+            put(key, new ModRule(pathId.makeChild(key), vs));
+        }
+    }
+
     final ImmutableList<String> gsiEndings;
-    Map<String, KeyRules<CaseNumber>> rulesMap;
+    Map<String, Rules> rulesMap;
 
     Declension(String gst) {
         this.gsiEndings = Splitters.csplit(gst);
-        this.path = PathId.makeRoot(this);
         this.rulesMap = Maps.newHashMap();
     }
 
@@ -33,39 +52,51 @@ public enum Declension {
             return (Declension) d;
         }
         else {
-            return Declension.valueOf(d.toString());
+            return EkeyHelper.ekeyFromString(Declension.class, d.toString());
         }
     }
 
-    public KeyRules<CaseNumber> getRules(String subname, boolean errorp) {
-        KeyRules<CaseNumber> keyRules = rulesMap.get(subname);
+    public Rules getRules(String subname, boolean errorp) {
+        Rules rules = rulesMap.get(subname);
         if (errorp) {
-            Preconditions.checkNotNull(keyRules, "Unknown rules " + toString());
+            Preconditions.checkNotNull(rules, "Unknown rules " + toString());
         }
-        return keyRules;
+        return rules;
+    }
+
+    public Rules getRules(String subname) {
+        return getRules(subname, true);
+    }
+
+    public boolean gsiMatch(String s) {
+        return Suffix.selectEndMatcher(s, gsiEndings) != null;
+    }
+
+    public String makeGstem(String gsi) {
+        String ms = Suffix.selectEndMatcher(gsi, gsiEndings);
+        return (ms == null) ? null : Suffix.butlast(gsi, ms.length());
     }
 
     void rules(String subname, String... strings) {
-        final PathId rulesId = path.makeChild(subname);
-        final KeyRulesMap<CaseNumber> keyRulesMap = new KeyRulesMap<>(CaseNumber.class, rulesId);
+        final Rules newRules = new Rules(this, subname);
         BiConsumer<String, String> consumer = new BiConsumer<String, String>() {
             @Override
             public void accept(String ks, String vs) {
                 if (ks.equals("use")) {
                     for (String sn : Splitters.csplitter(vs)) {
-                        KeyRules<CaseNumber> keyRules = rulesMap.get(sn);
-                        keyRulesMap.putAll(keyRules);
+                        Rules gotRules = rulesMap.get(sn);
+                        Preconditions.checkNotNull(gotRules);
+                        newRules.putAll(gotRules);
                     }
                 } else {
-                    CaseNumber key = CaseNumber.fromString(ks);
-                    keyRulesMap.addRule(key, vs);
+                    newRules.addRule(ks, vs);
                 }
             }
         };
         for (String string : strings) {
             Splitters.essplit(string, consumer);
         }
-        rulesMap.put(subname, keyRulesMap);
+        rulesMap.put(subname, newRules);
     }
 
     static {
@@ -109,8 +140,8 @@ public enum Declension {
                     "AblSi=ī,e");
         Third.rules("n.i", "use=sh,ium,i",
                     "NomPl=ia");
-        Third.rules("mf.mi", "use=mf,ium");
-        Third.rules("mf.pi", "use=mf.mi,i");
+        Third.rules("mf.i", "use=mf,ium");
+        Third.rules("mf.pi", "use=mf.i,i");
 
         Fourth.rules("sh", "GenSi=ūs AblSi=ū GenPl=uum DatPl=ibus");
         Fourth.rules("mf", "use=sh",

@@ -1,7 +1,7 @@
 
 package latin.forms;
 
-import com.google.common.base.CharMatcher;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import latin.util.Splitters;
@@ -148,6 +148,12 @@ public class Suffix {
 
     public static EndMatcher endMatcher (String mss) {
         return new EndMatcher(Splitters.csplit(mss));
+    }
+
+    public static String butlast(String s, int n) {
+        int l = s.length();
+        Preconditions.checkArgument(l >= n);
+        return s.substring(0, l - n);
     }
 
     public static String removeEnding(String s, String e) {

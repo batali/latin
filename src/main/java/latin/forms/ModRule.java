@@ -2,7 +2,6 @@ package latin.forms;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.UnmodifiableIterator;
 
 import latin.choices.AltsList;
@@ -107,7 +106,7 @@ public class ModRule extends AltsList<Mod> {
 
         @Override
         public String toString() {
-            return Iterables.toString(this);
+            return pjoin();
         }
     }
 

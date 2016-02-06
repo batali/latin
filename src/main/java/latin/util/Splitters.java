@@ -25,24 +25,32 @@ public class Splitters {
     }
 
     public static FluentIterable<String> ssplitter(String str) {
-        return FluentIterable.from(Splitter.on(CharMatcher.BREAKING_WHITESPACE).omitEmptyStrings()
-                                           .split(str));
+        return FluentIterable.from(
+            Splitter.on(CharMatcher.BREAKING_WHITESPACE).omitEmptyStrings().split(str));
     }
 
     public static ImmutableList<String> ssplit(String ss) {
         return ssplitter(ss).toList();
     }
 
-    public static void esplit(String es, BiConsumer<String,String> consumer) {
-        int p = es.indexOf('=');
+    public static void charSplit(String es, Character c, BiConsumer<String,String> consumer) {
+        int p = es.indexOf(c);
         Preconditions.checkState(p > 0);
         consumer.accept(es.substring(0, p), es.substring(p+1));
+    }
+
+    public static void esplit(String es, BiConsumer<String,String> consumer) {
+        charSplit(es, '=', consumer);
     }
 
     public static void essplit(String ss, BiConsumer<String,String> consumer) {
         for (String es : ssplitter(ss)) {
             esplit(es, consumer);
         }
+    }
+
+    public static void psplit(String ps, BiConsumer<String,String> consumer) {
+        charSplit(ps, '.', consumer);
     }
 
 }

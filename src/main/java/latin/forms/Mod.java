@@ -47,6 +47,10 @@ public abstract class Mod implements java.util.function.Function<String,String>,
         }
     }
 
+    public static Ending ending(String es) {
+        return new Ending(es);
+    }
+
     public static String butLastString(String s, int n){
         return s.substring(0, s.length() - n);
     }
