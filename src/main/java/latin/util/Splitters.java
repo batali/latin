@@ -43,12 +43,6 @@ public class Splitters {
         charSplit(es, '=', consumer);
     }
 
-    public static void essplit(String ss, BiConsumer<String,String> consumer) {
-        for (String es : ssplitter(ss)) {
-            esplit(es, consumer);
-        }
-    }
-
     public static void psplit(String ps, BiConsumer<String,String> consumer) {
         charSplit(ps, '.', consumer);
     }

@@ -13,7 +13,7 @@ public class English {
 
     public static final PathId pathId = PathId.makeRoot("English");
 
-    interface NounEntry {
+    interface CountNounEntry {
         String getSingular();
         String getPlural();
     }
@@ -37,9 +37,9 @@ public class English {
         }
     }
 
-    static abstract class AbstractNounEntry implements NounEntry {
+    static abstract class AbstractCountNounEntry implements CountNounEntry {
         public final String singular;
-        public AbstractNounEntry(String singular) {
+        public AbstractCountNounEntry(String singular) {
             this.singular = singular;
         }
         @Override
@@ -48,8 +48,8 @@ public class English {
         }
     }
 
-    public static class RegularNounEntry extends AbstractNounEntry {
-        public RegularNounEntry(String singular) {
+    public static class RegularCountNounEntry extends AbstractCountNounEntry {
+        public RegularCountNounEntry(String singular) {
             super(singular);
         }
         @Override
@@ -58,8 +58,8 @@ public class English {
         }
     }
 
-    public static class UnchangedNounEntry extends AbstractNounEntry {
-        public UnchangedNounEntry(String singular) {
+    public static class UnchangedCountNounEntry extends AbstractCountNounEntry {
+        public UnchangedCountNounEntry(String singular) {
             super(singular);
         }
         @Override
@@ -68,9 +68,9 @@ public class English {
         }
     }
 
-    public static class IrregularNounEntry extends AbstractNounEntry {
+    public static class IrregularCountNounEntry extends AbstractCountNounEntry {
         public final String plural;
-        public IrregularNounEntry(String singular, String plural) {
+        public IrregularCountNounEntry(String singular, String plural) {
             super(singular);
             this.plural = plural;
         }
@@ -80,26 +80,26 @@ public class English {
         }
     }
 
-    public static NounEntry makeNounEntry(String singular, String plural) {
+    public static CountNounEntry makeCountNounEntry(String singular, String plural) {
         if (plural == null || plural.equals(regularPlural(singular))) {
-            return new RegularNounEntry(singular);
+            return new RegularCountNounEntry(singular);
         }
         else if (singular.equals(plural)) {
-            return new UnchangedNounEntry(singular);
+            return new UnchangedCountNounEntry(singular);
         }
         else {
-            return new IrregularNounEntry(singular, plural);
+            return new IrregularCountNounEntry(singular, plural);
         }
     }
 
-    public static NounEntry parseNounEntry(String ss) {
+    public static CountNounEntry parseCountNounEntry(String ss) {
         List<String> sl = Splitters.csplit(ss);
         int l = sl.size();
         Preconditions.checkArgument(l > 0 && l <= 2);
         if (l == 1) {
-            return makeNounEntry(sl.get(0), null);
+            return makeCountNounEntry(sl.get(0), null);
         } else {
-            return makeNounEntry(sl.get(0), sl.get(1));
+            return makeCountNounEntry(sl.get(0), sl.get(1));
         }
     }
 

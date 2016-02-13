@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<DeclensionRules>
+ <rules name="First.mf">
+   <AccSi>am</AccSi>
+   <GenSi>ae</GenSi>
+   <DatSi>ae</DatSi>
+   <AblSi>ā</AblSi>
+   <LocSi>ae</LocSi>
+   <NomPl>ae</NomPl>
+   <AccPl>ās</AccPl>
+   <GenPl>ārum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="First.a">
+   <NomSi>a</NomSi>
+   <AccSi>am</AccSi>
+   <GenSi>ae</GenSi>
+   <DatSi>ae</DatSi>
+   <AblSi>ā</AblSi>
+   <LocSi>ae</LocSi>
+   <NomPl>ae</NomPl>
+   <AccPl>ās</AccPl>
+   <GenPl>ārum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.mf">
+   <AccSi>um</AccSi>
+   <GenSi>ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <LocSi>ī</LocSi>
+   <NomPl>ī</NomPl>
+   <AccPl>ōs</AccPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.n">
+   <GenSi>ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <LocSi>ī</LocSi>
+   <NomPl>a</NomPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.us">
+   <NomSi>us</NomSi>
+   <AccSi>um</AccSi>
+   <GenSi>ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <VocSi>e</VocSi>
+   <LocSi>ī</LocSi>
+   <NomPl>ī</NomPl>
+   <AccPl>ōs</AccPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.ius">
+   <NomSi>us</NomSi>
+   <AccSi>um</AccSi>
+   <GenSi>ī,-ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <VocSi>-ī</VocSi>
+   <LocSi>ī</LocSi>
+   <NomPl>ī</NomPl>
+   <AccPl>ōs</AccPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.um">
+   <NomSi>um</NomSi>
+   <GenSi>ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <LocSi>ī</LocSi>
+   <NomPl>a</NomPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.ium">
+   <NomSi>um</NomSi>
+   <GenSi>ī,-ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <LocSi>ī</LocSi>
+   <NomPl>a</NomPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.r">
+   <NomSi>-er</NomSi>
+   <AccSi>um</AccSi>
+   <GenSi>ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <LocSi>ī</LocSi>
+   <NomPl>ī</NomPl>
+   <AccPl>ōs</AccPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Second.er">
+   <NomSi>:</NomSi>
+   <AccSi>um</AccSi>
+   <GenSi>ī</GenSi>
+   <DatSi>ō</DatSi>
+   <AblSi>ō</AblSi>
+   <LocSi>ī</LocSi>
+   <NomPl>ī</NomPl>
+   <AccPl>ōs</AccPl>
+   <GenPl>ōrum</GenPl>
+   <DatPl>īs</DatPl>
+ </rules>
+ <rules name="Third.c.mf">
+   <AccSi>em</AccSi>
+   <GenSi>is</GenSi>
+   <DatSi>ī</DatSi>
+   <AblSi>e</AblSi>
+   <NomPl>ēs</NomPl>
+   <AccPl>ēs</AccPl>
+   <GenPl>um</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Third.c.n">
+   <GenSi>is</GenSi>
+   <DatSi>ī</DatSi>
+   <AblSi>e</AblSi>
+   <NomPl>a</NomPl>
+   <GenPl>um</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Third.i.mf">
+   <AccSi>em</AccSi>
+   <GenSi>is</GenSi>
+   <DatSi>ī</DatSi>
+   <AblSi>e</AblSi>
+   <NomPl>ēs</NomPl>
+   <AccPl>ēs</AccPl>
+   <GenPl>ium</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Third.i.n">
+   <GenSi>is</GenSi>
+   <DatSi>ī</DatSi>
+   <AblSi>ī</AblSi>
+   <NomPl>ia</NomPl>
+   <GenPl>ium</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Third.a.mf">
+   <AccSi>em</AccSi>
+   <GenSi>is</GenSi>
+   <DatSi>ī</DatSi>
+   <AblSi>ī</AblSi>
+   <NomPl>ēs</NomPl>
+   <AccPl>ēs</AccPl>
+   <GenPl>ium</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Third.pi.mf">
+   <AccSi>im</AccSi>
+   <GenSi>is</GenSi>
+   <DatSi>ī</DatSi>
+   <AblSi>ī</AblSi>
+   <NomPl>ēs</NomPl>
+   <AccPl>īm,ēm</AccPl>
+   <GenPl>ium</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Fourth.mf">
+   <AccSi>um</AccSi>
+   <GenSi>ūs</GenSi>
+   <DatSi>uī,ū</DatSi>
+   <AblSi>ū</AblSi>
+   <NomPl>ūs</NomPl>
+   <AccPl>ūs</AccPl>
+   <GenPl>uum</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Fourth.n">
+   <GenSi>ūs</GenSi>
+   <DatSi>ū</DatSi>
+   <AblSi>ū</AblSi>
+   <NomPl>ua</NomPl>
+   <GenPl>uum</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Fourth.us">
+   <NomSi>us</NomSi>
+   <AccSi>um</AccSi>
+   <GenSi>ūs</GenSi>
+   <DatSi>uī,ū</DatSi>
+   <AblSi>ū</AblSi>
+   <NomPl>ūs</NomPl>
+   <AccPl>ūs</AccPl>
+   <GenPl>uum</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Fourth.ū">
+   <NomSi>ū</NomSi>
+   <GenSi>ūs</GenSi>
+   <DatSi>ū</DatSi>
+   <AblSi>ū</AblSi>
+   <NomPl>ua</NomPl>
+   <GenPl>uum</GenPl>
+   <DatPl>ibus</DatPl>
+ </rules>
+ <rules name="Fifth.c">
+   <NomSi>ēs</NomSi>
+   <AccSi>em</AccSi>
+   <GenSi>eī</GenSi>
+   <DatSi>eī</DatSi>
+   <AblSi>ē</AblSi>
+   <NomPl>ēs</NomPl>
+   <AccPl>ēs</AccPl>
+   <GenPl>ērum</GenPl>
+   <DatPl>ēbus</DatPl>
+ </rules>
+ <rules name="Fifth.v">
+   <NomSi>ēs</NomSi>
+   <AccSi>em</AccSi>
+   <GenSi>ēī</GenSi>
+   <DatSi>ēī</DatSi>
+   <AblSi>ē</AblSi>
+   <NomPl>ēs</NomPl>
+   <AccPl>ēs</AccPl>
+   <GenPl>ērum</GenPl>
+   <DatPl>ēbus</DatPl>
+ </rules>
+</DeclensionRules>

@@ -27,7 +27,7 @@ public class EkeyHelper {
         return -1;
     }
 
-    public static <E extends Enum<E>> E ekeyFromString(Class<E> cls, String ks) {
+    public static <E extends Enum<E>> E ekeyFromString(Class<E> cls, String ks, boolean errorp) {
         try {
             return Enum.valueOf(cls, ks);
         }
@@ -37,10 +37,17 @@ public class EkeyHelper {
             if (i >= 0) {
                 return values[i];
             }
-            else {
+            else if (errorp) {
                 throw iae;
             }
+            else {
+                return null;
+            }
         }
+    }
+
+    public static <E extends Enum<E>> E ekeyFromString(Class<E> cls, String ks) {
+        return ekeyFromString(cls, ks, true);
     }
 
 }

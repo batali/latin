@@ -10,13 +10,13 @@ public class EnglishNounTest {
 
     private static Logger logger = LoggerFactory.getLogger(EnglishNounTest.class);
 
-    void compareForms(English.NounEntry e, String ts, String tp) {
+    void compareForms(English.CountNounEntry e, String ts, String tp) {
         Assert.assertEquals(ts, e.getSingular());
         Assert.assertEquals(tp, e.getPlural());
     }
 
     void compareForms(String es, String ts, String tp) {
-        compareForms(English.parseNounEntry(es), ts, tp);
+        compareForms(English.parseCountNounEntry(es), ts, tp);
     }
 
     @Test
@@ -25,14 +25,14 @@ public class EnglishNounTest {
         compareForms("try", "try", "tries");
         compareForms("kiss", "kiss", "kisses");
         compareForms("match", "match", "matches");
-        English.NounEntry e1 = English.parseNounEntry("dog,dogs");
-        Assert.assertTrue(e1 instanceof English.RegularNounEntry);
+        English.CountNounEntry e1 = English.parseCountNounEntry("dog,dogs");
+        Assert.assertTrue(e1 instanceof English.RegularCountNounEntry);
     }
 
     @Test
     public void testUnchanged() {
-        English.NounEntry e1 = English.parseNounEntry("fish,fish");
-        Assert.assertTrue(e1 instanceof English.UnchangedNounEntry);
+        English.CountNounEntry e1 = English.parseCountNounEntry("fish,fish");
+        Assert.assertTrue(e1 instanceof English.UnchangedCountNounEntry);
         compareForms(e1, "fish", "fish");
     }
 

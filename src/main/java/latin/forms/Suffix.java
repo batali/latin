@@ -126,8 +126,8 @@ public class Suffix {
         return null;
     }
 
-    public static interface StringTest {
-        public boolean test(CharSequence charSequence);
+    public interface StringTest {
+        boolean test(CharSequence charSequence);
     }
 
     public static class EndMatcher implements StringTest {
@@ -150,14 +150,14 @@ public class Suffix {
         return new EndMatcher(Splitters.csplit(mss));
     }
 
-    public static String butlast(String s, int n) {
+    public static String butLast(String s, int n) {
         int l = s.length();
         Preconditions.checkArgument(l >= n);
         return s.substring(0, l - n);
     }
 
     public static String removeEnding(String s, String e) {
-        return s.endsWith(e) ? s.substring(0, s.length() - e.length()) : null;
+        return s.endsWith(e) ? butLast(s, e.length()) : null;
     }
 
     public static boolean checkFormString(String fs) {

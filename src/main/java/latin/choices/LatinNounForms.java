@@ -3,6 +3,8 @@ package latin.choices;
 import latin.forms.Form;
 import latin.forms.ModRule;
 
+import java.util.function.BiFunction;
+
 public class LatinNounForms {
 
     public static CaseNumber getRenamed(CaseNumber caseNumber, Gender gender) {
@@ -21,6 +23,20 @@ public class LatinNounForms {
             default:
                 return null;
         }
+    }
+
+    public static Form getForm(BiFunction<CaseNumber, Gender, Form> keyFormFunction,
+                               CaseNumber cn,
+                               Gender g) {
+        Form kf = keyFormFunction.apply(cn, g);
+        if (kf != null) {
+            return kf;
+        }
+        CaseNumber rcn = getRenamed(cn, g);
+        if (rcn != null) {
+            return getForm(keyFormFunction, rcn, g);
+        }
+        return null;
     }
 
     public interface KeyFormEntry {

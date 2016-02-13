@@ -17,6 +17,35 @@ public class LatinNoun {
 
     public static final CaseNumber NOMSI = CaseNumber.NomSi;
 
+    public interface FormEntry {
+        Form getForm(CaseNumber cn);
+    }
+
+    public interface KeyFormEntry extends FormEntry {
+        Form getKeyForm(CaseNumber cn, Gender g);
+        Gender getGender();
+        default Form getForm(CaseNumber cn) {
+            return LatinNounForms.getForm(this::getKeyForm, cn, getGender());
+        }
+    }
+
+    public interface RulesEntry extends KeyFormEntry {
+        Form getStoredForm(CaseNumber cn);
+        Form getGstem();
+        ModRule getGstemRule(CaseNumber cn);
+        default Form getKeyForm(CaseNumber cn, Gender g) {
+            Form sf = getStoredForm(cn);
+            if (sf != null) {
+                return sf;
+            }
+            ModRule r = getGstemRule(cn);
+            if (r != null) {
+                return r.apply(getGstem());
+            }
+            return null;
+        }
+    }
+
     public interface IEntry extends LatinNounForms.GstemRulesFormEntry {
 
         String getId();
@@ -135,11 +164,6 @@ public class LatinNoun {
             return this;
         }
 
-        public EntryBuilder setRules(String dname, String subname) {
-            Declension declension = Declension.getDeclension(dname);
-            return setRules(declension.getRules(subname, true));
-        }
-
         Map<String, String> getFeaturesMap() {
             Map<String, String> featuresMap = entry.features;
             if (featuresMap == null) {
@@ -158,7 +182,8 @@ public class LatinNoun {
             if (ks.equals("gstem")) {
                 setGstem(makeStringForm(ks, vs));
             } else if (ks.equals("rules")) {
-                Splitters.psplit(vs, this::setRules);
+                Declension.Rules rules = Declension.getRules(vs);
+                setRules(rules);
             } else if (ks.equals("gender")) {
                 setGender(Gender.fromString(vs));
             } else {
@@ -174,8 +199,10 @@ public class LatinNoun {
         }
 
         public EntryBuilder add(String... strings) {
-            for (String string : strings) {
-                Splitters.essplit(string, this::set);
+            for (String ss : strings) {
+                for (String es : Splitters.ssplitter(ss)) {
+                    Splitters.esplit(es, this::set);
+                }
             }
             return this;
         }

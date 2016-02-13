@@ -56,16 +56,15 @@ public enum Declension {
         }
     }
 
-    public Rules getRules(String subname, boolean errorp) {
-        Rules rules = rulesMap.get(subname);
-        if (errorp) {
-            Preconditions.checkNotNull(rules, "Unknown rules " + toString());
-        }
+    public static Rules getRules(String rs) {
+        int p = rs.indexOf('.');
+        Preconditions.checkState(p > 0);
+        Declension declension = EkeyHelper.ekeyFromString(Declension.class, rs.substring(0, p),
+                                                          false);
+        Preconditions.checkNotNull(declension, "Unknown rules (declension) " + rs);
+        Rules rules = declension.rulesMap.get(rs.substring(p+1));
+        Preconditions.checkNotNull(rules, "Unknown rules (subname) " + rs);
         return rules;
-    }
-
-    public Rules getRules(String subname) {
-        return getRules(subname, true);
     }
 
     public boolean gsiMatch(String s) {
@@ -74,7 +73,7 @@ public enum Declension {
 
     public String makeGstem(String gsi) {
         String ms = Suffix.selectEndMatcher(gsi, gsiEndings);
-        return (ms == null) ? null : Suffix.butlast(gsi, ms.length());
+        return (ms == null) ? null : Suffix.butLast(gsi, ms.length());
     }
 
     void rules(String subname, String... strings) {
@@ -93,8 +92,10 @@ public enum Declension {
                 }
             }
         };
-        for (String string : strings) {
-            Splitters.essplit(string, consumer);
+        for (String ss : strings) {
+            for (String es : Splitters.ssplitter(ss)) {
+                Splitters.esplit(es, consumer);
+            }
         }
         rulesMap.put(subname, newRules);
     }
@@ -117,9 +118,9 @@ public enum Declension {
         Second.rules("um", "use=n",
                      "NomSi=um");
         Second.rules("iu",
-                     "GenSi=ī,<");
+                     "GenSi=ī,-ī");
         Second.rules("ius", "use=us,iu",
-                     "VocSi=<");
+                     "VocSi=-ī");
         Second.rules("ium", "use=um,iu");
         Second.rules("r", "use=mf",
                      "NomSi=-er");
@@ -128,20 +129,20 @@ public enum Declension {
 
         Third.rules("sh",
                     "GenSi=is DatSi=ī AblSi=e GenPl=um DatPl=ibus");
-        Third.rules("mf", "use=sh",
+        Third.rules("c.mf", "use=sh",
                     "AccSi=em NomPl=ēs AccPl=ēs");
-        Third.rules("n", "use=sh",
+        Third.rules("c.n", "use=sh",
                     "NomPl=a");
         Third.rules("ium",
                     "GenPl=ium");
         Third.rules("i",
                     "AblSi=ī");
-        Third.rules("ie",
-                    "AblSi=ī,e");
-        Third.rules("n.i", "use=sh,ium,i",
+        Third.rules("i.n", "use=sh,ium,i",
                     "NomPl=ia");
-        Third.rules("mf.i", "use=mf,ium");
-        Third.rules("mf.pi", "use=mf.i,i");
+        Third.rules("i.mf", "use=c.mf,ium");
+        Third.rules("a.mf", "use=i.mf,i");
+        Third.rules("pi.mf", "use=a.mf",
+                    "AccSi=im AccPl=īm,ēm");
 
         Fourth.rules("sh", "GenSi=ūs AblSi=ū GenPl=uum DatPl=ibus");
         Fourth.rules("mf", "use=sh",
@@ -150,10 +151,11 @@ public enum Declension {
                      "DatSi=ū NomPl=ua");
         Fourth.rules("us", "use=mf",
                      "NomSi=us");
-        Fourth.rules("u", "use=n",
+        Fourth.rules("ū", "use=n",
                      "NomSi=ū");
 
-        Fifth.rules("sh", "NomSi=ēs AccSi=em AblSi=ē GenPl=ērum DatPl=ēbus");
+        Fifth.rules("sh", "NomSi=ēs AccSi=em AblSi=ē",
+                    "NomPl=ēs AccPl=ēs GenPl=ērum DatPl=ēbus");
         Fifth.rules("c", "use=sh",
                     "GenSi=eī DatSi=eī");
         Fifth.rules("v", "use=sh",
