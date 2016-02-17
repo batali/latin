@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<SimpleNoun gstem="dom" gender="f" rules="Fourth.us" english="home"
+            GenSi="domūs,domī" DatSi="domuī,domō,domū" LocSi="domī"
+            AblSi="domū,domō" GenPl="domuum,domōrum" AccPl="domūs,domōs" >
+</SimpleNoun>
